@@ -93,10 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
-        const itemButtons = document.querySelector("#item-buttons");
-        const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.classList.add('hidden');
-        confirmButtons.classList.remove('hidden');
+        // Target specific buttons
+        const placeButton = document.querySelector("#place");
+        const cancelButton = document.querySelector("#cancel");
+        const buttonImages = document.querySelectorAll(".button-image"); // Get all buttons with this class
+
+        // Hide only place and cancel buttons initially
+        placeButton.classList.add('hidden');
+        cancelButton.classList.add('hidden');
+
+        // Make other buttons visible
+        buttonImages.forEach(button => button.classList.remove('hidden'));
 
         // Handle selection of items
         const select = (selectItem) => {
@@ -104,24 +111,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.visible = item === selectItem;
             });
             selectedItem = selectItem;
-            itemButtons.classList.add('hidden');
-            confirmButtons.classList.remove('hidden');
+            placeButton.classList.remove('hidden');
+            cancelButton.classList.remove('hidden');
+            buttonImages.forEach(button => button.classList.add('hidden'));
         };
 
         // Handle cancel selection
         const cancelSelect = () => {
-            itemButtons.classList.remove('hidden');
-            confirmButtons.classList.add('hidden');
+            placeButton.classList.add('hidden');
+            cancelButton.classList.add('hidden');
+            buttonImages.forEach(button => button.classList.remove('hidden'));
             if (selectedItem) {
                 selectedItem.visible = false;
             }
             selectedItem = null;
         };
 
-        // Place selected item
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-
+        // Event listeners for buttons
         cancelButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -145,14 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(categories).forEach((category, index) => {
             categories[category].forEach((model, subIndex) => {
                 const el = document.querySelector(`#item${index * 3 + subIndex}`);
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
-                    if (item) {
-                        select(item.item);
-                    }
-                });
+                if (el) {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
+                        if (item) {
+                            select(item.item);
+                        }
+                    });
+                }
             });
         });
 
@@ -242,26 +250,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 new THREE.Vector3(sessionSources[0].gamepad.axes[0], sessionSources[0].gamepad.axes[1], 0),
                                 new THREE.Vector3(sessionSources[1].gamepad.axes[0], sessionSources[1].gamepad.axes[1], 0)
                             ];
-
                             const newDistance = Math.sqrt(
                                 Math.pow(newFingerPositions[0].x - newFingerPositions[1].x, 2) +
                                 Math.pow(newFingerPositions[0].y - newFingerPositions[1].y, 2)
                             );
-
-                            if (initialDistance) {
-                                const scaleChange = newDistance / initialDistance;
-                                currentInteractedItem.scale.multiplyScalar(scaleChange);
+                            if (initialDistance !== null) {
+                                const scale = newDistance / initialDistance;
+                                currentInteractedItem.scale.multiplyScalar(scale);
                             }
                             initialDistance = newDistance;
                         }
                     }
                 }
-
-                renderer.render(scene, camera);
             });
         });
 
-        // Handle window resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
