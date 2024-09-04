@@ -1,0 +1,62 @@
+.side-bar {
+    background: #1b1a1b;
+    backdrop-filter: blur(15px);
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: -250px;
+    overflow-y: auto;
+    transition: 0.6s ease;
+    transition-property: left;
+}
+
+    .side-bar.active {
+        left: 0;
+    }
+
+.menu .item {
+    position: relative;
+    cursor: pointer;
+}
+
+    .menu .item a:hover {
+        background: #33363a;
+        transition: 0.3s ease;
+    }
+
+    .menu .item .sub-menu {
+        background: #262627;
+        display: none;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+.model-image {
+    width: 50px;
+    height: 50px;
+    margin: 0;
+    border-radius: 0;
+}
+
+.button-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin: 5px;
+}
+
+#confirm-buttons {
+    position: absolute;
+    top: 50px;
+    z-index: 2;
+    display: flex;
+    flex-direction: row;
+    display: none;
+}
+
+.button {
+    width: 50px;
+    height: 50px;
+    margin: 5px;
+}
