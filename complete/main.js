@@ -102,8 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
         placeButton.classList.add('hidden');
         cancelButton.classList.add('hidden');
 
-        // Make other buttons visible
+        // Ensure all menu buttons are visible
         buttonImages.forEach(button => button.classList.remove('hidden'));
+        // Note: Ensure the menu is not hidden in CSS if it relies on JavaScript visibility settings.
 
         // Handle selection of items
         const select = (selectItem) => {
@@ -151,16 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(categories).forEach((category, index) => {
             categories[category].forEach((model, subIndex) => {
                 const el = document.querySelector(`#item${index * 3 + subIndex}`);
-                if (el) {
-                    el.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
-                        if (item) {
-                            select(item.item);
-                        }
-                    });
-                }
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
+                    if (item) {
+                        select(item.item);
+                    }
+                });
             });
         });
 
@@ -241,7 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 currentInteractedItem.rotation.y -= delta.x * 5.0; // Rotate the object based on touch movement
                             }
                         }
-                        prevTouchPosition = touchPosition.clone();
+
+                                               prevTouchPosition = touchPosition.clone();
                     } else if (isDraggingWithTwoFingers && currentInteractedItem) {
                         const sessionSources = renderer.xr.getSession().inputSources;
 
