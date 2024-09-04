@@ -2,6 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from '../libs/three123/three.module.js';
 import { ARButton } from '../libs/jsm/ARButton.js';
 
+// Normalize model size and position
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -12,6 +13,7 @@ const normalizeModel = (obj, height) => {
     obj.position.set(-center.x, -center.y, -center.z);
 };
 
+// Set opacity of the model
 const setOpacity = (obj, opacity) => {
     obj.traverse((child) => {
         if (child.isMesh) {
@@ -21,6 +23,7 @@ const setOpacity = (obj, opacity) => {
     });
 };
 
+// Deep clone of a model
 const deepClone = (obj) => {
     const newObj = obj.clone();
     newObj.traverse((o) => {
@@ -48,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
+        // Define categories and item heights
         const categories = {
             'bookshelf': ['bookshelf1', 'bookshelf2', 'bookshelf3'],
             'chair': ['chair1', 'chair2', 'chair3'],
@@ -58,9 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'chair': 0.5,
             'light': 0.5
         };
+
         const items = [];
         const placedItems = [];
 
+        // Load and normalize models
         for (const [category, models] of Object.entries(categories)) {
             for (const modelName of models) {
                 const model = await loadGLTF(`../assets/models/${modelName}/scene.gltf`);
@@ -89,27 +95,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemButtons = document.querySelector("#item-buttons");
         const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.style.display = "block";
-        confirmButtons.style.display = "none";
+        itemButtons.classList.add('hidden');
+        confirmButtons.classList.remove('hidden');
 
+        // Handle selection of items
         const select = (selectItem) => {
             items.forEach(({ item }) => {
                 item.visible = item === selectItem;
             });
             selectedItem = selectItem;
-            itemButtons.style.display = "none";
-            confirmButtons.style.display = "block";
+            itemButtons.classList.add('hidden');
+            confirmButtons.classList.remove('hidden');
         };
 
+        // Handle cancel selection
         const cancelSelect = () => {
-            itemButtons.style.display = "block";
-            confirmButtons.style.display = "none";
+            itemButtons.classList.remove('hidden');
+            confirmButtons.classList.add('hidden');
             if (selectedItem) {
                 selectedItem.visible = false;
             }
             selectedItem = null;
         };
 
+        // Place selected item
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
@@ -117,20 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation();
             cancelSelect();
-        });
-
-        Object.keys(categories).forEach((category, index) => {
-            categories[category].forEach((model, subIndex) => {
-                const el = document.querySelector(`#item${index * 3 + subIndex}`);
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
-                    if (item) {
-                        select(item.item);
-                    }
-                });
-            });
         });
 
         placeButton.addEventListener('click', (e) => {
@@ -146,6 +141,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Handle item button clicks
+        Object.keys(categories).forEach((category, index) => {
+            categories[category].forEach((model, subIndex) => {
+                const el = document.querySelector(`#item${index * 3 + subIndex}`);
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
+                    if (item) {
+                        select(item.item);
+                    }
+                });
+            });
+        });
+
+        // Function to select an item for interaction
         const selectItem = (item) => {
             if (currentInteractedItem !== item) {
                 if (currentInteractedItem) {
@@ -156,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // Handle controller interactions
         controller.addEventListener('selectstart', () => {
             touchDown = true;
 
@@ -178,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prevTouchPosition = null;
         });
 
+        // Handle AR session and interactions
         renderer.xr.addEventListener("sessionstart", async () => {
             const session = renderer.xr.getSession();
             const viewerReferenceSpace = await session.requestReferenceSpace("viewer");
@@ -230,33 +243,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                 new THREE.Vector3(sessionSources[1].gamepad.axes[0], sessionSources[1].gamepad.axes[1], 0)
                             ];
 
-                            const movementVector = newFingerPositions[0].clone().sub(initialFingerPositions[0])
-                                .add(newFingerPositions[1].clone().sub(initialFingerPositions[1]));
-
-                            currentInteractedItem.position.add(new THREE.Vector3(movementVector.x, 0, -movementVector.y));
-                            initialFingerPositions = newFingerPositions;
-                        }
-                    } else if (isPinching && currentInteractedItem) {
-                        const sessionSources = renderer.xr.getSession().inputSources;
-
-                        if (sessionSources.length === 2) {
                             const newDistance = Math.sqrt(
-                                Math.pow(sessionSources[0].gamepad.axes[0] - sessionSources[1].gamepad.axes[0], 2) +
-                                Math.pow(sessionSources[0].gamepad.axes[1] - sessionSources[1].gamepad.axes[1], 2)
+                                Math.pow(newFingerPositions[0].x - newFingerPositions[1].x, 2) +
+                                Math.pow(newFingerPositions[0].y - newFingerPositions[1].y, 2)
                             );
 
-                            const scaleChange = newDistance / initialDistance;
-                            currentInteractedItem.scale.multiplyScalar(scaleChange);
-
+                            if (initialDistance) {
+                                const scaleChange = newDistance / initialDistance;
+                                currentInteractedItem.scale.multiplyScalar(scaleChange);
+                            }
                             initialDistance = newDistance;
                         }
                     }
-
-                    renderer.render(scene, camera);
                 }
+
+                renderer.render(scene, camera);
             });
         });
 
+        // Handle window resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
