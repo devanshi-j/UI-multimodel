@@ -1,80 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Model Selector</title>
-  <style>
-    body {
-      margin: 0;
-    }
-    #item-buttons, #sub-menu, #confirm-buttons {
-      position: absolute;
-      top: 50px;
-      z-index: 2;
-      display: flex;
-      flex-direction: row;
-      display: none;
-    }
-    #item-buttons {
-      display: flex;
-    }
-    #sub-menu {
-      display: none;
-      flex-wrap: wrap;
-      top: 120px; /* Adjusted to appear below the item-buttons */
-      position: absolute;
-    }
-    .button-image {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      margin: 5px;
-      cursor: pointer;
-    }
-    .button {
-      width: 50px;
-      height: 50px;
-      margin: 5px;
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Model Selector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+        /* Custom styles to ensure layout consistency */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .menu-btn {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .side-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #333;
+            color: #fff;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+        .side-bar.active {
+            transform: translateX(0);
+        }
+        .side-bar header {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #444;
+            justify-content: space-between;
+        }
+        .side-bar header img {
+            height: 100px;
+            width: 100px;
+            object-fit: cover;
+        }
+        .side-bar .menu {
+            margin-top: 20px;
+        }
+        .side-bar .item {
+            margin: 10px 0;
+        }
+        .side-bar .sub-btn {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .side-bar .sub-btn .model-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .side-bar .sub-menu {
+            display: none;
+            padding-left: 20px;
+        }
+        .side-bar .sub-menu .sub-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .side-bar .sub-menu .sub-item .model-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .side-bar .close-btn {
+            cursor: pointer;
+        }
+        .main {
+            margin-left: 260px;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div id="item-buttons">
-    <img class="button-image" id="category-chair" src="../assets/models/Chair/thumbnail.png" alt="Chair">
-    <img class="button-image" id="category-light" src="../assets/models/light/thumbnail.png" alt="Light">
-    <img class="button-image" id="category-plant" src="../assets/models/plant/thumbnail.png" alt="Plant">
-    <img class="button-image" id="category-rug" src="../assets/models/rug/thumbnail.png" alt="Rug">
-  </div>
-  <div id="sub-menu">
-    <!-- Sub-menu items for Chair -->
-    <div id="sub-menu-chair" class="sub-menu-category" style="display: none;">
-      <img class="button-image" id="model-chair1" src="../assets/models/Chair/model1_thumbnail.png" alt="Chair Model 1">
-      <img class="button-image" id="model-chair2" src="../assets/models/Chair/model2_thumbnail.png" alt="Chair Model 2">
+    <!-- Menu Button to Toggle Sidebar -->
+    <div class="menu-btn">
+        <i class="fas fa-bars"></i>
     </div>
 
-    <!-- Sub-menu items for Light -->
-    <div id="sub-menu-light" class="sub-menu-category" style="display: none;">
-      <img class="button-image" id="model-light1" src="../assets/models/light/model1_thumbnail.png" alt="Light Model 1">
-      <img class="button-image" id="model-light2" src="../assets/models/light/model2_thumbnail.png" alt="Light Model 2">
-    </div>
+    <!-- Sidebar for Categories and Models -->
+    <div class="side-bar">
+        <header>
+            <div class="close-btn">
+                <i class="fas fa-times"></i>
+            </div>
+            <img src="https://media.sketchfab.com/models/130fdb34a2204cdfa3170c2098d42ff7/thumbnails/ea7f4817897d4f178bda90e69c7b6973/63391ca959fa484c8bf186c8159dcc76.jpeg" alt="Sidebar Logo" />
+            <h1>Categories</h1>
+        </header>
+        <div class="menu">
+            <!-- Category Items -->
+            <div class="item">
+                <a class="sub-btn" id="item0">
+                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
+                    <i class="fas fa-angle-right dropdown"></i>
+                </a>
+                <div class="sub-menu" id="sub-menu0">
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3
+                    </a>
+                </div>
+            </div>
 
-    <!-- Sub-menu items for Plant -->
-    <div id="sub-menu-plant" class="sub-menu-category" style="display: none;">
-      <img class="button-image" id="model-plant1" src="../assets/models/plant/model1_thumbnail.png" alt="Plant Model 1">
-      <img class="button-image" id="model-plant2" src="../assets/models/plant/model2_thumbnail.png" alt="Plant Model 2">
-    </div>
+           <div class="item">
+                <a class="sub-btn" id="item0">
+                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
+                    <i class="fas fa-angle-right dropdown"></i>
+                </a>
+                <div class="sub-menu" id="sub-menu0">
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3
+                    </a>
+                </div>
+            </div>
 
-    <!-- Sub-menu items for Rug -->
-    <div id="sub-menu-rug" class="sub-menu-category" style="display: none;">
-      <img class="button-image" id="model-rug1" src="../assets/models/rug/model1_thumbnail.png" alt="Rug Model 1">
-      <img class="button-image" id="model-rug2" src="../assets/models/rug/model2_thumbnail.png" alt="Rug Model 2">
+           <div class="item">
+                <a class="sub-btn" id="item0">
+                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
+                    <i class="fas fa-angle-right dropdown"></i>
+                </a>
+                <div class="sub-menu" id="sub-menu0">
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2
+                    </a>
+                    <a href="#" class="sub-item">
+                        <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3
+                    </a>
+                </div>
+            </div>
+
+          
+            <!-- Repeat the above block for other categories as needed -->
+        </div>
     </div>
-  </div>
-  <div id="confirm-buttons">
-    <button class="button" id="place">OK</button>
-    <button class="button" id="cancel">X</button>
-  </div>
-  <script type="module" src="../complete/main.js"></script>
+    
+    <!-- Main Content Area for AR Scene -->
+    <section class="main">
+        <h1>Models Preview</h1>
+    </section>
+
+    <!-- Include JavaScript libraries and your script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="../libs/three123/three.module.js"></script>
+    <script src="../libs/jsm/ARButton.js"></script>
+    <script src="../libs/loader.js"></script>
+    <script src="../complete/main.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // jQuery for toggle sub-menus
+            $(".sub-btn").click(function () {
+                $(this).next(".sub-menu").slideToggle();
+                $(this).find(".dropdown").toggleClass("rotate");
+            });
+
+            // jQuery for expand and collapse the sidebar
+            $(".menu-btn").click(function () {
+                $(".side-bar").addClass("active");
+                $(".menu-btn").css("visibility", "hidden");
+            });
+
+            $(".close-btn").click(function () {
+                $(".side-bar").removeClass("active");
+                $(".menu-btn").css("visibility", "visible");
+            });
+        });
+    </script>
 </body>
 </html>
