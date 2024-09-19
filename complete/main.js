@@ -2,7 +2,6 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from '../libs/three123/three.module.js';
 import { ARButton } from '../libs/jsm/ARButton.js';
 
-// Normalize model size and position
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -13,7 +12,6 @@ const normalizeModel = (obj, height) => {
     obj.position.set(-center.x, -center.y, -center.z);
 };
 
-// Set opacity of the model
 const setOpacity = (obj, opacity) => {
     obj.traverse((child) => {
         if (child.isMesh) {
@@ -23,7 +21,6 @@ const setOpacity = (obj, opacity) => {
     });
 };
 
-// Deep clone of a model
 const deepClone = (obj) => {
     const newObj = obj.clone();
     newObj.traverse((o) => {
@@ -51,88 +48,121 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
-        // Define categories and item heights
+        // Define categories and models
         const categories = {
-            'bookshelf': ['bookshelf1', 'bookshelf2', 'bookshelf3'],
-            'chair': ['chair1', 'chair2', 'chair3'],
-            'light': ['light1', 'light2', 'light3']
+            'Chair': ['Chair1', 'Chair2'], // Replace with actual model names
+            'light': ['Light1', 'Light2'],
+            'plant': ['Plant1', 'Plant2'],
+            'rug': ['Rug1', 'Rug2']
         };
+
         const itemHeights = {
-            'bookshelf': 0.5,
-            'chair': 0.5,
-            'light': 0.5
+            'Chair': 0.3,
+            'light': 0.3,
+            'plant': 0.3,
+            'rug': 0.3
         };
 
-        const items = [];
+        const items = {}; // Object to hold category groups
         const placedItems = [];
+        const models = {};
 
-        // Load and normalize models
-        for (const [category, models] of Object.entries(categories)) {
-            for (const modelName of models) {
-                const model = await loadGLTF(`../assets/models/${modelName}/scene.gltf`);
-                normalizeModel(model.scene, itemHeights[category]);
-                const item = new THREE.Group();
-                item.add(model.scene);
-                item.visible = false;
-                setOpacity(item, 0.5);
-                items.push({ category, item });
-                scene.add(item);
+        const loadModel = async (category, modelName) => {
+            if (!models[category]) {
+                models[category] = {};
             }
+
+            if (!models[category][modelName]) {
+                const model = await loadGLTF(`../assets/models/${category}/${modelName}/scene.gltf`);
+                normalizeModel(model.scene, itemHeights[category]);
+                models[category][modelName] = model.scene;
+            }
+            return models[category][modelName];
+        };
+
+        // Create category groups in scene
+        for (const [category, modelNames] of Object.entries(categories)) {
+            const group = new THREE.Group();
+            group.name = category;
+            items[category] = group;
+            scene.add(group);
         }
 
         let selectedItem = null;
-        let prevTouchPosition = null;
-        let touchDown = false;
-        let isPinching = false;
-        let initialDistance = null;
-        let isDraggingWithTwoFingers = false;
-        let initialFingerPositions = [];
+        let lastTouchX = null;
+        let lastTouchY = null;
+        let lastAngle = null;
+        let lastDistance = null;
         let currentInteractedItem = null;
 
         const raycaster = new THREE.Raycaster();
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
-        // Target specific buttons
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-        const buttonImages = document.querySelectorAll(".button-image"); // Get all buttons with this class
+        const itemButtons = document.querySelector("#item-buttons");
+        const subMenu = document.querySelector("#sub-menu");
+        const confirmButtons = document.querySelector("#confirm-buttons");
+        itemButtons.style.display = "block";
+        confirmButtons.style.display = "none";
 
-        // Hide only place and cancel buttons initially
-        placeButton.classList.add('hidden');
-        cancelButton.classList.add('hidden');
-
-        // Ensure all menu buttons are visible
-        buttonImages.forEach(button => button.classList.remove('hidden'));
-        // Note: Ensure the menu is not hidden in CSS if it relies on JavaScript visibility settings.
-
-        // Handle selection of items
-        const select = (selectItem) => {
-            items.forEach(({ item }) => {
-                item.visible = item === selectItem;
+        const showSubMenu = (category) => {
+            subMenu.innerHTML = ''; // Clear existing items
+            const modelNames = categories[category];
+            modelNames.forEach((modelName) => {
+                const img = document.createElement('img');
+                img.className = 'sub-item';
+                img.src = `../assets/models/${category}/${modelName}/thumbnail.png`; // Update path as needed
+                img.alt = modelName;
+                img.addEventListener('click', async () => {
+                    await select(category, modelName);
+                });
+                subMenu.appendChild(img);
             });
-            selectedItem = selectItem;
-            placeButton.classList.remove('hidden');
-            cancelButton.classList.remove('hidden');
-            buttonImages.forEach(button => button.classList.add('hidden'));
+            subMenu.style.display = 'block';
         };
 
-        // Handle cancel selection
+        const select = async (category, modelName) => {
+            const group = items[category];
+            if (!group.children.length || !group.children.find(child => child.name === modelName)) {
+                const model = await loadModel(category, modelName);
+                const modelInstance = model.clone();
+                group.add(modelInstance);
+            }
+            for (const cat in items) {
+                items[cat].visible = cat === category;
+            }
+            selectedItem = items[category].children.find(child => child.name === modelName);
+            itemButtons.style.display = "none";
+            confirmButtons.style.display = "block";
+            subMenu.style.display = "none";
+        };
+
         const cancelSelect = () => {
-            placeButton.classList.add('hidden');
-            cancelButton.classList.add('hidden');
-            buttonImages.forEach(button => button.classList.remove('hidden'));
+            itemButtons.style.display = "block";
+            confirmButtons.style.display = "none";
+            subMenu.style.display = "none";
             if (selectedItem) {
                 selectedItem.visible = false;
             }
             selectedItem = null;
         };
 
-        // Event listeners for buttons
+        const placeButton = document.querySelector("#place");
+        const cancelButton = document.querySelector("#cancel");
+
         cancelButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             cancelSelect();
+        });
+
+        Object.keys(categories).forEach((category, i) => {
+            const el = document.querySelector(`#item${i}`);
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showSubMenu(category);
+            });
         });
 
         placeButton.addEventListener('click', (e) => {
@@ -143,133 +173,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 setOpacity(spawnItem, 1.0);
                 scene.add(spawnItem);
                 placedItems.push(spawnItem);
-                currentInteractedItem = spawnItem; // Set the current interacted item
-                cancelSelect(); // Hide the selected model and reset selection
+                currentInteractedItem = spawnItem;
+                cancelSelect();
             }
         });
 
-        // Handle item button clicks
-        Object.keys(categories).forEach((category, index) => {
-            categories[category].forEach((model, subIndex) => {
-                const el = document.querySelector(`#item${index * 3 + subIndex}`);
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const item = items.find(({ category: cat, item }) => cat === category && item.name.includes(model));
-                    if (item) {
-                        select(item.item);
-                    }
-                });
-            });
-        });
-
-        // Function to select an item for interaction
-        const selectItem = (item) => {
-            if (currentInteractedItem !== item) {
-                if (currentInteractedItem) {
-                    setOpacity(currentInteractedItem, 1.0); // Reset opacity for the previous item
+        // DRAG: Single-Finger Dragging Implementation
+        document.addEventListener('touchmove', (event) => {
+            if (selectedItem && event.touches.length === 1) {
+                const touch = event.touches[0];
+                if (lastTouchX !== null && lastTouchY !== null) {
+                    const movementX = touch.pageX - lastTouchX;
+                    const movementY = touch.pageY - lastTouchY;
+                    selectedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
+                    selectedItem.position.y -= movementY * 0.001;
                 }
-                currentInteractedItem = item;
-                setOpacity(currentInteractedItem, 0.7); // Highlight selected item with slightly transparent opacity
+                lastTouchX = touch.pageX;
+                lastTouchY = touch.pageY;
             }
+        });
+
+        // ROTATION: Two-Finger Twist Gesture
+        document.addEventListener('touchmove', (event) => {
+            if (selectedItem && event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+
+                const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
+                if (lastAngle !== null) {
+                    const deltaAngle = currentAngle - lastAngle;
+                    selectedItem.rotation.y += deltaAngle;
+                }
+                lastAngle = currentAngle;
+            }
+        });
+
+        // SCALING: Two-Finger Pinch Gesture
+        document.addEventListener('touchmove', (event) => {
+            if (selectedItem && event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+
+                const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+                if (lastDistance !== null) {
+                    const scaleFactor = currentDistance / lastDistance;
+                    selectedItem.scale.multiplyScalar(scaleFactor);
+                }
+                lastDistance = currentDistance;
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            lastTouchX = null;
+            lastTouchY = null;
+            lastAngle = null;
+            lastDistance = null;
+        });
+
+        const animate = () => {
+            renderer.setAnimationLoop(animate);
+            renderer.render(scene, camera);
         };
 
-        // Handle controller interactions
-        controller.addEventListener('selectstart', () => {
-            touchDown = true;
-
-            // Raycasting to check if we intersect with any placed items
-            const tempMatrix = new THREE.Matrix4();
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
-
-            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-            const intersects = raycaster.intersectObjects(placedItems, true);
-
-            if (intersects.length > 0) {
-                selectItem(intersects[0].object.parent); // Assuming the object is in a group
-            }
-        });
-
-        controller.addEventListener('selectend', () => {
-            touchDown = false;
-            prevTouchPosition = null;
-        });
-
-        // Handle AR session and interactions
-        renderer.xr.addEventListener("sessionstart", async () => {
-            const session = renderer.xr.getSession();
-            const viewerReferenceSpace = await session.requestReferenceSpace("viewer");
-            const hitTestSource = await session.requestHitTestSource({ space: viewerReferenceSpace });
-
-            session.addEventListener('inputsourceschange', () => {
-                const sources = session.inputSources;
-                if (sources.length === 2) {
-                    isPinching = true;
-                    initialDistance = Math.sqrt(
-                        Math.pow(sources[0].gamepad.axes[0] - sources[1].gamepad.axes[0], 2) +
-                        Math.pow(sources[0].gamepad.axes[1] - sources[1].gamepad.axes[1], 2)
-                    );
-                    isDraggingWithTwoFingers = true;
-                    initialFingerPositions = [
-                        new THREE.Vector3(sources[0].gamepad.axes[0], sources[0].gamepad.axes[1], 0),
-                        new THREE.Vector3(sources[1].gamepad.axes[0], sources[1].gamepad.axes[1], 0)
-                    ];
-                }
-            });
-
-            renderer.setAnimationLoop((timestamp, frame) => {
-                if (frame) {
-                    const referenceSpace = renderer.xr.getReferenceSpace();
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (selectedItem && hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const position = new THREE.Vector3().setFromMatrixPosition(hit.getPose(referenceSpace).transform.matrix);
-                        selectedItem.position.copy(position);
-                    }
-
-                    // Rotation and dragging logic
-                    if (touchDown && currentInteractedItem && !isPinching) {
-                        const touchPosition = new THREE.Vector2(controller.position.x, controller.position.y);
-
-                        if (prevTouchPosition) {
-                            const delta = touchPosition.clone().sub(prevTouchPosition);
-                            if (delta.length() > 0) {
-                                currentInteractedItem.rotation.y -= delta.x * 5.0; // Rotate the object based on touch movement
-                            }
-                        }
-
-                                               prevTouchPosition = touchPosition.clone();
-                    } else if (isDraggingWithTwoFingers && currentInteractedItem) {
-                        const sessionSources = renderer.xr.getSession().inputSources;
-
-                        if (sessionSources.length === 2) {
-                            const newFingerPositions = [
-                                new THREE.Vector3(sessionSources[0].gamepad.axes[0], sessionSources[0].gamepad.axes[1], 0),
-                                new THREE.Vector3(sessionSources[1].gamepad.axes[0], sessionSources[1].gamepad.axes[1], 0)
-                            ];
-                            const newDistance = Math.sqrt(
-                                Math.pow(newFingerPositions[0].x - newFingerPositions[1].x, 2) +
-                                Math.pow(newFingerPositions[0].y - newFingerPositions[1].y, 2)
-                            );
-                            if (initialDistance !== null) {
-                                const scale = newDistance / initialDistance;
-                                currentInteractedItem.scale.multiplyScalar(scale);
-                            }
-                            initialDistance = newDistance;
-                        }
-                    }
-                }
-            });
-        });
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        animate();
     };
 
     initialize();
