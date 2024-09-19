@@ -51,16 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Define categories and models
         const categories = {
             'Chair': ['Chair1', 'Chair2'], // Replace with actual model names
-            'light': ['Light1', 'Light2'],
-            'plant': ['Plant1', 'Plant2'],
-            'rug': ['Rug1', 'Rug2']
+            'Light': ['Light1', 'Light2'],
+            'Plant': ['Plant1', 'Plant2'],
+            'Rug': ['Rug1', 'Rug2']
         };
 
         const itemHeights = {
             'Chair': 0.3,
-            'light': 0.3,
-            'plant': 0.3,
-            'rug': 0.3
+            'Light': 0.3,
+            'Plant': 0.3,
+            'Rug': 0.3
         };
 
         const items = {}; // Object to hold category groups
@@ -127,11 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const model = await loadModel(category, modelName);
                 const modelInstance = model.clone();
                 group.add(modelInstance);
+                modelInstance.name = modelName; // Set name to match modelName
             }
+            // Hide all categories except the selected one
             for (const cat in items) {
                 items[cat].visible = cat === category;
             }
-            selectedItem = items[category].children.find(child => child.name === modelName);
+            selectedItem = group.children.find(child => child.name === modelName);
             itemButtons.style.display = "none";
             confirmButtons.style.display = "block";
             subMenu.style.display = "none";
