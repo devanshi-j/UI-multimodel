@@ -44,9 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
+        // Create the AR button and append it to the body
         const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body } });
         document.body.appendChild(renderer.domElement);
-        document.body.appendChild(arButton);
+        document.body.appendChild(arButton);  // Ensure this line exists
 
         // Define categories and models
         const categories = {
