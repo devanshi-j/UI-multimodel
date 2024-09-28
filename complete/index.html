@@ -23,7 +23,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100px;
+            width: 70px;
             height: 100%;
             background-color: #333;
             color: #fff;
@@ -31,6 +31,8 @@
             transition: transform 0.3s ease;
             z-index: 1;
             overflow-y: auto; /* Enable vertical scrolling */
+            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS and touch devices */
+            touch-action: pan-y; /* Ensures vertical scrolling on touch */
         }
         .side-bar.active {
             transform: translateX(0);
@@ -43,8 +45,8 @@
             justify-content: space-between;
         }
         .side-bar header img {
-            height: 50px;
-            width: 50px;
+            height: 30px;
+            width: 30px;
             object-fit: cover;
         }
         .side-bar .menu {
@@ -103,7 +105,6 @@
                 <i class="fas fa-times"></i>
             </div>
             <img src="https://media.sketchfab.com/models/130fdb34a2204cdfa3170c2098d42ff7/thumbnails/ea7f4817897d4f178bda90e69c7b6973/63391ca959fa484c8bf186c8159dcc76.jpeg" alt="Sidebar Logo" />
-           
         </header>
         <div class="menu">
             <!-- Category Items -->
@@ -130,7 +131,7 @@
                     <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
                     <i class="fas fa-angle-right dropdown"></i>
                 </a>
-                <div class="sub-menu" id="sub-menu0">
+                <div class="sub-menu" id="sub-menu1">
                     <a href="#" class="sub-item">
                         <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> 
                     </a>
@@ -148,7 +149,7 @@
                     <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
                     <i class="fas fa-angle-right dropdown"></i>
                 </a>
-                <div class="sub-menu" id="sub-menu0">
+                <div class="sub-menu" id="sub-menu2">
                     <a href="#" class="sub-item">
                         <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> 
                     </a>
@@ -161,19 +162,16 @@
                 </div>
             </div>
 
-            
-
-           <!-- Repeat the above block for other categories as needed -->
+            <!-- Add more categories and sub-menus as needed -->
         </div>
     </div>
     
     <!-- Main Content Area for AR Scene -->
-   
+    <!-- (Your AR content goes here) -->
 
     <!-- Include JavaScript libraries and your script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="../complete/main.js"></script>
-   
 
     <script type="text/javascript">
         $(document).ready(function () {
