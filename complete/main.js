@@ -51,17 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Define categories and models
         const categories = {
-            'Chair': ['Chair1', 'Chair2'], // Replace with actual model names
-            'Light': ['Light1', 'Light2'],
-            'Plant': ['Plant1', 'Plant2'],
-            'Rug': ['Rug1', 'Rug2']
+            'lamp': ['lamp1', 'lamp2', 'lamp3'], // Replace with actual model names
+            'table': ['table1', 'table2', 'table3'],
+            'sofa': ['sofa1', 'sofa2', 'sofa3']
         };
 
         const itemHeights = {
-            'Chair': 0.3,
-            'Light': 0.3,
-            'Plant': 0.3,
-            'Rug': 0.3
+           'lamp': 0.4;
+           'table': 0.1;
+           'sofa': 0.1;
         };
 
         const items = {}; // Object to hold category groups
