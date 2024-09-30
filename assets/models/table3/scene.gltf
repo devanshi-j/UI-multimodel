@@ -1,0 +1,412 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2691,
+      "max": [
+        22.624353408813477,
+        4.450409889221191,
+        20.3889217376709
+      ],
+      "min": [
+        -16.312990188598633,
+        -0.68300461769104,
+        -18.163955688476563
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 32292,
+      "componentType": 5126,
+      "count": 2691,
+      "max": [
+        0.9996294379234314,
+        1.0,
+        0.9999949932098389
+      ],
+      "min": [
+        -0.9997414350509644,
+        -1.0,
+        -0.9999272227287292
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 2691,
+      "max": [
+        0.9999594688415527,
+        0.9999993443489075,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9999874234199524,
+        -0.996519923210144,
+        -0.999998152256012,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2691,
+      "max": [
+        0.991335928440094,
+        0.9950023293495178
+      ],
+      "min": [
+        -0.16903764009475708,
+        -0.11765885353088379
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 8832,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 64584,
+      "componentType": 5126,
+      "count": 669,
+      "max": [
+        13.952312469482422,
+        -0.3841463327407837,
+        13.120770454406738
+      ],
+      "min": [
+        -12.039064407348633,
+        -10.562715530395508,
+        -11.861964225769043
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 72612,
+      "componentType": 5126,
+      "count": 669,
+      "max": [
+        0.9903231859207153,
+        0.9950122237205505,
+        0.9946680068969727
+      ],
+      "min": [
+        -0.9984533786773682,
+        -0.9913212060928345,
+        -0.9906994700431824
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 21528,
+      "componentType": 5126,
+      "count": 669,
+      "max": [
+        13.952198028564453,
+        -0.381908118724823
+      ],
+      "min": [
+        -12.039178848266602,
+        -10.560477256774902
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 35328,
+      "componentType": 5125,
+      "count": 3858,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "DANILADESIGN.RU (https://sketchfab.com/vychurov)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/wood-slab-coffee-table-662f6d9f670247f0bbbf6a07b8f4b886",
+      "title": "Wood slab coffee table"
+    },
+    "generator": "Sketchfab-16.32.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 50760,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 26880,
+      "byteOffset": 50760,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 80640,
+      "byteOffset": 77640,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 43056,
+      "byteOffset": 158280,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 201336,
+      "uri": "scene.bin"
+    }
+  ],
+  "extensionsUsed": [
+    "KHR_materials_specular"
+  ],
+  "images": [
+    {
+      "uri": "textures/Coffee_table_of_elm_cut_3_75_baseColor.png"
+    },
+    {
+      "uri": "textures/Coffee_table_of_elm_cut_3_75_metallicRoughness.png"
+    },
+    {
+      "uri": "textures/Coffee_table_of_elm_cut_3_75_normal.png"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularColorFactor": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "specularFactor": 0.08471846710094062
+        }
+      },
+      "name": "Coffee_table_of_elm_cut_3_75",
+      "normalTexture": {
+        "index": 2
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 0.02398836987205497,
+        "metallicRoughnessTexture": {
+          "index": 1
+        },
+        "roughnessFactor": 0.9106477894137855
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "Coffee_table_of_elm_cut_1_79",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.13937555460693773,
+          0.13937555460693773,
+          0.13937555460693773,
+          1.0
+        ],
+        "roughnessFactor": 0.2547627393418205
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Object009_low002_Coffee_table_of_elm_cut_3_75_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Object009_low002_Coffee_table_of_elm_cut_1_79_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 6,
+            "POSITION": 5,
+            "TEXCOORD_0": 7
+          },
+          "indices": 8,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.02539999969303608,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02539999969303608,
+        0.0,
+        0.0,
+        -0.02539999969303608,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "6105588828fe4af7b18960e0a0a0b9e6.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        0.9999999999999998,
+        -1.4901161193847656e-08,
+        -1.4901161193847653e-08,
+        0.0,
+        -1.4901160305669213e-08,
+        5.960464466436832e-08,
+        -0.9999999999999981,
+        0.0,
+        1.4901162082026046e-08,
+        0.9999999999999981,
+        5.960464444232372e-08,
+        0.0,
+        0.0007844269275665283,
+        0.0,
+        -0.0030058622360229492,
+        1.0
+      ],
+      "name": "Object009_low002"
+    },
+    {
+      "children": [
+        5,
+        6
+      ],
+      "matrix": [
+        0.9037693006528477,
+        0.4280199191596403,
+        -1.9371510075753124e-07,
+        0.0,
+        1.1807946144842202e-07,
+        2.0325808348740056e-07,
+        0.9999999999999724,
+        0.0,
+        0.4280199191596679,
+        -0.9037693006528457,
+        1.3315805442187867e-07,
+        0.0,
+        -3.3281733989715576,
+        -0.34526824951171875,
+        10.566374778747559,
+        1.0
+      ],
+      "name": "Object_4"
+    },
+    {
+      "mesh": 0,
+      "name": "Object009_low002_Coffee_table_of_elm_cut_3_75_0"
+    },
+    {
+      "mesh": 1,
+      "name": "Object009_low002_Coffee_table_of_elm_cut_1_79_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ]
+}
