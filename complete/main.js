@@ -170,6 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        document.querySelector("#place-button").style.display = "block";
+        document.querySelector("#cancel-button").style.display = "block";
+
+
         const cancelSelect = () => {
             if (selectedItem) {
                 scene.remove(selectedItem);
