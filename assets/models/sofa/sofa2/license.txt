@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sofa 6
+* source:	https://sketchfab.com/3d-models/sofa-6-5cc5949440054f52abe8b2ac53cd6deb
+* author:	Augusto.Angulo (https://sketchfab.com/Augusto.Angulo)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sofa 6" (https://sketchfab.com/3d-models/sofa-6-5cc5949440054f52abe8b2ac53cd6deb) by Augusto.Angulo (https://sketchfab.com/Augusto.Angulo) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
