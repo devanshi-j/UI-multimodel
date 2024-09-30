@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AR Model Selector</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
- 
+
     <style>
-        /* Custom styles to ensure layout consistency */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -30,9 +29,7 @@
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             z-index: 1;
-            overflow-y: auto; /* Enable vertical scrolling */
-            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS and touch devices */
-            touch-action: pan-y; /* Ensures vertical scrolling on touch */
+            overflow-y: auto;
         }
         .side-bar.active {
             transform: translateX(0);
@@ -89,7 +86,34 @@
         .side-bar .close-btn {
             cursor: pointer;
         }
-       
+
+        /* Styles for Place and Cancel buttons */
+        #confirm-buttons {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        #place-button, #cancel-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        #place-button {
+            background-color: #28a745;
+        }
+
+        #cancel-button {
+            background-color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -114,14 +138,14 @@
                     <i class="fas fa-angle-right dropdown"></i>
                 </a>
                 <div class="sub-menu" id="sub-menu0">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp1/thumbnail.png" alt="">
+                    <a href="#" class="sub-item" data-model="lamp1">
+                        <img class="model-image" src="../assets/models/lamp1/thumbnail.png" alt="Model 1">
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp2/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="lamp2">
+                        <img class="model-image" src="../assets/models/lamp2/thumbnail.png" alt="Model 2"> 
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp3/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="lamp3">
+                        <img class="model-image" src="../assets/models/lamp3/thumbnail.png" alt="Model 3"> 
                     </a>
                 </div>
             </div>
@@ -132,14 +156,14 @@
                     <i class="fas fa-angle-right dropdown"></i>
                 </a>
                 <div class="sub-menu" id="sub-menu1">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="table1">
+                        <img class="model-image" src="../assets/models/table1/thumbnail.png" alt="Table 1">
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table2/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="table2">
+                        <img class="model-image" src="../assets/models/table2/thumbnail.png" alt="Table 2"> 
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table3/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="table3">
+                        <img class="model-image" src="../assets/models/table3/thumbnail.png" alt="Table 3"> 
                     </a>
                 </div>
             </div>
@@ -150,22 +174,26 @@
                     <i class="fas fa-angle-right dropdown"></i>
                 </a>
                 <div class="sub-menu" id="sub-menu2">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa2/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="sofa1">
+                        <img class="model-image" src="../assets/models/sofa1/thumbnail.png" alt="Sofa 1">
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa2/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="sofa2">
+                        <img class="model-image" src="../assets/models/sofa2/thumbnail.png" alt="Sofa 2"> 
                     </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa3/thumbnail.png" alt=""> 
+                    <a href="#" class="sub-item" data-model="sofa3">
+                        <img class="model-image" src="../assets/models/sofa3/thumbnail.png" alt="Sofa 3"> 
                     </a>
                 </div>
             </div>
-
-            <!-- Add more categories and sub-menus as needed -->
         </div>
     </div>
-    
+
+    <!-- Place and Cancel buttons -->
+    <div id="confirm-buttons">
+        <button id="place-button">Place</button>
+        <button id="cancel-button">Cancel</button>
+    </div>
+
     <!-- Main Content Area for AR Scene -->
     <!-- (Your AR content goes here) -->
 
@@ -175,6 +203,8 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            let selectedModel = null;
+
             // jQuery for toggle sub-menus
             $(".sub-btn").click(function () {
                 $(this).next(".sub-menu").slideToggle();
@@ -190,6 +220,33 @@
             $(".close-btn").click(function () {
                 $(".side-bar").removeClass("active");
                 $(".menu-btn").css("visibility", "visible");
+            });
+
+            // Handle sub-item click to select model
+            $(".sub-item").click(function (e) {
+                e.preventDefault();
+                selectedModel = $(this).data("model");
+                console.log("Selected model: " + selectedModel);
+
+                // Show the Place and Cancel buttons when a model is selected
+                $("#confirm-buttons").css("display", "block");
+            });
+
+            // Handle Place button click
+            $("#place-button").click(function () {
+                if (selectedModel) {
+                    console.log("Placing model: " + selectedModel);
+                    // Place the selected model in the AR scene
+                    // (Add your model placement code here)
+                }
+                $("#confirm-buttons").hide(); // Hide buttons after placement
+            });
+
+            // Handle Cancel button click
+            $("#cancel-button").click(function () {
+                console.log("Cancelled model selection");
+                selectedModel = null; // Reset selected model
+                $("#confirm-buttons").hide(); // Hide buttons on cancel
             });
         });
     </script>
