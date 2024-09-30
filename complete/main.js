@@ -44,42 +44,41 @@ document.addEventListener('DOMContentLoaded', () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
-        // Create the AR button and append it to the body
         const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body } });
+        document.body.appendChild(arButton);
         document.body.appendChild(renderer.domElement);
-        document.body.appendChild(arButton);  // Ensure this line exists
 
-        // Define categories and models
         const categories = {
-            'lamp': ['lamp1', 'lamp2', 'lamp3'], // Replace with actual model names
+            'lamp': ['lamp1', 'lamp2', 'lamp3'],
             'table': ['table1', 'table2', 'table3'],
             'sofa': ['sofa1', 'sofa2', 'sofa3']
         };
 
         const itemHeights = {
-           'lamp': 0.4;
-           'table': 0.1;
-           'sofa': 0.1;
+            'lamp': 0.4,
+            'table': 0.1,
+            'sofa': 0.1
         };
 
-        const items = {}; // Object to hold category groups
+        const items = {};
         const placedItems = [];
         const models = {};
 
         const loadModel = async (category, modelName) => {
-            if (!models[category]) {
-                models[category] = {};
-            }
+            try {
+                if (!models[category]) models[category] = {};
 
-            if (!models[category][modelName]) {
-                const model = await loadGLTF(`../assets/models/${category}/${modelName}/scene.gltf`);
-                normalizeModel(model.scene, itemHeights[category]);
-                models[category][modelName] = model.scene;
+                if (!models[category][modelName]) {
+                    const model = await loadGLTF(`../assets/models/${category}/${modelName}/scene.gltf`);
+                    normalizeModel(model.scene, itemHeights[category]);
+                    models[category][modelName] = model.scene;
+                }
+                return models[category][modelName];
+            } catch (error) {
+                console.error(`Error loading model ${modelName} from category ${category}:`, error);
             }
-            return models[category][modelName];
         };
 
-        // Create category groups in scene
         for (const [category, modelNames] of Object.entries(categories)) {
             const group = new THREE.Group();
             group.name = category;
@@ -101,68 +100,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const itemButtons = document.querySelector("#item-buttons");
         const subMenu = document.querySelector("#sub-menu");
         const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.style.display = "block";
-        confirmButtons.style.display = "none";
+        const placeButton = document.querySelector("#place-button");
+        const cancelButton = document.querySelector("#cancel-button");
 
-        const showSubMenu = (category) => {
-            subMenu.innerHTML = ''; // Clear existing items
-            const modelNames = categories[category];
-            modelNames.forEach((modelName) => {
-                const img = document.createElement('img');
-                img.className = 'sub-item';
-                img.src = `../assets/models/${category}/${modelName}/thumbnail.png`; // Update path as needed
-                img.alt = modelName;
-                img.addEventListener('click', async () => {
-                    await select(category, modelName);
-                });
-                subMenu.appendChild(img);
-            });
-            subMenu.style.display = 'block';
-        };
+        const menuItems = document.querySelectorAll(".button-image");
+        menuItems.forEach((button) => {
+            button.addEventListener("click", async (event) => {
+                const category = event.target.dataset.category;
+                const modelName = event.target.dataset.model;
 
-        const select = async (category, modelName) => {
-            const group = items[category];
-            if (!group.children.length || !group.children.find(child => child.name === modelName)) {
                 const model = await loadModel(category, modelName);
-                const modelInstance = model.clone();
-                group.add(modelInstance);
-                modelInstance.name = modelName; // Set name to match modelName
-            }
-            // Hide all categories except the selected one
-            for (const cat in items) {
-                items[cat].visible = cat === category;
-            }
-            selectedItem = group.children.find(child => child.name === modelName);
-            itemButtons.style.display = "none";
-            confirmButtons.style.display = "block";
-            subMenu.style.display = "none";
-        };
+                selectedItem = deepClone(model);
+                setOpacity(selectedItem, 0.5);
 
-        const cancelSelect = () => {
-            itemButtons.style.display = "block";
-            confirmButtons.style.display = "none";
-            subMenu.style.display = "none";
-            if (selectedItem) {
-                selectedItem.visible = false;
-            }
-            selectedItem = null;
-        };
-
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-
-        cancelButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelSelect();
-        });
-
-        Object.keys(categories).forEach((category, i) => {
-            const el = document.querySelector(`#item${i}`);
-            el.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                showSubMenu(category);
+                scene.add(selectedItem);
             });
         });
 
@@ -171,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             if (selectedItem) {
                 const spawnItem = deepClone(selectedItem);
-                setOpacity(spawnItem, 1.0);
+                setOpacity(spawnItem, 1.0);  // Ensure full opacity upon placement
                 scene.add(spawnItem);
                 placedItems.push(spawnItem);
                 currentInteractedItem = spawnItem;
@@ -179,14 +130,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // DRAG: Single-Finger Dragging Implementation
         document.addEventListener('touchmove', (event) => {
             if (selectedItem && event.touches.length === 1) {
                 const touch = event.touches[0];
                 if (lastTouchX !== null && lastTouchY !== null) {
                     const movementX = touch.pageX - lastTouchX;
                     const movementY = touch.pageY - lastTouchY;
-                    selectedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
+                    selectedItem.position.x += movementX * 0.001;
                     selectedItem.position.y -= movementY * 0.001;
                 }
                 lastTouchX = touch.pageX;
@@ -194,12 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // ROTATION: Two-Finger Twist Gesture
         document.addEventListener('touchmove', (event) => {
             if (selectedItem && event.touches.length === 2) {
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
-
                 const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
                 if (lastAngle !== null) {
                     const deltaAngle = currentAngle - lastAngle;
@@ -209,12 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // SCALING: Two-Finger Pinch Gesture
         document.addEventListener('touchmove', (event) => {
             if (selectedItem && event.touches.length === 2) {
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
-
                 const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
                 if (lastDistance !== null) {
                     const scaleFactor = currentDistance / lastDistance;
@@ -224,15 +170,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        document.addEventListener('touchend', () => {
-            lastTouchX = null;
-            lastTouchY = null;
-            lastAngle = null;
-            lastDistance = null;
-        });
+        const cancelSelect = () => {
+            if (selectedItem) {
+                scene.remove(selectedItem);
+                selectedItem = null;
+                lastTouchX = null;
+                lastTouchY = null;
+                lastAngle = null;
+                lastDistance = null;
+            }
+        };
 
         const animate = () => {
-            renderer.setAnimationLoop(animate);
+            renderer.setAnimationLoop(render);
+        };
+
+        const render = (timestamp, frame) => {
             renderer.render(scene, camera);
         };
 
