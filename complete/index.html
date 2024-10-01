@@ -199,7 +199,7 @@
     </div>
 
     <!-- Main Content Area for AR Scene -->
-    <!-- (Your AR content goes here) -->
+    <canvas id="ar-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
 
     <!-- Include JavaScript libraries and your script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -232,49 +232,37 @@
                 selectedModel = $(this).data("model");
 
                 // Highlight the selected sub-item
-                $(".sub-item").removeClass("selected"); // Remove selection from all
-                $(this).addClass("selected"); // Add selection to clicked
+                $(".sub-item").removeClass("selected");
+                $(this).addClass("selected");
 
-                console.log("Selected model: " + selectedModel);
-
-                // Show the Place and Cancel buttons when a model is selected
-                $("#confirm-buttons").css("display", "block");
-                $("#clear-selection").css("display", "block");
+                // Show the confirm buttons
+                $("#confirm-buttons").show();
             });
 
-            // Place button click event
+            // Place button action
             $("#place-button").click(function () {
                 if (selectedModel) {
-                    // Logic to place the model in the AR scene
-                    console.log("Placing model: " + selectedModel);
-                    // Reset selection and hide buttons
-                    selectedModel = null;
-                    $("#confirm-buttons").css("display", "none");
-                    $(".sub-item").removeClass("selected"); // Remove selection highlight
+                    // Implement logic to place the selected model in AR
+                    console.log("Placing model:", selectedModel);
+                    // Your model placement logic here
                 }
             });
 
-            // Cancel button click event
+            // Cancel button action
             $("#cancel-button").click(function () {
-                // Reset selection and hide buttons
+                // Implement logic to cancel the action
+                console.log("Action cancelled.");
                 selectedModel = null;
-                $("#confirm-buttons").css("display", "none");
-                $(".sub-item").removeClass("selected"); // Remove selection highlight
+                $("#confirm-buttons").hide();
+                $(".sub-item").removeClass("selected");
             });
 
-            // Clear selection button click event
+            // Clear Selection button action
             $("#clear-selection").click(function () {
                 selectedModel = null;
-                $("#confirm-buttons").css("display", "none");
-                $(".sub-item").removeClass("selected"); // Remove selection highlight
-            });
-
-            // Close sidebar when clicking outside of it
-            $(document).click(function (event) {
-                if (!$(event.target).closest('.side-bar, .menu-btn').length) {
-                    $(".side-bar").removeClass("active");
-                    $(".menu-btn").css("visibility", "visible");
-                }
+                $("#confirm-buttons").hide();
+                $(".sub-item").removeClass("selected");
+                console.log("Selection cleared.");
             });
         });
     </script>
