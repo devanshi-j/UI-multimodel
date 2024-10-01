@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scene.add(light);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
@@ -60,73 +60,72 @@ document.addEventListener('DOMContentLoaded', () => {
             'sofa': 0.1
         };
 
-        const items = {};
-        const placedItems = [];
-        const models = {};
+        const models = {};  // Store preloaded models
 
         const loadModel = async (category, modelName) => {
             try {
-                if (!models[category]) models[category] = {};
-
-                if (!models[category][modelName]) {
-                    const model = await loadGLTF(`../assets/models/${category}/${modelName}/scene.gltf`);
-                    normalizeModel(model.scene, itemHeights[category]);
-                    models[category][modelName] = model.scene;
-                }
-                return models[category][modelName];
+                const modelPath = `../assets/models/${category}/${modelName}/scene.gltf`;
+                const model = await loadGLTF(modelPath);
+                normalizeModel(model.scene, itemHeights[category]);
+                return model.scene;
             } catch (error) {
                 console.error(`Error loading model ${modelName} from category ${category}:`, error);
             }
         };
 
-        for (const [category, modelNames] of Object.entries(categories)) {
-            const group = new THREE.Group();
-            group.name = category;
-            items[category] = group;
-            scene.add(group);
-        }
+        const preloadModels = async () => {
+            for (const [category, modelNames] of Object.entries(categories)) {
+                models[category] = {};
+                for (const modelName of modelNames) {
+                    const model = await loadModel(category, modelName);
+                    if (model) models[category][modelName] = model;
+                }
+            }
+            console.log("All models preloaded.");
+        };
+
+        await preloadModels();
 
         let selectedItem = null;
         let lastTouchX = null;
         let lastTouchY = null;
         let lastAngle = null;
         let lastDistance = null;
-        let currentInteractedItem = null;
-
-        const raycaster = new THREE.Raycaster();
-        const controller = renderer.xr.getController(0);
-        scene.add(controller);
-
-        const itemButtons = document.querySelector("#item-buttons");
-        const subMenu = document.querySelector("#sub-menu");
-        const confirmButtons = document.querySelector("#confirm-buttons");
-        const placeButton = document.querySelector("#place-button");
-        const cancelButton = document.querySelector("#cancel-button");
 
         const menuItems = document.querySelectorAll(".button-image");
         menuItems.forEach((button) => {
-            button.addEventListener("click", async (event) => {
+            button.addEventListener("click", (event) => {
                 const category = event.target.dataset.category;
                 const modelName = event.target.dataset.model;
 
-                const model = await loadModel(category, modelName);
-                selectedItem = deepClone(model);
-                setOpacity(selectedItem, 0.5);
-
-                scene.add(selectedItem);
+                const model = models[category][modelName];
+                if (model) {
+                    selectedItem = deepClone(model);  // Clone from preloaded models
+                    setOpacity(selectedItem, 0.5);  // Set transparency for preview
+                    scene.add(selectedItem);  // Add selected item to scene
+                }
             });
         });
 
-        placeButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        const placeButton = document.querySelector("#place-button");
+        placeButton.addEventListener('click', () => {
             if (selectedItem) {
-                const spawnItem = deepClone(selectedItem);
-                setOpacity(spawnItem, 1.0);  // Ensure full opacity upon placement
-                scene.add(spawnItem);
-                placedItems.push(spawnItem);
-                currentInteractedItem = spawnItem;
-                cancelSelect();
+                const placedItem = deepClone(selectedItem);  // Clone before placing
+                setOpacity(placedItem, 1.0);  // Set full opacity for placed object
+                scene.add(placedItem);
+                selectedItem = null;  // Reset selected item after placement
+            }
+        });
+
+        const cancelButton = document.querySelector("#cancel-button");
+        cancelButton.addEventListener('click', () => {
+            if (selectedItem) {
+                scene.remove(selectedItem);  // Remove the selected item
+                selectedItem = null;
+                lastTouchX = null;
+                lastTouchY = null;
+                lastAngle = null;
+                lastDistance = null;
             }
         });
 
@@ -170,27 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        document.querySelector("#place-button").style.display = "block";
-        document.querySelector("#cancel-button").style.display = "block";
-
-
-        const cancelSelect = () => {
-            if (selectedItem) {
-                scene.remove(selectedItem);
-                selectedItem = null;
-                lastTouchX = null;
-                lastTouchY = null;
-                lastAngle = null;
-                lastDistance = null;
-            }
-        };
-
         const animate = () => {
-            renderer.setAnimationLoop(render);
-        };
-
-        const render = (timestamp, frame) => {
-            renderer.render(scene, camera);
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
         };
 
         animate();
