@@ -129,6 +129,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        document.addEventListener('click', (event) => {
+            // Calculate mouse position in normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Calculate objects intersecting the picking ray
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+
+                // Select the intersected object
+                if (intersectedObject) {
+                    selectedItem = intersectedObject; // Set the selected item to the intersected object
+                }
+            }
+        });
+
         document.addEventListener('touchmove', (event) => {
             if (selectedItem && event.touches.length === 1) {
                 const touch = event.touches[0];
