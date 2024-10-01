@@ -41,7 +41,6 @@
             background-color: #444;
             justify-content: space-between;
         }
-       
         .side-bar .menu {
             margin-top: 20px;
         }
@@ -93,7 +92,7 @@
             z-index: 2;
         }
 
-        #place-button, #cancel-button {
+        #place-button, #cancel-button, #clear-selection {
             padding: 10px 20px;
             font-size: 16px;
             margin: 10px;
@@ -110,6 +109,15 @@
         #cancel-button {
             background-color: #dc3545;
         }
+
+        #clear-selection {
+            background-color: #ffc107; /* Yellow for clear selection */
+        }
+
+        .sub-item.selected {
+            background-color: rgba(255, 255, 0, 0.3); /* Yellow highlight */
+            border-radius: 5px; /* Slightly rounded corners */
+        }
     </style>
 </head>
 <body>
@@ -124,7 +132,6 @@
             <div class="close-btn">
                 <i class="fas fa-times"></i>
             </div>
-         
         </header>
         <div class="menu">
             <!-- Category Items -->
@@ -184,10 +191,11 @@
         </div>
     </div>
 
-    <!-- Place and Cancel buttons -->
+    <!-- Place, Cancel, and Clear Selection buttons -->
     <div id="confirm-buttons">
         <button id="place-button">Place</button>
         <button id="cancel-button">Cancel</button>
+        <button id="clear-selection" style="display: none;">Clear Selection</button>
     </div>
 
     <!-- Main Content Area for AR Scene -->
@@ -222,27 +230,51 @@
             $(".sub-item").click(function (e) {
                 e.preventDefault();
                 selectedModel = $(this).data("model");
+
+                // Highlight the selected sub-item
+                $(".sub-item").removeClass("selected"); // Remove selection from all
+                $(this).addClass("selected"); // Add selection to clicked
+
                 console.log("Selected model: " + selectedModel);
 
                 // Show the Place and Cancel buttons when a model is selected
                 $("#confirm-buttons").css("display", "block");
+                $("#clear-selection").css("display", "block");
             });
 
-            // Handle Place button click
+            // Place button click event
             $("#place-button").click(function () {
                 if (selectedModel) {
+                    // Logic to place the model in the AR scene
                     console.log("Placing model: " + selectedModel);
-                    // Place the selected model in the AR scene
-                    // (Add your model placement code here)
+                    // Reset selection and hide buttons
+                    selectedModel = null;
+                    $("#confirm-buttons").css("display", "none");
+                    $(".sub-item").removeClass("selected"); // Remove selection highlight
                 }
-                $("#confirm-buttons").hide(); // Hide buttons after placement
             });
 
-            // Handle Cancel button click
+            // Cancel button click event
             $("#cancel-button").click(function () {
-                console.log("Cancelled model selection");
-                selectedModel = null; // Reset selected model
-                $("#confirm-buttons").hide(); // Hide buttons on cancel
+                // Reset selection and hide buttons
+                selectedModel = null;
+                $("#confirm-buttons").css("display", "none");
+                $(".sub-item").removeClass("selected"); // Remove selection highlight
+            });
+
+            // Clear selection button click event
+            $("#clear-selection").click(function () {
+                selectedModel = null;
+                $("#confirm-buttons").css("display", "none");
+                $(".sub-item").removeClass("selected"); // Remove selection highlight
+            });
+
+            // Close sidebar when clicking outside of it
+            $(document).click(function (event) {
+                if (!$(event.target).closest('.side-bar, .menu-btn').length) {
+                    $(".side-bar").removeClass("active");
+                    $(".menu-btn").css("visibility", "visible");
+                }
             });
         });
     </script>
