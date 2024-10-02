@@ -1,283 +1,44 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Multiple Model AR Setup</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .menu-btn {
-            position: fixed;
-            top: 30px;
-            left: 30px;
-            cursor: pointer;
-            z-index: 2;
-        }
-        .side-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 85px;
-            height: 100%;
-            background-color: #333;
-            color: #fff;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1;
-            overflow-y: auto;
-        }
-        .side-bar.active {
-            transform: translateX(0);
-        }
-        .side-bar header {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: #444;
-            justify-content: space-between;
-        }
-        .side-bar .menu {
-            margin-top: 20px;
-        }
-        .side-bar .item {
-            margin: 10px 0;
-        }
-        .side-bar .sub-btn {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            color: #fff;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .side-bar .sub-btn .model-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .side-bar .sub-menu {
-            display: none;
-            padding-left: 20px;
-        }
-        .side-bar .sub-menu .sub-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            color: #fff;
-            text-decoration: none;
-        }
-        .side-bar .sub-menu .sub-item .model-image {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .side-bar .close-btn {
-            cursor: pointer;
-        }
-
-        /* Styles for Place and Cancel buttons */
-        #confirm-buttons {
-            display: none;
-            position: fixed;
-            bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2;
-        }
-
-        #place-button, #cancel-button, #clear-selection {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-        }
-
-        #place-button {
-            background-color: #28a745;
-        }
-
-        #cancel-button {
-            background-color: #dc3545;
-        }
-
-        #clear-selection {
-            background-color: #ffc107; /* Yellow for clear selection */
-        }
-
-        .sub-item.selected {
-            background-color: rgba(255, 255, 0, 0.3); /* Yellow highlight */
-            border-radius: 5px; /* Slightly rounded corners */
-        }
-    </style>
+  <title>AR Furniture Placement</title>
+  <link rel="stylesheet" href="../complete/styles.css">
 </head>
 <body>
-    <!-- Menu Button to Toggle Sidebar -->
-    <div class="menu-btn">
-        <i class="fas fa-bars"></i>
-    </div>
+  <div id="sidebar">
+    <h2>Furniture Categories</h2>
+    <ul>
+      <li class="category">
+        <img src="images/seating.png" alt="Seating">
+        <ul class="submenu">
+          <li><img src="images/sofa1.png" alt="Sofa 1"></li>
+          <li><img src="images/sofa2.png" alt="Sofa 2"></li>
+          <li><img src="images/sofa3.png" alt="Sofa 3"></li>
+        </ul>
+      </li>
+      <li class="category">
+        <img src="images/decor.png" alt="Decor">
+        <ul class="submenu">
+          <li><img src="images/lamp1.png" alt="Lamp 1"></li>
+          <li><img src="images/lamp2.png" alt="Lamp 2"></li>
+          <li><img src="images/lamp3.png" alt="Lamp 3"></li>
+        </ul>
+      </li>
+      <li class="category">
+        <img src="images/flooring.png" alt="Flooring">
+        <ul class="submenu">
+          <li><img src="images/table1.png" alt="Table 1"></li>
+          <li><img src="images/table2.png" alt="Table 2"></li>
+          <li><img src="images/table3.png" alt="Table 3"></li>
+        </ul>
+      </li>
+    </ul>
+    <button id="placeButton">Place</button>
+    <button id="cancelButton">Cancel</button>
+  </div>
 
-    <!-- Sidebar for Categories and Models -->
-    <div class="side-bar">
-        <header>
-            <div class="close-btn">
-                <i class="fas fa-times"></i>
-            </div>
-        </header>
-        <div class="menu">
-            <!-- Category Items -->
-            <div class="item">
-                <a class="sub-btn" id="item0">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu0">
-                    <a href="#" class="sub-item" data-model="lamp1">
-                        <img class="model-image" src="../assets/models/lamp/lamp1/thumbnail.png" alt="Model 1">
-                    </a>
-                    <a href="#" class="sub-item" data-model="lamp2">
-                        <img class="model-image" src="../assets/models/lamp/lamp2/thumbnail.png" alt="Model 2"> 
-                    </a>
-                    <a href="#" class="sub-item" data-model="lamp3">
-                        <img class="model-image" src="../assets/models/lamp/lamp3/thumbnail.png" alt="Model 3"> 
-                    </a>
-                </div>
-            </div>
+  <div id="ar-scene"></div>
 
-            <div class="item">
-                <a class="sub-btn" id="item1">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu1">
-                    <a href="#" class="sub-item" data-model="table1">
-                        <img class="model-image" src="../assets/models/table/table1/thumbnail.png" alt="Table 1">
-                    </a>
-                    <a href="#" class="sub-item" data-model="table2">
-                        <img class="model-image" src="../assets/models/table/table2/thumbnail.png" alt="Table 2"> 
-                    </a>
-                    <a href="#" class="sub-item" data-model="table3">
-                        <img class="model-image" src="../assets/models/table/table3/thumbnail.png" alt="Table 3"> 
-                    </a>
-                </div>
-            </div>
-
-            <div class="item">
-                <a class="sub-btn" id="item2">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu2">
-                    <a href="#" class="sub-item" data-model="sofa1">
-                        <img class="model-image" src="../assets/models/sofa/sofa1/thumbnail.png" alt="Sofa 1">
-                    </a>
-                    <a href="#" class="sub-item" data-model="sofa2">
-                        <img class="model-image" src="../assets/models/sofa/sofa2/thumbnail.png" alt="Sofa 2"> 
-                    </a>
-                    <a href="#" class="sub-item" data-model="sofa3">
-                        <img class="model-image" src="../assets/models/sofa/sofa3/thumbnail.png" alt="Sofa 3"> 
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Place, Cancel, and Clear Selection buttons -->
-    <div id="confirm-buttons">
-        <button id="place-button">Place</button>
-        <button id="cancel-button">Cancel</button>
-        <button id="clear-selection" style="display: none;">Clear Selection</button>
-    </div>
-
-    <!-- Main Content Area for AR Scene -->
-    <div id="ar-scene">
-        <!-- Your AR content goes here -->
-    </div>
-
-    <!-- Include JavaScript libraries and your script -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script type="module" src="../complete/main.js"></script>
-
-    <script type="text/javascript">
-        $(document).ready(function () {
-            let selectedModel = null;
-
-            // jQuery for toggle sub-menus
-            $(".sub-btn").click(function () {
-                $(this).next(".sub-menu").slideToggle();
-                $(this).find(".dropdown").toggleClass("rotate");
-            });
-
-            // jQuery for expand and collapse the sidebar
-            $(".menu-btn").click(function () {
-                $(".side-bar").addClass("active");
-                $(".menu-btn").css("visibility", "hidden");
-            });
-
-            $(".close-btn").click(function () {
-                $(".side-bar").removeClass("active");
-                $(".menu-btn").css("visibility", "visible");
-            });
-
-            // Handle sub-item click to select model
-            $(".sub-item").click(function (e) {
-                e.preventDefault();
-                selectedModel = $(this).data("model");
-
-                // Highlight the selected sub-item
-                $(".sub-item").removeClass("selected"); // Remove selection from all
-                $(this).addClass("selected"); // Add selection to the clicked item
-
-                // Show the buttons when a model is selected
-                $("#confirm-buttons").show();
-                $("#clear-selection").show(); // Show the clear selection button
-            });
-
-            // Place button action
-            $("#place-button").click(function () {
-                alert("Place button clicked!"); // Temporary alert for debugging
-                if (selectedModel) {
-                    console.log("Placing model:", selectedModel);
-                    loadModel(selectedModel); // Call your model loading function here
-                } else {
-                    console.log("No model selected.");
-                }
-            });
-
-            // Cancel button action
-            $("#cancel-button").click(function () {
-                selectedModel = null; // Clear selection
-                $("#confirm-buttons").hide(); // Hide buttons
-                $(".sub-item").removeClass("selected"); // Remove selection highlight
-                console.log("Selection canceled.");
-            });
-
-            // Clear selection button action
-            $("#clear-selection").click(function () {
-                selectedModel = null; // Clear selection
-                $("#confirm-buttons").hide(); // Hide buttons
-                $(".sub-item").removeClass("selected"); // Remove selection highlight
-                console.log("Selection cleared.");
-            });
-
-            // Function to load model into AR scene
-            function loadModel(modelName) {
-                console.log(`Loading model: ${modelName}`);
-                // Implement your model loading logic here
-                // For instance:
-                // arScene.add(model); // Add the model to the AR scene
-                alert(`Model ${modelName} has been placed in the AR scene!`); // Debugging alert
-            }
-        });
-    </script>
+  <script type= "module" src="../complete/main.js"></script>
 </body>
 </html>
