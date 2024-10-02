@@ -1,128 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Model Viewer</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
-        }
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sidebar menu With Sub-menus | Using HTML, CSS & JQuery</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../complete/style.css" />
+  </head>
+  <body>
+      <div class="menu-btn">
+          <i class="fas fa-bars"></i>
+      </div>
 
-        #sidebar {
-            width: 200px;
-            background: #333;
-            color: white;
-            padding: 20px;
-        }
+      <div class="side-bar">
+          <header>
+              <div class="close-btn">
+                  <i class="fas fa-times"></i>
+              </div>
 
-        .menu-item {
-            cursor: pointer;
-            padding: 10px;
-            background: #444;
-            margin: 5px 0;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
+              <h1>Categories</h1>
+          </header>
+          <div class="menu">
+              <div class="item0">
+                  <a class="sub-btn">
+                      <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="">
+                      <i class="fas fa-angle-right dropdown"></i>
+                  </a>
+                  <div class="sub-menu0">
 
-        .menu-item:hover {
-            background: #555;
-        }
+                      <a href="#" class="sub-item"> <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3</a>
+                  </div>
+              </div>
+              <div class="item1">
+                  <a class="sub-btn">
+                      <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="">
+                      <i class="fas fa-angle-right dropdown"></i>
+                  </a>
+                  <div class="sub-menu1">
 
-        .submenu {
-            display: none; /* Initially hide the submenus */
-            margin-left: 10px;
-        }
+                      <a href="#" class="sub-item"> <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3</a>
+                  </div>
+              </div>
+              <div class="item2">
+                  <a class="sub-btn">
+                      <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="">
+                      <i class="fas fa-angle-right dropdown"></i>
+                  </a>
+                  <div class="sub-menu2">
 
-        .button-image {
-            cursor: pointer;
-            padding: 8px;
-            background: #555;
-            margin: 5px 0;
-            border-radius: 3px;
-            transition: background 0.3s;
-        }
+                      <a href="#" class="sub-item"> <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 1</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 2</a>
+                      <a href="#" class="sub-item"><img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt=""> Model 3</a>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <section class="main">
+          <h1 style="color: black;">Models Preview</h1>
+      </section>
 
-        .button-image:hover {
-            background: #666;
-        }
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+              charset="utf-8"></script>
 
-        #controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-        }
+      <script src="../complete/main.js" type="module"></script>
+      
+      
+      <script type="text/javascript">
+          $(document).ready(function () {
+              //jquery for toggle sub menus
+              $(".sub-btn").click(function () {
+                  $(this).next(".sub-menu").slideToggle();
+                  $(this).find(".dropdown").toggleClass("rotate");
+              });
 
-        button {
-            margin: 5px;
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-            background: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
+              //jquery for expand and collapse the sidebar
+              $(".menu-btn").click(function () {
+                  $(".side-bar").addClass("active");
+                  $(".menu-btn").css("visibility", "hidden");
+              });
 
-        button:hover {
-            background: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div id="sidebar">
-        <h2>Menu</h2>
-        <div class="menu-item" data-category="lamp">Lamps</div>
-        <div class="submenu" id="lamp-submenu">
-            <div class="button-image" data-model="lamp1">Lamp 1</div>
-            <div class="button-image" data-model="lamp2">Lamp 2</div>
-            <div class="button-image" data-model="lamp3">Lamp 3</div>
-        </div>
-        <div class="menu-item" data-category="table">Tables</div>
-        <div class="submenu" id="table-submenu">
-            <div class="button-image" data-model="table1">Table 1</div>
-            <div class="button-image" data-model="table2">Table 2</div>
-            <div class="button-image" data-model="table3">Table 3</div>
-        </div>
-        <div class="menu-item" data-category="sofa">Sofas</div>
-        <div class="submenu" id="sofa-submenu">
-            <div class="button-image" data-model="sofa1">Sofa 1</div>
-            <div class="button-image" data-model="sofa2">Sofa 2</div>
-            <div class="button-image" data-model="sofa3">Sofa 3</div>
-        </div>
-    </div>
-    
-    <div id="controls">
-        <button id="place-button" style="display: none;">Place</button>
-        <button id="cancel-button" style="display: none;">Cancel</button>
-    </div>
-
-   
-    <script type="module" src="../complete/main.js"></script>
-    <script>
-        // Function to initialize menu item toggling
-        document.querySelectorAll(".menu-item").forEach(item => {
-            item.addEventListener("click", function() {
-                // Toggle the corresponding submenu
-                const submenu = document.getElementById(`${item.dataset.category}-submenu`);
-                submenu.style.display = submenu.style.display === "none" || submenu.style.display === "" ? "block" : "none";
-            });
-        });
-
-        // Function to show buttons when a model is selected
-        document.querySelectorAll(".button-image").forEach(button => {
-            button.addEventListener("click", function() {
-                // Show place and cancel buttons when a model is selected
-                document.getElementById("place-button").style.display = "block";
-                document.getElementById("cancel-button").style.display = "block";
-            });
-        });
-
-        // Additional JavaScript for AR functionality will go here
-        // (Load models, handle placement, etc.)
-    </script>
-</body>
+              $(".close-btn").click(function () {
+                  $(".side-bar").removeClass("active");
+                  $(".menu-btn").css("visibility", "visible");
+              });
+          });
+      </script>
+  </body>
 </html>
