@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const itemHeights = {
-      sofa: 0.1,
-      lamp: 0.3,
-      table: 0.2,
+     seating:0.1,
+      decor:0.3,
+      flooring:0.2,
     };
 
     const items = [];
@@ -77,147 +77,131 @@ document.addEventListener('DOMContentLoaded', () => {
       return model.scene;
     };
 
-    Object.entries(furnitureCategories).forEach(([category, itemNames]) => {
-      itemNames.forEach((name) => {
+    // Get all submenu images
+    const submenuImages = document.querySelectorAll('.submenu img');
+
+    // Add event listeners to submenu images
+    submenuImages.forEach((image) => {
+      image.addEventListener('click', async (event) => {
+        const itemName = event.target.alt.toLowerCase().replace(' ', '');
         const item = new THREE.Group();
-        item.name = name;
+        item.name = itemName;
         items.push(item);
         scene.add(item);
+
+        const model = await loadModel(itemName);
+        item.add(model);
+
+        // Update buttons based on category
+        if (itemName.includes('sofa') || itemName.includes('lamp')) {
+          // Show specific buttons for seating and lighting categories (optional)
+        } else {
+          const itemButtons = document.querySelector("#item-buttons");
+          const confirmButtons = document.querySelector("#confirm-buttons");
+          itemButtons.style.display = "none";
+          confirmButtons.style.display = "block";
+        }
+
+        let selectedItem = item;
+
+        const placeButton = document.querySelector("#placeButton");
+        const cancelButton = document.querySelector("#cancelButton");
+
+        cancelButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const itemButtons = document.querySelector("#item-buttons");
+          const confirmButtons = document.querySelector("#confirm-buttons");
+          itemButtons.style.display = "block";
+          confirmButtons.style.display = "none";
+          if (selectedItem) {
+            selectedItem.visible = false;
+          }
+          selectedItem = null;
+        });
+
+        placeButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (selectedItem) {
+            const spawnItem = deepClone(selectedItem);
+            setOpacity(spawnItem, 1.0);
+            scene.add(spawnItem);
+            placedItems.push(spawnItem);
+            let currentInteractedItem = spawnItem;
+            const itemButtons = document.querySelector("#item-buttons");
+            const confirmButtons = document.querySelector("#confirm-buttons");
+            itemButtons.style.display = "block";
+            confirmButtons.style.display = "none";
+            selectedItem = null;
+          }
+        });
+
+        // DRAG: Single-Finger Dragging Implementation
+        document.addEventListener('touchmove', (event) => {
+          if (selectedItem && event.touches.length === 1) {
+            const touch = event.touches[0];
+            if (lastTouchX !== null && lastTouchY !== null) {
+              const movementX = touch.pageX - lastTouchX;
+              const movementY = touch.pageY - lastTouchY;
+              selectedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
+              selectedItem.position.y -= movementY * 0.001;
+            }
+            lastTouchX = touch.pageX;
+            lastTouchY = touch.pageY;
+          }
+        });
+
+        // ROTATION: Two-Finger Twist Gesture
+        document.addEventListener('touchmove', (event) => {
+          if (selectedItem && event.touches.length === 2) {
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
+            if (lastAngle !== null) {
+              const deltaAngle = currentAngle - lastAngle;
+              selectedItem.rotation.y += deltaAngle;
+            }
+            lastAngle = currentAngle;
+          }
+        });
+
+        // SCALING: Two-Finger Pinch Gesture
+        document.addEventListener('touchmove', (event) => {
+          if (selectedItem && event.touches.length === 2) {
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+            if (lastDistance !== null) {
+              const scaleFactor = currentDistance / lastDistance;
+              selectedItem.scale.multiplyScalar(scaleFactor);
+            }
+            lastDistance = currentDistance;
+          }
+        });
+
+        document.addEventListener('touchend', () => {
+          lastTouchX = null;
+          lastTouchY = null;
+          lastAngle = null;
+          lastDistance = null;
+        });
+
+        const animate = () => {
+          renderer.setAnimationLoop(animate);
+          renderer.render(scene, camera);
+        };
+
+        animate();
       });
     });
 
-    let selectedItem = null;
     let lastTouchX = null;
     let lastTouchY = null;
     let lastAngle = null;
     let lastDistance = null;
-    let currentInteractedItem = null;
-
-    const raycaster = new THREE.Raycaster();
-    const controller = renderer.xr.getController(0);
-    scene.add(controller);
-
-    const itemButtons = document.querySelector("#item-buttons");
-    const confirmButtons = document.querySelector("#confirm-buttons");
-    itemButtons.style.display = "block";
-    confirmButtons.style.display = "none";
-
-    const select = async (selectItem) => {
-      if (!selectItem.children.length) {
-        const category = Object.keys(furnitureCategories).find(key => furnitureCategories[key].includes(selectItem.name));
-        const model = await loadModel(selectItem.name, itemHeights[itemNames.indexOf(selectItem.name)]);
-        selectItem.add(model);
-      }
-
-      // Update buttons based on category
-      if (category === 'seating' || category === 'lighting') {
-        // Show specific buttons for seating and lighting categories (optional)
-      } else {
-        itemButtons.style.display = "none";
-        confirmButtons.style.display = "block";
-      }
-
-      selectedItem = selectItem;
-    };
-
-    const cancelSelect = () => {
-      itemButtons.style.display = "block";
-      confirmButtons.style.display = "none";
-      if (selectedItem) {
-        selectedItem.visible = false;
-      }
-      selectedItem = null;
-    };
-
-    const placeButton = document.querySelector("#place");
-    const cancelButton = document.querySelector("#cancel");
-
-    cancelButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      cancelSelect();
-    });
-
-    items.forEach((item, i) => {
-      const el = document.querySelector(`#item${i}`);
-      el.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        await select(item);
-      });
-    });
-
-    placeButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (selectedItem) {
-        const spawnItem = deepClone(selectedItem);
-        setOpacity(spawnItem, 1.0);
-        scene.add(spawnItem);
-        placedItems.push(spawnItem);
-        currentInteractedItem = spawnItem;
-        cancelSelect();
-      }
-    });
-
-    // DRAG: Single-Finger Dragging Implementation
-    document.addEventListener('touchmove', (event) => {
-      if (selectedItem && event.touches.length === 1) {
-        const touch = event.touches[0];
-        if (lastTouchX !== null && lastTouchY !== null) {
-          const movementX = touch.pageX - lastTouchX;
-          const movementY = touch.pageY - lastTouchY;
-          selectedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
-          selectedItem.position.y -= movementY * 0.001;
-        }
-        lastTouchX = touch.pageX;
-        lastTouchY = touch.pageY;
-      }
-    });
-
-    // ROTATION: Two-Finger Twist Gesture
-    document.addEventListener('touchmove', (event) => {
-      if (selectedItem && event.touches.length === 2) {
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-
-        const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
-        if (lastAngle !== null) {
-          const deltaAngle = currentAngle - lastAngle;
-          selectedItem.rotation.y += deltaAngle;
-        }
-        lastAngle = currentAngle;
-      }
-    });
-
-    // SCALING: Two-Finger Pinch Gesture
-    document.addEventListener('touchmove', (event) => {
-      if (selectedItem && event.touches.length === 2) {
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-
-        const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-        if (lastDistance !== null) {
-          const scaleFactor = currentDistance / lastDistance;
-          selectedItem.scale.multiplyScalar(scaleFactor);
-        }
-        lastDistance = currentDistance;
-      }
-    });
-
-    document.addEventListener('touchend', () => {
-      lastTouchX = null;
-      lastTouchY = null;
-      lastAngle = null;
-      lastDistance = null;
-    });
-
-    const animate = () => {
-      renderer.setAnimationLoop(animate);
-      renderer.render(scene, camera);
-    };
-
-    animate();
   };
 
   initialize();
