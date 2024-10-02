@@ -49,15 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(arButton);
 
     const furnitureCategories = {
-      seating: ['sofa1', 'sofa2', 'sofa3'],
-      decor: ['lamp1', 'lamp2', 'lamp3'],
-      flooring: ['table1', 'table2', 'table3'],
+      sofa: ['sofa1', 'sofa2', 'sofa3'],
+      lamp: ['lamp1', 'lamp2', 'lamp3'],
+      table: ['table1', 'table2', 'table3'],
     };
 
     const itemHeights = {
-     seating:0.1,
-      decor:0.3,
-      flooring:0.2,
+    lamp:0.3,
+    sofa:0.1,
+    table:0.2,
     };
 
     const items = [];
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.add(model);
 
         // Update buttons based on category
-        if (itemName.includes('sofa') || itemName.includes('lamp')) {
+        if (itemName.includes('sofa') || itemName.includes('lamp') || itemName.includes('table')) {
           // Show specific buttons for seating and lighting categories (optional)
         } else {
           const itemButtons = document.querySelector("#item-buttons");
