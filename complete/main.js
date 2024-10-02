@@ -48,26 +48,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
-        const itemNames = ['Chair', 'light', 'plant', 'rug'];
-        const itemHeights = [0.3, 0.3, 0.3, 0.3];
+        const categories = {
+            "lamps": ["lamp1", "lamp2", "lamp3"],
+            "tables": ["table1", "table2", "table3"],
+            "sofas": ["sofa1", "sofa2", "sofa3"]
+        };
+        const itemHeights = {
+            "lamps": 0.3, 
+            "tables": 0.5, 
+            "sofas": 0.4
+        };
         const items = [];
         const placedItems = [];
         const models = {};
 
         const loadModel = async (itemName, itemHeight) => {
             if (!models[itemName]) {
-                const model = await loadGLTF(`../assets/models/${itemName}/scene.gltf`);
+                const model = await loadGLTF(`../assets/models/${categoryName}/${itemName}/scene.gltf`);
                 normalizeModel(model.scene, itemHeight);
                 models[itemName] = model.scene;
             }
             return models[itemName];
         };
 
-        itemNames.forEach((name, i) => {
-            const item = new THREE.Group();
-            item.name = name;
-            items.push(item);
-            scene.add(item);
+        Object.keys(categories).forEach(category => {
+            categories[category].forEach((name) => {
+                const item = new THREE.Group();
+                item.name = name;
+                items.push(item);
+                scene.add(item);
+            });
         });
 
         let selectedItem = null;
@@ -75,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let lastTouchY = null;
         let lastAngle = null;
         let lastDistance = null;
-        let currentInteractedItem = null;
 
         const raycaster = new THREE.Raycaster();
         const controller = renderer.xr.getController(0);
@@ -88,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const select = async (selectItem) => {
             if (!selectItem.children.length) {
-                const model = await loadModel(selectItem.name, itemHeights[itemNames.indexOf(selectItem.name)]);
+                const model = await loadModel(selectItem.name, itemHeights[selectItem.name]);
                 selectItem.add(model);
             }
             items.forEach((item) => {
@@ -118,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         items.forEach((item, i) => {
-            const el = document.querySelector(`#item${i}`);
+            const el = document.querySelector(`#${item.name}`);
             el.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -134,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setOpacity(spawnItem, 1.0);
                 scene.add(spawnItem);
                 placedItems.push(spawnItem);
-                currentInteractedItem = spawnItem;
                 cancelSelect();
             }
         });
