@@ -2,6 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from '../libs/three123/three.module.js';
 import { ARButton } from '../libs/jsm/ARButton.js';
 
+// Utility functions for model normalization and opacity
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
+        // Categories and associated models
         const categories = {
             "lamps": ["lamp1", "lamp2", "lamp3"],
             "tables": ["table1", "table2", "table3"],
@@ -62,15 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const placedItems = [];
         const models = {};
 
-        const loadModel = async (itemName, itemHeight) => {
+        const loadModel = async (category, itemName, itemHeight) => {
             if (!models[itemName]) {
-                const model = await loadGLTF(`../assets/models/${categoryName}/${itemName}/scene.gltf`);
+                const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
                 normalizeModel(model.scene, itemHeight);
                 models[itemName] = model.scene;
             }
             return models[itemName];
         };
 
+        // Create placeholders for all items in each category
         Object.keys(categories).forEach(category => {
             categories[category].forEach((name) => {
                 const item = new THREE.Group();
@@ -95,9 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
         itemButtons.style.display = "block";
         confirmButtons.style.display = "none";
 
-        const select = async (selectItem) => {
+        // Function to select an item
+        const select = async (selectItem, category) => {
             if (!selectItem.children.length) {
-                const model = await loadModel(selectItem.name, itemHeights[selectItem.name]);
+                const model = await loadModel(category, selectItem.name, itemHeights[category]);
                 selectItem.add(model);
             }
             items.forEach((item) => {
@@ -108,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmButtons.style.display = "block";
         };
 
+        // Cancel selection
         const cancelSelect = () => {
             itemButtons.style.display = "block";
             confirmButtons.style.display = "none";
@@ -120,21 +125,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
+        // Cancel button listener
         cancelButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             cancelSelect();
         });
 
-        items.forEach((item, i) => {
-            const el = document.querySelector(`#${item.name}`);
-            el.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                await select(item);
+        // Handle item selection by category
+        Object.keys(categories).forEach((category) => {
+            categories[category].forEach((name) => {
+                const el = document.querySelector(`#${name}`);
+                el.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await select(items.find(item => item.name === name), category);
+                });
             });
         });
 
+        // Place the item
         placeButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -147,57 +157,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // DRAG: Single-Finger Dragging Implementation
+        // Implement drag, rotate, and scale gestures for selected item
         document.addEventListener('touchmove', (event) => {
-            if (selectedItem && event.touches.length === 1) {
-                const touch = event.touches[0];
-                if (lastTouchX !== null && lastTouchY !== null) {
-                    const movementX = touch.pageX - lastTouchX;
-                    const movementY = touch.pageY - lastTouchY;
-                    selectedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
-                    selectedItem.position.y -= movementY * 0.001;
-                }
-                lastTouchX = touch.pageX;
-                lastTouchY = touch.pageY;
-            }
-        });
-
-        // ROTATION: Two-Finger Twist Gesture
-        document.addEventListener('touchmove', (event) => {
-            if (selectedItem && event.touches.length === 2) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-
-                const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
-                if (lastAngle !== null) {
-                    const deltaAngle = currentAngle - lastAngle;
-                    selectedItem.rotation.y += deltaAngle;
-                }
-                lastAngle = currentAngle;
-            }
-        });
-
-        // SCALING: Two-Finger Pinch Gesture
-        document.addEventListener('touchmove', (event) => {
-            if (selectedItem && event.touches.length === 2) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-
-                const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-                if (lastDistance !== null) {
-                    const scaleFactor = currentDistance / lastDistance;
-                    selectedItem.scale.multiplyScalar(scaleFactor);
-                }
-                lastDistance = currentDistance;
+            if (selectedItem) {
+                handleGesture(event, selectedItem);
             }
         });
 
         document.addEventListener('touchend', () => {
+            resetTouchValues();
+        });
+
+        const handleGesture = (event, obj) => {
+            if (event.touches.length === 1) {
+                dragItem(event.touches[0], obj);
+            } else if (event.touches.length === 2) {
+                rotateAndScale(event.touches, obj);
+            }
+        };
+
+        const dragItem = (touch, obj) => {
+            if (lastTouchX !== null && lastTouchY !== null) {
+                const movementX = touch.pageX - lastTouchX;
+                const movementY = touch.pageY - lastTouchY;
+                obj.position.x += movementX * 0.001;
+                obj.position.y -= movementY * 0.001;
+            }
+            lastTouchX = touch.pageX;
+            lastTouchY = touch.pageY;
+        };
+
+        const rotateAndScale = (touches, obj) => {
+            const touch1 = touches[0];
+            const touch2 = touches[1];
+
+            const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
+            if (lastAngle !== null) {
+                const deltaAngle = currentAngle - lastAngle;
+                obj.rotation.y += deltaAngle;
+            }
+            lastAngle = currentAngle;
+
+            const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+            if (lastDistance !== null) {
+                const scaleFactor = currentDistance / lastDistance;
+                obj.scale.multiplyScalar(scaleFactor);
+            }
+            lastDistance = currentDistance;
+        };
+
+        const resetTouchValues = () => {
             lastTouchX = null;
             lastTouchY = null;
             lastAngle = null;
             lastDistance = null;
-        });
+        };
 
         const animate = () => {
             renderer.setAnimationLoop(animate);
