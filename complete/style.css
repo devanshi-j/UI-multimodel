@@ -26,7 +26,7 @@ body {
     width: 60px; /* Adjusted width */
     height: 100%;
     background: #f0f0f0;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
     transition: left 0.3s ease; /* Smooth transition */
     z-index: 999;
 }
@@ -55,7 +55,6 @@ body {
     display: none;
 }
 
-
 .close-btn {
     text-align: right;
     padding: 10px;
@@ -72,26 +71,10 @@ body {
 }
 
 .sub-menu {
-    display: none; /* Initially hide sub-menu */
-}
-
-.sub-item {
-    display: block;
-    margin: 10px 0;
-}
-
-.category-image {
-    width: 30%;
-    height: auto;
-}
-
-/* Sub-menu Styles */
-.sub-menu {
     display: none; /* Initially hidden */
     padding-left: 10px; /* Indent sub-menu items */
 }
 
-/* Sub-item Styles */
 .sub-item {
     display: flex;
     align-items: center;
@@ -107,19 +90,15 @@ body {
     margin-right: 10px; /* Space between image and text */
 }
 
-/* Confirm Buttons Styles */
-
-
 /* Button Hover Effect */
 #place:hover, #cancel:hover {
     background-color: #0056b3; /* Darker blue on hover */
 }
 
-/*/* Sidebar Visibility 
+/* Sidebar Visibility */
 .sidebar-open .side-bar {
-    left: 0; /* Show sidebar when active 
-}*/
-
+    left: 0; /* Show sidebar when active */
+} 
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
     .side-bar {
