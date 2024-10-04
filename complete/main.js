@@ -100,8 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemButtons = document.querySelector("#item-buttons");
         const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.style.display = "block";
-        confirmButtons.style.display = "none";
+        
+        // Hide the Place and Cancel buttons initially
+        itemButtons.style.display = "none";
 
         const select = async (selectItem) => {
             const model = await loadModel(selectItem.name, selectItem.category);
@@ -110,13 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.visible = item === selectItem;
             });
             selectedItem = selectItem;
-            itemButtons.style.display = "none";
-            confirmButtons.style.display = "block";
+
+            // Show Place and Cancel buttons when a model is selected
+            itemButtons.style.display = "block";
         };
 
         const cancelSelect = () => {
-            itemButtons.style.display = "block";
-            confirmButtons.style.display = "none";
+            // Hide Place and Cancel buttons when cancel is clicked
+            itemButtons.style.display = "none";
             if (selectedItem) {
                 selectedItem.visible = false;
             }
@@ -159,7 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 scene.add(spawnItem);
                 placedItems.push(spawnItem);
                 currentInteractedItem = spawnItem;
-                cancelSelect();
+
+                // Hide the Place and Cancel buttons after placing the item
+                itemButtons.style.display = "none";
+                selectedItem = null;
             }
         });
 
