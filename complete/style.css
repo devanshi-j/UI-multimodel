@@ -1,54 +1,131 @@
-#sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 200px;
-  height: 100%;
-  background-color: #f0f0f0;
-  padding: 20px;
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-h2 {
-  margin-bottom: 10px;
+/* Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
+/* Menu Button Styles */
+.menu-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 30px;
 }
 
-li {
-  margin-bottom: 5px;
+/* Sidebar Styles */
+.side-bar {
+    position: fixed;
+    left: -250px; /* Initially hidden */
+    top: 0;
+    height: 100%;
+    width: 250px;
+    background-color: #fff;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    transition: left 0.3s ease;
+    z-index: 999;
 }
 
-li.category {
-  cursor: pointer;
+/* Close Button Styles */
+.close-btn {
+    text-align: right;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 30px;
 }
 
-li.category img {
-  width: 100%;
-  height: auto;
+/* Menu Styles */
+.menu {
+    padding: 20px;
 }
 
-.submenu {
-  display: none;
+/* Category Item Styles */
+.item {
+    margin-bottom: 20px;
 }
 
-.submenu.active {
-  display: block;
+/* Category Button Styles */
+.sub-btn {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
-#placeButton, #cancelButton {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  cursor: pointer;
+/* Category Image Styles */
+.category-image {
+    width: 100%; /* Adjust as needed */
+    height: auto; /* Maintain aspect ratio */
+    cursor: pointer; /* Change cursor to pointer */
 }
 
-#placeButton:hover, #cancelButton:hover {
-  background-color: #0062cc;
+/* Sub-menu Styles */
+.sub-menu {
+    display: none; /* Initially hidden */
+    padding-left: 10px; /* Indent sub-menu items */
+}
+
+/* Sub-item Styles */
+.sub-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    text-decoration: none;
+    color: #333; /* Default color */
+}
+
+/* Sub-item Image Styles */
+.sub-item img {
+    width: 40px; /* Set image size */
+    height: auto; /* Maintain aspect ratio */
+    margin-right: 10px; /* Space between image and text */
+}
+
+/* Confirm Buttons Styles */
+#item-buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px; /* Space between buttons */
+}
+
+#place, #cancel {
+    padding: 10px 20px;
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px;
+}
+
+/* Button Hover Effect */
+#place:hover, #cancel:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Sidebar Visibility */
+.sidebar-open .side-bar {
+    left: 0; /* Show sidebar when active */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .side-bar {
+        width: 200px; /* Smaller sidebar on mobile */
+    }
+
+    .menu-btn {
+        font-size: 25px; /* Smaller menu button */
+    }
 }
