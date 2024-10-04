@@ -2,6 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from '../libs/three123/three.module.js';
 import { ARButton } from '../libs/jsm/ARButton.js';
 
+// Normalizing model function
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -12,6 +13,7 @@ const normalizeModel = (obj, height) => {
     obj.position.set(-center.x, -center.y, -center.z);
 };
 
+// Set opacity function
 const setOpacity = (obj, opacity) => {
     obj.traverse((child) => {
         if (child.isMesh) {
@@ -21,6 +23,7 @@ const setOpacity = (obj, opacity) => {
     });
 };
 
+// Deep clone function
 const deepClone = (obj) => {
     const newObj = obj.clone();
     newObj.traverse((o) => {
@@ -31,6 +34,7 @@ const deepClone = (obj) => {
     return newObj;
 };
 
+// Main function to initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     const initialize = async () => {
         const scene = new THREE.Scene();
@@ -62,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const placedItems = [];
         const models = {};
 
+        // Load model function
         const loadModel = async (itemName, category) => {
             const modelPath = `../assets/models/${category}/${itemName}/scene.gltf`;
             if (!models[itemName]) {
@@ -100,8 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemButtons = document.querySelector("#item-buttons");
         const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.style.display = "block"; // Show item buttons initially
-        confirmButtons.style.display = "none"; // Hide confirm buttons initially
+        confirmButtons.style.display = "none"; // Initially hide confirm buttons
 
         const select = async (selectItem) => {
             const model = await loadModel(selectItem.name, selectItem.category);
@@ -110,15 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.visible = item === selectItem;
             });
             selectedItem = selectItem;
-            itemButtons.style.display = "none"; // Hide item buttons when an item is selected
-            confirmButtons.style.display = "block"; // Show confirm buttons
+            confirmButtons.style.display = "block"; // Show confirm buttons after selection
         };
 
         const cancelSelect = () => {
-            itemButtons.style.display = "block"; // Show item buttons again
-            confirmButtons.style.display = "none"; // Hide confirm buttons
+            confirmButtons.style.display = "none"; // Hide confirm buttons on cancel
             if (selectedItem) {
-                selectedItem.visible = false; // Hide selected item
+                selectedItem.visible = false;
             }
             selectedItem = null;
         };
@@ -134,6 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Toggle sub-menu when category image is clicked
         $(document).ready(function() {
+            $('.menu-btn').on('click', function() {
+                // Show item buttons only when the menu button is clicked
+                itemButtons.style.display = itemButtons.style.display === "block" ? "none" : "block";
+            });
+
             $('.sub-btn').on('click', function() {
                 $(this).next('.sub-menu').slideToggle();
             });
@@ -159,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 scene.add(spawnItem);
                 placedItems.push(spawnItem);
                 currentInteractedItem = spawnItem;
-                cancelSelect();
+                cancelSelect(); // Hide buttons after placing
             }
         });
 
@@ -233,12 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 setOpacity(currentInteractedItem, 0.5);
 
                 // Now, you can implement interaction behavior like dragging, rotating, or scaling
-
                 // DRAG: Single-Finger Dragging Implementation for placed items
                 document.addEventListener('touchmove', (event) => {
                     if (currentInteractedItem && event.touches.length === 1) {
                         const touch = event.touches[0];
-                        if (lastTouchX !== null && lastTouchY !== null) {
+                        if (                        lastTouchY !== null) {
                             const movementX = touch.pageX - lastTouchX;
                             const movementY = touch.pageY - lastTouchY;
                             currentInteractedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
@@ -249,7 +255,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Implement similar rotation and scaling logic here for placed items
+                // ROTATION: Two-Finger Twist Gesture for placed items
+                document.addEventListener('touchmove', (event) => {
+                    if (currentInteractedItem && event.touches.length === 2) {
+                        const touch1 = event.touches[0];
+                        const touch2 = event.touches[1];
+
+                        const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
+                        if (lastAngle !== null) {
+                            const deltaAngle = currentAngle - lastAngle;
+                            currentInteractedItem.rotation.y += deltaAngle;
+                        }
+                        lastAngle = currentAngle;
+                    }
+                });
+
+                // SCALING: Two-Finger Pinch Gesture for placed items
+                document.addEventListener('touchmove', (event) => {
+                    if (currentInteractedItem && event.touches.length === 2) {
+                        const touch1 = event.touches[0];
+                        const touch2 = event.touches[1];
+
+                        const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+                        if (lastDistance !== null) {
+                            const scaleFactor = currentDistance / lastDistance;
+                            currentInteractedItem.scale.multiplyScalar(scaleFactor);
+                        }
+                        lastDistance = currentDistance;
+                    }
+                });
+
+                document.addEventListener('touchend', () => {
+                    lastTouchX = null;
+                    lastTouchY = null;
+                    lastAngle = null;
+                    lastDistance = null;
+                });
             }
         });
 
@@ -264,3 +305,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialize();
 });
+
