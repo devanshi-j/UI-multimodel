@@ -1,191 +1,71 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AR Model Selector</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
-   
-    <style>
-        /* Custom styles to ensure layout consistency */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .menu-btn {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            cursor: pointer;
-            z-index: 2;
-        }
-        .side-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 90px;
-            height: 100%;
-            background-color: #333;
-            color: #fff;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1;
-            overflow-y: auto; /* Enable vertical scrolling */
-            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS and touch devices */
-            touch-action: pan-y; /* Ensures vertical scrolling on touch */
-        }
-        .side-bar.active {
-            transform: translateX(0);
-        }
-        .side-bar header {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: #444;
-            justify-content: space-between;
-        }
-       
-        .side-bar .menu {
-            margin-top: 20px;
-        }
-        .side-bar .item {
-            margin: 10px 0;
-        }
-        .side-bar .sub-btn {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            color: #fff;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .side-bar .sub-btn .model-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .side-bar .sub-menu {
-            display: none;
-            padding-left: 20px;
-        }
-        .side-bar .sub-menu .sub-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            color: #fff;
-            text-decoration: none;
-        }
-        .side-bar .sub-menu .sub-item .model-image {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .side-bar .close-btn {
-            cursor: pointer;
-        }
-       
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Model Loader</title>
+    <link rel="stylesheet" href="../complete/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../complete/main.js" type="module"></script>
 </head>
 <body>
-    <!-- Menu Button to Toggle Sidebar -->
-    <div class="menu-btn">
-        <i class="fas fa-bars"></i>
+
+<!-- Menu Button to Open the Sidebar -->
+<div class="menu-btn">
+    <span>☰</span>
+</div>
+
+<!-- Sidebar with Categories and Models -->
+<div class="side-bar">
+    <!-- Close Button to Collapse Sidebar -->
+    <div class="close-btn">
+        <span>&times;</span>
     </div>
 
-    <!-- Sidebar for Categories and Models -->
-    <div class="side-bar">
-        <header>
-            <div class="close-btn">
-                <i class="fas fa-times"></i>
+    <div class="menu">
+        <!-- Category 1: Contains Models 1, 2, 3 -->
+        <div class="item">
+            <a class="sub-btn">
+                <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Category 1" class="category-image">
+            </a>
+            <div class="sub-menu">
+                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Model 1"></a>
+                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp2/thumbnail.png" alt="Model 2"></a>
+                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp3/thumbnail.png" alt="Model 3"></a>
             </div>
-         
-        </header>
-        <div class="menu">
-            <!-- Category Items -->
-            <div class="item">
-                <a class="sub-btn" id="item0">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu0">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp/lamp1/thumbnail.png" alt="">
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp/lamp2/thumbnail.png" alt=""> 
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/lamp/lamp3/thumbnail.png" alt=""> 
-                    </a>
-                </div>
-            </div>
+        </div>
 
-            <div class="item">
-                <a class="sub-btn" id="item1">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu1">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa/sofa1/thumbnail.png" alt=""> 
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa/sofa2/thumbnail.png" alt=""> 
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/sofa/sofa3/thumbnail.png" alt=""> 
-                    </a>
-                </div>
+         <div class="item">
+            <a class="sub-btn">
+                <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Category 1" class="category-image">
+            </a>
+            <div class="sub-menu">
+                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Model 1"></a>
+                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa2/thumbnail.png" alt="Model 2"></a>
+                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa3/thumbnail.png" alt="Model 3"></a>
             </div>
+        </div>
 
-            <div class="item">
-                <a class="sub-btn" id="item2">
-                    <img class="model-image" src="https://5.imimg.com/data5/SELLER/Default/2023/10/357322490/UC/KW/UI/4580418/indoor-vcb-panel-500x500.jpg" alt="Category Image">
-                    <i class="fas fa-angle-right dropdown"></i>
-                </a>
-                <div class="sub-menu" id="sub-menu2">
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table/table2/thumbnail.png" alt=""> 
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table/table2/thumbnail.png" alt=""> 
-                    </a>
-                    <a href="#" class="sub-item">
-                        <img class="model-image" src="../assets/models/table/table3/thumbnail.png" alt=""> 
-                    </a>
-                </div>
+
+        <!-- Category 2: Contains Models 4, 5, 6 -->
+        <div class="item">
+            <a class="sub-btn">
+                <img src="../assets/models/table/table1/thumbnail.png" alt="Category 2" class="category-image">
+            </a>
+            <div class="sub-menu">
+                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table1/thumbnail.png" alt="Model 4"></a>
+                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table2/thumbnail.png" alt="Model 5"></a>
+                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table3/thumbnail.png" alt="Model 6"></a>
             </div>
-
-            <!-- Add more categories and sub-menus as needed -->
         </div>
     </div>
-    
-  
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="../complete/main.js"></script>
+</div>
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            // jQuery for toggle sub-menus
-            $(".sub-btn").click(function () {
-                $(this).next(".sub-menu").slideToggle();
-                $(this).find(".dropdown").toggleClass("rotate");
-            });
+<!-- Confirm Buttons for Model Placement -->
+<div id="item-buttons" style="display: none;">
+    <button id="place">Place</button>
+    <button id="cancel">Cancel</button>
+</div>
 
-            // jQuery for expand and collapse the sidebar
-            $(".menu-btn").click(function () {
-                $(".side-bar").addClass("active");
-                $(".menu-btn").css("visibility", "hidden");
-            });
-
-            $(".close-btn").click(function () {
-                $(".side-bar").removeClass("active");
-                $(".menu-btn").css("visibility", "visible");
-            });
-        });
-    </script>
 </body>
 </html>
-
