@@ -100,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemButtons = document.querySelector("#item-buttons");
         const confirmButtons = document.querySelector("#confirm-buttons");
-        itemButtons.style.display = "block";
-        confirmButtons.style.display = "none";
+        itemButtons.style.display = "block"; // Show item buttons initially
+        confirmButtons.style.display = "none"; // Hide confirm buttons initially
 
         const select = async (selectItem) => {
             const model = await loadModel(selectItem.name, selectItem.category);
@@ -110,15 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.visible = item === selectItem;
             });
             selectedItem = selectItem;
-            itemButtons.style.display = "none";
-            confirmButtons.style.display = "block";
+            itemButtons.style.display = "none"; // Hide item buttons when an item is selected
+            confirmButtons.style.display = "block"; // Show confirm buttons
         };
 
         const cancelSelect = () => {
-            itemButtons.style.display = "block";
-            confirmButtons.style.display = "none";
+            itemButtons.style.display = "block"; // Show item buttons again
+            confirmButtons.style.display = "none"; // Hide confirm buttons
             if (selectedItem) {
-                selectedItem.visible = false;
+                selectedItem.visible = false; // Hide selected item
             }
             selectedItem = null;
         };
@@ -228,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const intersects = raycaster.intersectObjects(placedItems, true);
             if (intersects.length > 0) {
                 currentInteractedItem = intersects[0].object.parent;
-                               
 
                 // Highlight or visually indicate that the item is selected
                 setOpacity(currentInteractedItem, 0.5);
@@ -242,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (lastTouchX !== null && lastTouchY !== null) {
                             const movementX = touch.pageX - lastTouchX;
                             const movementY = touch.pageY - lastTouchY;
-                            currentInteractedItem.position.x += movementX * 0.001; // Adjust for dragging speed
+                            currentInteractedItem.position.x += movementX * 0.001; // Adjust factor for dragging speed
                             currentInteractedItem.position.y -= movementY * 0.001;
                         }
                         lastTouchX = touch.pageX;
@@ -250,51 +249,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // ROTATION: Two-Finger Twist Gesture for placed items
-                document.addEventListener('touchmove', (event) => {
-                    if (currentInteractedItem && event.touches.length === 2) {
-                        const touch1 = event.touches[0];
-                        const touch2 = event.touches[1];
-
-                        const currentAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
-                        if (lastAngle !== null) {
-                            const deltaAngle = currentAngle - lastAngle;
-                            currentInteractedItem.rotation.y += deltaAngle;
-                        }
-                        lastAngle = currentAngle;
-                    }
-                });
-
-                // SCALING: Two-Finger Pinch Gesture for placed items
-                document.addEventListener('touchmove', (event) => {
-                    if (currentInteractedItem && event.touches.length === 2) {
-                        const touch1 = event.touches[0];
-                        const touch2 = event.touches[1];
-
-                        const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-                        if (lastDistance !== null) {
-                            const scaleFactor = currentDistance / lastDistance;
-                            currentInteractedItem.scale.multiplyScalar(scaleFactor);
-                        }
-                        lastDistance = currentDistance;
-                    }
-                });
-
-                // Reset interaction variables when touch ends
-                document.addEventListener('touchend', () => {
-                    lastTouchX = null;
-                    lastTouchY = null;
-                    lastAngle = null;
-                    lastDistance = null;
-                });
+                // Implement similar rotation and scaling logic here for placed items
             }
         });
 
-        renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
-        });
+        const animate = () => {
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
+        };
+
+        animate();
     };
 
     initialize();
 });
-
