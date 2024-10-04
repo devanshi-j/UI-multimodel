@@ -32,7 +32,7 @@ body {
 }
 
 .side-bar.open {
-    left: 0; /* Show sidebar */
+    left: -90px; /* Show sidebar */
     width: 90px;
 }
 
