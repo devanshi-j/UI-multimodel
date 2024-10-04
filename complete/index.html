@@ -11,80 +11,52 @@
 <body>
 
 <!-- Menu Button to Open the Sidebar -->
-<div class="menu-btn">
-    <span>☰</span>
-</div>
 
-<!-- Sidebar with Categories and Models -->
-<div class="side-bar">
-    <!-- Close Button to Collapse Sidebar -->
-    <div class="close-btn">
-        <span>&times;</span>
-    </div>
-
-    <div class="menu">
-        <!-- Category 1: Contains Models 1, 2, 3 -->
-        <div class="item">
-            <a class="sub-btn">
-                <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Category 1" class="category-image">
-            </a>
-            <div class="sub-menu">
-                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Model 1"></a>
-                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp2/thumbnail.png" alt="Model 2"></a>
-                <a class="sub-item" data-folder="lamp"><img src="../assets/models/lamp/lamp3/thumbnail.png" alt="Model 3"></a>
-            </div>
-        </div>
-
-           <!-- Category 2: Contains Models 4, 5, 6 -->
-        <div class="item">
-            <a class="sub-btn">
-                <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Category 2" class="category-image">
-            </a>
-            <div class="sub-menu">
-                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Model 1"></a>
-                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa2/thumbnail.png" alt="Model 2"></a>
-                <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa3/thumbnail.png" alt="Model 3"></a>
-            </div>
-        </div>
-
-        <!-- Category 3: Contains Models 4, 5, 6 -->
-        <div class="item">
-            <a class="sub-btn">
-                <img src="../assets/models/table/table1/thumbnail.png" alt="Category 3" class="category-image">
-            </a>
-            <div class="sub-menu">
-                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table1/thumbnail.png" alt="Model 4"></a>
-                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table2/thumbnail.png" alt="Model 5"></a>
-                <a class="sub-item" data-folder="table"><img src="../assets/models/table/table3/thumbnail.png" alt="Model 6"></a>
-            </div>
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <span class="menu-btn">☰</span> <!-- Menu Button -->
+        <div class="menu">
+            <!-- Main Menu -->
+            <ul>
+                <li>
+                    <a href="#" class="sub-btn">Lamps</a>
+                    <!-- Submenu for Lamps -->
+                    <ul class="sub-menu">
+                        <li><a href="#" class="sub-item" data-folder="lamp">Lamp 1</a></li>
+                        <li><a href="#" class="sub-item" data-folder="lamp">Lamp 2</a></li>
+                        <li><a href="#" class="sub-item" data-folder="lamp">Lamp 3</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="sub-btn">Sofas</a>
+                    <!-- Submenu for Sofas -->
+                    <ul class="sub-menu">
+                        <li><a href="#" class="sub-item" data-folder="sofa">Sofa 1</a></li>
+                        <li><a href="#" class="sub-item" data-folder="sofa">Sofa 2</a></li>
+                        <li><a href="#" class="sub-item" data-folder="sofa">Sofa 3</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="sub-btn">Tables</a>
+                    <!-- Submenu for Tables -->
+                    <ul class="sub-menu">
+                        <li><a href="#" class="sub-item" data-folder="table">Table 1</a></li>
+                        <li><a href="#" class="sub-item" data-folder="table">Table 2</a></li>
+                        <li><a href="#" class="sub-item" data-folder="table">Table 3</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
     </div>
-</div>
 
-<!-- Confirm Buttons for Model Placement -->
-<div id="item-buttons" style="display: none;">
-    <button id="place">Place</button>
-    <button id="cancel">Cancel</button>
-</div>
+    <!-- Action Buttons -->
+    <div id="item-buttons" style="display: none;">
+        <button id="place">Place</button>
+        <button id="cancel">Cancel</button>
+    </div>
 
-<script>
-$(document).ready(function() {
-    // Toggle sidebar on menu button click
-    $('.menu-btn').on('click', function() {
-        $('.side-bar').addClass('open');
-    });
-
-    // Close sidebar on close button click
-    $('.close-btn').on('click', function() {
-        $('.side-bar').removeClass('open');
-    });
-
-    // Toggle sub-menu when category image is clicked
-    $('.sub-btn').on('click', function() {
-        $(this).next('.sub-menu').slideToggle(); // Toggle the associated sub-menu
-    });
-});
-</script>
-
+   
+  
+  
 </body>
 </html>
