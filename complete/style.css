@@ -23,7 +23,7 @@ body {
     position: fixed;
     top: 0;
     left: -300px; /* Hidden off-screen */
-    width: 90px;
+    width: 60px; /* Adjusted width */
     height: 100%;
     background: #f0f0f0;
     box-shadow: 2px 0 5px rgba(0,0,0,0.5);
@@ -33,6 +33,26 @@ body {
 
 .side-bar.open {
     left: 0; /* Show sidebar */
+}
+
+#item-buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; /* Initially hide buttons */
+    gap: 20px; /* Space between buttons */
+}
+
+#place, #cancel {
+    padding: 10px 20px;
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px;
+    display: none;
 }
 
 
@@ -88,24 +108,7 @@ body {
 }
 
 /* Confirm Buttons Styles */
-#item-buttons {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px; /* Space between buttons */
-}
 
-#place, #cancel {
-    padding: 10px 20px;
-    background-color: #007bff; /* Blue background */
-    color: white; /* White text */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer; /* Pointer cursor */
-    font-size: 16px;
-}
 
 /* Button Hover Effect */
 #place:hover, #cancel:hover {
