@@ -33,6 +33,7 @@ body {
 
 .side-bar.open {
     left: 0; /* Show sidebar */
+    width: 90px;
 }
 
 .close-btn {
@@ -111,10 +112,10 @@ body {
     background-color: #0056b3; /* Darker blue on hover */
 }
 
-/* Sidebar Visibility */
+/*/* Sidebar Visibility 
 .sidebar-open .side-bar {
-    left: 0; /* Show sidebar when active */
-}
+    left: 0; /* Show sidebar when active 
+}*/
 
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
