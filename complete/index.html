@@ -35,9 +35,10 @@
             </div>
         </div>
 
-         <div class="item">
+           <!-- Category 2: Contains Models 4, 5, 6 -->
+        <div class="item">
             <a class="sub-btn">
-                <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Category 1" class="category-image">
+                <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Category 2" class="category-image">
             </a>
             <div class="sub-menu">
                 <a class="sub-item" data-folder="sofa"><img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Model 1"></a>
@@ -46,11 +47,10 @@
             </div>
         </div>
 
-
-        <!-- Category 2: Contains Models 4, 5, 6 -->
+        <!-- Category 3: Contains Models 4, 5, 6 -->
         <div class="item">
             <a class="sub-btn">
-                <img src="../assets/models/table/table1/thumbnail.png" alt="Category 2" class="category-image">
+                <img src="../assets/models/table/table1/thumbnail.png" alt="Category 3" class="category-image">
             </a>
             <div class="sub-menu">
                 <a class="sub-item" data-folder="table"><img src="../assets/models/table/table1/thumbnail.png" alt="Model 4"></a>
@@ -66,6 +66,25 @@
     <button id="place">Place</button>
     <button id="cancel">Cancel</button>
 </div>
+
+<script>
+$(document).ready(function() {
+    // Toggle sidebar on menu button click
+    $('.menu-btn').on('click', function() {
+        $('.side-bar').addClass('open');
+    });
+
+    // Close sidebar on close button click
+    $('.close-btn').on('click', function() {
+        $('.side-bar').removeClass('open');
+    });
+
+    // Toggle sub-menu when category image is clicked
+    $('.sub-btn').on('click', function() {
+        $(this).next('.sub-menu').slideToggle(); // Toggle the associated sub-menu
+    });
+});
+</script>
 
 </body>
 </html>
