@@ -55,6 +55,11 @@ body {
     display: none;
 }
 
+.category-image {
+    width: 30%;
+    height: auto;
+}
+
 .close-btn {
     text-align: right;
     padding: 10px;
