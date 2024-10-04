@@ -33,7 +33,7 @@ body {
 
 .side-bar.open {
     left: 0; /* Show sidebar */
-    width: 90px;
+   
 }
 
 .close-btn {
