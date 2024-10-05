@@ -1,45 +1,130 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <style>
-    body {
-      margin: 0;
-    }
-    #item-buttons, #confirm-buttons {
-      position: absolute;
-      top: 50px;
-      z-index: 2;
-      display: flex;
-      flex-direction: row;
-      display: none;
-    }
-    .button-image {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      margin: 5px;
-    }
-    .button {
-      width: 50px;
-      height: 50px;
-      margin: 5px;
-    }
-  </style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR App</title>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #menu-btn, #close-btn {
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+            color: white;
+            width: 90px;
+            height: 50px;
+            border: none;
+            position: fixed;
+            top: 10px;
+        }
+        #menu-btn {
+            left: 10px;
+        }
+        #close-btn {
+            right: 10px;
+        }
+        #sidebar {
+            width: 90px;
+            height: 100vh; /* Full height */
+            background-color: #111;
+            position: fixed;
+            left: -90px;
+            top: 0;
+            transition: left 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+        .icon {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .item-image {
+            width: 70px;
+            height: 70px;
+            margin: 10px;
+            cursor: pointer;
+            display: none; /* Initially hidden */
+        }
+        #confirm-buttons {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #place, #cancel {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #cancel {
+            background-color: #dc3545;
+        }
+    </style>
 </head>
 <body>
-  <div id="item-buttons">
-    <img class="button-image" id="item0" src="../assets/models/Chair/thumbnail.png">
-    <img class="button-image" id="item1" src="../assets/models/light/thumbnail.png">
-    <img class="button-image" id="item2" src="../assets/models/plant/thumbnail.png">
-     <img class="button-image" id="item3" src="../assets/models/rug/thumbnail.png">
-  </div>
-  <div id="confirm-buttons">
-    <button class="button" id="place">OK</button>
-    <button class="button" id="cancel">X</button>
-  </div>
-  <script type="module" src="../complete/main.js"></script>
+    <!-- Menu Button -->
+    <button id="menu-btn">&equiv;</button>
 
+    <!-- Sidebar with Categories -->
+    <div id="sidebar">
+        <div class="icon" data-category="lamp">
+            <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp" width="30">
+            <div class="submenu">
+                <img class="item-image" data-item="lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp1">
+                <img class="item-image" data-item="lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="lamp2">
+                <img class="item-image" data-item="lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="lamp3">
+            </div>
+        </div>
+        <div class="icon" data-category="sofa">
+            <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa" width="30">
+            <div class="submenu">
+                <img class="item-image" data-item="sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa1">
+                <img class="item-image" data-item="sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="sofa2">
+                <img class="item-image" data-item="sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="sofa3">
+            </div>
+        </div>
+        <div class="icon" data-category="table">
+            <img src="../assets/models/table/table1/thumbnail.png" alt="table" width="30">
+            <div class="submenu">
+                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
+                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
+                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
+            </div>
+        </div>
+    </div>
 
-</body></html>
+    <!-- Confirm Buttons -->
+    <div id="confirm-buttons">
+        <button id="place">Place</button>
+        <button id="cancel">Cancel</button>
+    </div>
+
+    <!-- Close Button -->
+    <button id="close-btn" style="display: none;">&times;</button>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
