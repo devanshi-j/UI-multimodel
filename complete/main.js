@@ -45,7 +45,7 @@ const itemCategories = {
         { name: 'sofa1', height: 0.1 },
         { name: 'sofa2', height: 0.1 },
         { name: 'sofa3', height: 0.1 }
-    ]
+    ],
     'table': [
         { name: 'table1', height: 0.2 },
         { name: 'table2', height: 0.2 },
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load items from the categories
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
-                const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
                 normalizeModel(model.scene, itemInfo.height);
                 const item = new THREE.Group();
                 item.add(model.scene);
@@ -90,6 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 setOpacity(item, 0.5);
                 items.push(item);
                 scene.add(item);
+
+                // Use existing images in the sidebar as buttons
+                const existingImage = document.querySelector(`#${category}-${itemInfo.name}`);
+                if (existingImage) {
+                    existingImage.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        select(item);
+                    });
+                }
             }
         }
 
@@ -134,16 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation();
             cancelSelect();
-        });
-
-        // Add event listeners to item buttons
-        items.forEach((item, i) => {
-            const el = document.querySelector(`#item${i}`);
-            el.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                select(item);
-            });
         });
 
         placeButton.addEventListener('click', (e) => {
@@ -239,29 +239,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const movementVector = newFingerPositions[0].clone().sub(initialFingerPositions[0])
                                 .add(newFingerPositions[1].clone().sub(initialFingerPositions[1]));
-
-                            currentInteractedItem.position.add(new THREE.Vector3(movementVector.x, 0, -movementVector.y));
-                            initialFingerPositions = newFingerPositions;
-                        }
-                    } else if (isPinching && currentInteractedItem) {
-                        const sessionSources = renderer.xr.getSession().inputSources;
-
-                        if (sessionSources.length === 2) {
-                            const newDistance = Math.sqrt(
-                                Math.pow(sessionSources[0].gamepad.axes[0] - sessionSources[1].gamepad.axes[0], 2) +
-                                Math.pow(sessionSources[0].gamepad.axes[1] - sessionSources[1].gamepad.axes[1], 2)
-                            );
-
-                            if (initialDistance) {
-                                const scaleFactor = newDistance / initialDistance;
-                                currentInteractedItem.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                            }
+                            currentInteractedItem.position.add(movementVector);
                         }
                     }
-                }
 
-                renderer.render(scene, camera);
+                    renderer.render(scene, camera);
+                }
             });
+        });
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
         });
     };
 
