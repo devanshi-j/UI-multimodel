@@ -239,15 +239,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const movementVector = newFingerPositions[0].clone().sub(initialFingerPositions[0])
                                 .add(newFingerPositions[1].clone().sub(initialFingerPositions[1]));
-                            currentInteractedItem.position.add(movementVector);
+
+                            currentInteractedItem.position.add(movementVector); // Move the object based on finger movement
+                            initialFingerPositions = newFingerPositions; // Update the initial positions for the next frame
                         }
                     }
-
-                    renderer.render(scene, camera);
                 }
+
+                renderer.render(scene, camera);
             });
         });
 
+        // Handle window resize
         window.addEventListener('resize', () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
