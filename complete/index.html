@@ -11,7 +11,7 @@
             font-family: Arial, sans-serif;
             overflow: hidden;
         }
-        #menu-btn, #close-btn {
+        #menu-button, #close-button {
             font-size: 24px;
             cursor: pointer;
             display: flex;
@@ -25,13 +25,13 @@
             position: fixed;
             top: 10px;
         }
-        #menu-btn {
+        #menu-button {
             left: 10px;
         }
-        #close-btn {
+        #close-button {
             right: 10px;
         }
-        #sidebar {
+        #sidebar-menu {
             width: 90px;
             height: 100vh; /* Full height */
             background-color: #111;
@@ -69,7 +69,7 @@
             left: 50%;
             transform: translateX(-50%);
         }
-        #place, #cancel {
+        #place-button, #cancel-button {
             font-size: 18px;
             padding: 10px 20px;
             margin: 0 10px;
@@ -79,51 +79,51 @@
             border: none;
             border-radius: 5px;
         }
-        #cancel {
+        #cancel-button {
             background-color: #dc3545;
         }
     </style>
 </head>
 <body>
     <!-- Menu Button -->
-    <button id="menu-btn">&equiv;</button>
+    <button id="menu-button">&equiv;</button>
 
     <!-- Sidebar with Categories -->
-    <div id="sidebar">
+    <div id="sidebar-menu">
         <div class="icon" data-category="lamp">
             <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp" width="30">
             <div class="submenu">
-                <img class="item-image" data-item="lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp1">
-                <img class="item-image" data-item="lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="lamp2">
-                <img class="item-image" data-item="lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="lamp3">
+                <img class="item-image" id="lamp1-image" data-item="lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp1">
+                <img class="item-image" id="lamp2-image" data-item="lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="lamp2">
+                <img class="item-image" id="lamp3-image" data-item="lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="lamp3">
             </div>
         </div>
         <div class="icon" data-category="sofa">
             <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa" width="30">
             <div class="submenu">
-                <img class="item-image" data-item="sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa1">
-                <img class="item-image" data-item="sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="sofa2">
-                <img class="item-image" data-item="sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="sofa3">
+                <img class="item-image" id="sofa1-image" data-item="sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa1">
+                <img class="item-image" id="sofa2-image" data-item="sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="sofa2">
+                <img class="item-image" id="sofa3-image" data-item="sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="sofa3">
             </div>
         </div>
         <div class="icon" data-category="table">
             <img src="../assets/models/table/table1/thumbnail.png" alt="table" width="30">
             <div class="submenu">
-                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
-                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
-                <img class="item-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
+                <img class="item-image" id="table1-image" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
+                <img class="item-image" id="table2-image" data-item="table2" src="../assets/models/table/table1/thumbnail.png" alt="table2">
+                <img class="item-image" id="table3-image" data-item="table3" src="../assets/models/table/table1/thumbnail.png" alt="table3">
             </div>
         </div>
     </div>
 
     <!-- Confirm Buttons -->
     <div id="confirm-buttons">
-        <button id="place">Place</button>
-        <button id="cancel">Cancel</button>
+        <button id="place-button">Place</button>
+        <button id="cancel-button">Cancel</button>
     </div>
 
     <!-- Close Button -->
-    <button id="close-btn" style="display: none;">&times;</button>
+    <button id="close-button" style="display: none;">&times;</button>
 
     <script type="module" src="../complete/main.js"></script>
 </body>
