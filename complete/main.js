@@ -63,6 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const placedItems = [];
     const raycaster = new THREE.Raycaster();
     let touchDown = false;
+    
+    // Declare isPinching in the correct scope
     let isPinching = false;
     let initialFingerPositions = [];
     
@@ -194,9 +196,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Pinching for scaling
-    let isPinching = false;
-    let initialFingerPositions = [];
-    
+    let initialPinchDistance;
+
     // Add listener for controller events
     renderer.xr.addEventListener("sessionstart", async () => {
         const session = renderer.xr.getSession();
@@ -226,9 +227,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         ];
 
                         const distance = newFingerPositions[0].distanceTo(newFingerPositions[1]);
-                        const initialDistance = initialFingerPositions[0].distanceTo(initialFingerPositions[1]);
-                        const scale = distance / initialDistance;
+                        if (initialPinchDistance === undefined) {
+                            initialPinchDistance = distance;
+                        }
 
+                        const scale = distance / initialPinchDistance;
                         currentInteractedItem.scale.set(scale, scale, scale); // Scale the object
                     }
                 }
