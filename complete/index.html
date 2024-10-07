@@ -27,11 +27,9 @@
         }
         #menu-button {
             left: 10px;
-            color: #FFF44F;
         }
         #close-button {
-            left: 40px;
-             color: #FFF44F;
+            left: 60px;
         }
         #sidebar-menu {
             width: 90px;
@@ -61,8 +59,8 @@
             align-items: center;
         }
         .item-image {
-            width: 30px;
-            height: 30px;
+            width: 70px;
+            height: 70px;
             margin: 10px;
             cursor: pointer;
             display: none; /* Initially hidden */
@@ -137,6 +135,7 @@
         const sidebarMenu = document.getElementById('sidebar-menu');
         const icons = document.querySelectorAll('.icon');
         const confirmButtons = document.getElementById('confirm-buttons');
+        const cancelButton = document.getElementById('cancel-button');
 
         menuButton.addEventListener('click', function() {
             sidebarMenu.classList.add('open'); // Open the sidebar
@@ -168,6 +167,11 @@
                 // Show the confirm buttons when an image is clicked
                 confirmButtons.style.display = 'block'; 
             });
+        });
+
+        // Hide confirm buttons when the cancel button is clicked
+        cancelButton.addEventListener('click', function() {
+            confirmButtons.style.display = 'none'; // Hide confirm buttons
         });
     </script>
 
