@@ -54,11 +54,10 @@ const itemCategories = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    const sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('sidebar-menu');
     const menuButton = document.getElementById('menu-button');
-    const closeButton = document.getElementById('close-sidebar');
+    const closeButton = document.getElementById('close-button');
     const confirmButtons = document.getElementById('confirm-buttons');
-    const itemButtons = document.querySelector("#item-buttons");
     let currentInteractedItem = null;
     let scene, camera, renderer;
     const placedItems = [];
@@ -91,23 +90,27 @@ document.addEventListener("DOMContentLoaded", () => {
         // Load items from the categories
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
-                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                normalizeModel(model.scene, itemInfo.height);
-                const item = new THREE.Group();
-                item.add(model.scene);
-                item.visible = false;
-                setOpacity(item, 0.5);
-                items.push(item);
-                scene.add(item);
+                try {
+                    const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+                    normalizeModel(model.scene, itemInfo.height);
+                    const item = new THREE.Group();
+                    item.add(model.scene);
+                    item.visible = false;
+                    setOpacity(item, 0.5);
+                    items.push(item);
+                    scene.add(item);
 
-                // Use existing images in the sidebar as buttons
-                const existingImage = document.querySelector(`#${category}-${itemInfo.name}`);
-                if (existingImage) {
-                    existingImage.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        select(item);
-                    });
+                    // Use existing images in the sidebar as buttons
+                    const existingImage = document.querySelector(`#${category}-${itemInfo.name}`);
+                    if (existingImage) {
+                        existingImage.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            select(item);
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Failed to load model: ${itemInfo.name} from category: ${category}`, error);
                 }
             }
         }
@@ -140,12 +143,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Menu button to toggle sidebar
         menuButton.addEventListener('click', () => {
-            sidebar.style.display = 'block'; // Show sidebar
+            sidebar.classList.toggle('open'); // Toggle sidebar
+            closeButton.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
         });
 
         // Close button to hide sidebar
         closeButton.addEventListener('click', () => {
-            sidebar.style.display = 'none'; // Hide sidebar
+            sidebar.classList.remove('open'); // Hide sidebar
+            closeButton.style.display = 'none';
         });
 
         // Touch event listeners for interaction
@@ -227,21 +232,25 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Event listeners for controller touch events
+    const controller = renderer.xr.getController(0); // Assuming using controller 0 for touch events
     controller.addEventListener('selectstart', () => {
         touchDown = true;
         const tempMatrix = new THREE.Matrix4();
         tempMatrix.identity().extractRotation(controller.matrixWorld);
         raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        const intersects = raycaster.intersectObjects(placedItems);
 
-        const intersects = raycaster.intersectObjects(scene.children);
         if (intersects.length > 0) {
-            select(intersects[0].object); // Select the intersected object
+            currentInteractedItem = intersects[0].object; // Select the touched object
+            confirmButtons.style.display = 'block'; // Show confirm buttons
         }
     });
 
     controller.addEventListener('selectend', () => {
-        touchDown = false;
+        touchDown = false; // Reset touch state
+        currentInteractedItem = null; // Deselect the item
+        confirmButtons.style.display = 'none'; // Hide confirm buttons
     });
 
     // Start the AR session
