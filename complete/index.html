@@ -1,4 +1,4 @@
-v<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,6 @@ v<!DOCTYPE html>
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #333;
             color: white;
             width: 90px;
             height: 50px;
@@ -24,6 +23,7 @@ v<!DOCTYPE html>
             position: fixed;
             top: 10px;
             z-index: 200;
+            background-color: transparent; /* Remove background */
         }
         #menu-button {
             left: 10px;
@@ -134,6 +134,7 @@ v<!DOCTYPE html>
         const closeButton = document.getElementById('close-button');
         const sidebarMenu = document.getElementById('sidebar-menu');
         const icons = document.querySelectorAll('.icon');
+        const confirmButtons = document.getElementById('confirm-buttons');
 
         menuButton.addEventListener('click', function() {
             sidebarMenu.classList.add('open'); // Open the sidebar
@@ -148,9 +149,22 @@ v<!DOCTYPE html>
         });
 
         icons.forEach(icon => {
-            icon.addEventListener('click', function() {
+            icon.addEventListener('click', function(event) {
                 const submenu = icon.querySelector('.submenu');
                 submenu.classList.toggle('open'); // Toggle submenu visibility
+                event.stopPropagation(); // Prevent the click from bubbling up
+            });
+        });
+
+        // Handle clicking on item images
+        const itemImages = document.querySelectorAll('.item-image');
+        itemImages.forEach(itemImage => {
+            itemImage.addEventListener('click', function(event) {
+                // Prevent the submenu from closing
+                event.stopPropagation(); 
+                
+                // Show the confirm buttons when an image is clicked
+                confirmButtons.style.display = 'block'; 
             });
         });
     </script>
