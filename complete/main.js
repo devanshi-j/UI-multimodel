@@ -169,8 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentInteractedItem) {
             currentInteractedItem = null; // Reset selection
             console.log("Placement canceled");
-            confirmButtons.style.display = 'none'; // Hide confirm buttons
         }
+        // Hide the confirm buttons regardless of whether there was an interacted item
+        confirmButtons.style.display = 'none'; // Hide confirm buttons
     });
 
     // Touch event listeners for interaction
@@ -235,9 +236,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         currentInteractedItem.scale.set(scale, scale, scale); // Scale the object
                     }
                 }
-            }
 
-            renderer.render(scene, camera);
+                renderer.render(scene, camera);
+            }
         });
     });
 
