@@ -7,7 +7,7 @@ const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
     obj.scale.multiplyScalar(height / size.y);
-    
+
     const bbox2 = new THREE.Box3().setFromObject(obj);
     const center = bbox2.getCenter(new THREE.Vector3());
     obj.position.set(-center.x, -center.y, -center.z);
@@ -133,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
+        // Cancel button logic
         document.getElementById('cancel').addEventListener('click', () => {
             if (currentInteractedItem) {
                 currentInteractedItem = null; // Reset selection
@@ -239,20 +240,12 @@ document.addEventListener("DOMContentLoaded", () => {
         tempMatrix.identity().extractRotation(controller.matrixWorld);
         raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-        const intersects = raycaster.intersectObjects(placedItems);
-
-        if (intersects.length > 0) {
-            currentInteractedItem = intersects[0].object; // Select the touched object
-            confirmButtons.style.display = 'block'; // Show confirm buttons
-        }
     });
 
     controller.addEventListener('selectend', () => {
-        touchDown = false; // Reset touch state
-        currentInteractedItem = null; // Deselect the item
-        confirmButtons.style.display = 'none'; // Hide confirm buttons
+        touchDown = false;
     });
 
-    // Start the AR session
+    // Start the AR session and initialize the app
     initialize();
 });
