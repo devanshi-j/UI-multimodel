@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let touchDown = false;
     let isPinching = false;
     let initialFingerPositions = [];
-
+    
     // Initialize the AR session
     const initialize = async () => {
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -85,61 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         document.body.appendChild(arButton);
 
-        const items = [];
-
-        // Load items from the categories
-        for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
-                try {
-                    const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                    normalizeModel(model.scene, itemInfo.height);
-                    const item = new THREE.Group();
-                    item.add(model.scene);
-                    item.visible = false;
-                    setOpacity(item, 0.5);
-                    items.push(item);
-                    scene.add(item);
-
-                    // Use existing images in the sidebar as buttons
-                    const existingImage = document.querySelector(`#${category}-${itemInfo.name}`);
-                    if (existingImage) {
-                        existingImage.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            select(item);
-                        });
-                    }
-                } catch (error) {
-                    console.error(`Failed to load model: ${itemInfo.name} from category: ${category}`, error);
-                }
-            }
-        }
-
         // Setup the rendering loop
         renderer.setAnimationLoop(() => {
             renderer.render(scene, camera);
-        });
-
-        // Handle model placement
-        document.getElementById('place').addEventListener('click', () => {
-            if (currentInteractedItem) {
-                const spawnItem = deepClone(currentInteractedItem);
-                setOpacity(spawnItem, 1.0);
-                scene.add(spawnItem);
-                placedItems.push(spawnItem);
-                console.log("Model placed:", spawnItem);
-                currentInteractedItem = null; // Reset selection
-                confirmButtons.style.display = 'none'; // Hide confirm buttons
-            }
-        });
-
-        // Cancel button logic
-        document.getElementById('cancel').addEventListener('click', () => {
-            if (currentInteractedItem) {
-                currentInteractedItem = null; // Reset selection
-                console.log("Placement canceled");
-                confirmButtons.style.display = 'none'; // Hide confirm buttons
-            }
         });
 
         // Menu button to toggle sidebar
@@ -154,64 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
             closeButton.style.display = 'none';
         });
 
-        // Touch event listeners for interaction
-        renderer.xr.addEventListener("sessionstart", async () => {
-            const session = renderer.xr.getSession();
-            const viewerReferenceSpace = await session.requestReferenceSpace("viewer");
-            const hitTestSource = await session.requestHitTestSource({ space: viewerReferenceSpace });
-
-            session.addEventListener('inputsourceschange', () => {
-                const sources = session.inputSources;
-
-                if (sources.length === 2) {
-                    isPinching = true;
-                    initialFingerPositions = [
-                        new THREE.Vector3(sources[0].gamepad.axes[0], sources[0].gamepad.axes[1], 0),
-                        new THREE.Vector3(sources[1].gamepad.axes[0], sources[1].gamepad.axes[1], 0)
-                    ];
-                }
-            });
-
-            renderer.setAnimationLoop((timestamp, frame) => {
-                if (frame) {
-                    const referenceSpace = renderer.xr.getReferenceSpace();
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (currentInteractedItem && hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const position = new THREE.Vector3().setFromMatrixPosition(hit.getPose(referenceSpace).transform.matrix);
-                        currentInteractedItem.position.copy(position);
-                    }
-
-                    if (touchDown && currentInteractedItem && !isPinching) {
-                        // Rotation control
-                        const touchPosition = new THREE.Vector2(controller.position.x, controller.position.y);
-                        currentInteractedItem.rotation.y -= touchPosition.x * 0.1; // Rotate the object based on touch movement
-                    }
-
-                    // Pinching to scale
-                    if (isPinching && currentInteractedItem) {
-                        const sessionSources = renderer.xr.getSession().inputSources;
-
-                        if (sessionSources.length === 2) {
-                            const newFingerPositions = [
-                                new THREE.Vector3(sessionSources[0].gamepad.axes[0], sessionSources[0].gamepad.axes[1], 0),
-                                new THREE.Vector3(sessionSources[1].gamepad.axes[0], sessionSources[1].gamepad.axes[1], 0)
-                            ];
-
-                            const distance = newFingerPositions[0].distanceTo(newFingerPositions[1]);
-                            const initialDistance = initialFingerPositions[0].distanceTo(initialFingerPositions[1]);
-                            const scale = distance / initialDistance;
-
-                            currentInteractedItem.scale.set(scale, scale, scale); // Scale the object
-                        }
-                    }
-                }
-
-                renderer.render(scene, camera);
-            });
-        });
-
         // Handle window resize
         window.addEventListener('resize', () => {
             const width = window.innerWidth;
@@ -223,16 +113,65 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Function to select a model
-    const select = (selectItem) => {
+    const select = async (category, itemInfo) => {
         if (currentInteractedItem) {
             setOpacity(currentInteractedItem, 1.0); // Reset opacity for the previous item
         }
-        currentInteractedItem = selectItem;
-        setOpacity(currentInteractedItem, 0.5); // Highlight selected item
-        confirmButtons.style.display = 'block'; // Show confirm buttons
+
+        // Load the model only when selected
+        try {
+            const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+            normalizeModel(model.scene, itemInfo.height);
+            currentInteractedItem = new THREE.Group();
+            currentInteractedItem.add(model.scene);
+            setOpacity(currentInteractedItem, 0.5); // Highlight selected item
+            confirmButtons.style.display = 'block'; // Show confirm buttons
+
+            // Add to scene but keep it hidden until confirmed
+            currentInteractedItem.visible = false;
+            scene.add(currentInteractedItem);
+        } catch (error) {
+            console.error(`Failed to load model: ${itemInfo.name} from category: ${category}`, error);
+        }
     };
 
-    // Event listeners for controller touch events
+    // Event listeners for category images
+    for (const category in itemCategories) {
+        for (const itemInfo of itemCategories[category]) {
+            const existingImage = document.querySelector(`#${category}-${itemInfo.name}`);
+            if (existingImage) {
+                existingImage.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    select(category, itemInfo); // Call select with category and item info
+                });
+            }
+        }
+    }
+
+    // Handle model placement
+    document.getElementById('place-button').addEventListener('click', () => {
+        if (currentInteractedItem) {
+            const spawnItem = deepClone(currentInteractedItem);
+            setOpacity(spawnItem, 1.0);
+            spawnItem.visible = true; // Make it visible when placed
+            scene.add(spawnItem);
+            placedItems.push(spawnItem);
+            console.log("Model placed:", spawnItem);
+            currentInteractedItem = null; // Reset selection
+            confirmButtons.style.display = 'none'; // Hide confirm buttons
+        }
+    });
+
+    document.getElementById('cancel-button').addEventListener('click', () => {
+        if (currentInteractedItem) {
+            currentInteractedItem = null; // Reset selection
+            console.log("Placement canceled");
+            confirmButtons.style.display = 'none'; // Hide confirm buttons
+        }
+    });
+
+    // Touch event listeners for interaction
     const controller = renderer.xr.getController(0); // Assuming using controller 0 for touch events
     controller.addEventListener('selectstart', () => {
         touchDown = true;
@@ -240,12 +179,65 @@ document.addEventListener("DOMContentLoaded", () => {
         tempMatrix.identity().extractRotation(controller.matrixWorld);
         raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        const intersects = raycaster.intersectObjects(placedItems);
+
+        if (intersects.length > 0) {
+            currentInteractedItem = intersects[0].object; // Select the touched object
+            confirmButtons.style.display = 'block'; // Show confirm buttons
+        }
     });
 
     controller.addEventListener('selectend', () => {
-        touchDown = false;
+        touchDown = false; // Reset touch state
+        currentInteractedItem = null; // Deselect the item
+        confirmButtons.style.display = 'none'; // Hide confirm buttons
     });
 
-    // Start the AR session and initialize the app
+    // Pinching for scaling
+    let isPinching = false;
+    let initialFingerPositions = [];
+    
+    // Add listener for controller events
+    renderer.xr.addEventListener("sessionstart", async () => {
+        const session = renderer.xr.getSession();
+        const viewerReferenceSpace = await session.requestReferenceSpace("viewer");
+        const hitTestSource = await session.requestHitTestSource({ space: viewerReferenceSpace });
+
+        // Handle the rendering loop for AR
+        renderer.setAnimationLoop((timestamp, frame) => {
+            if (frame) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                if (currentInteractedItem && hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const position = new THREE.Vector3().setFromMatrixPosition(hit.getPose(referenceSpace).transform.matrix);
+                    currentInteractedItem.position.copy(position);
+                }
+
+                // Pinching to scale
+                if (isPinching && currentInteractedItem) {
+                    const sessionSources = renderer.xr.getSession().inputSources;
+
+                    if (sessionSources.length === 2) {
+                        const newFingerPositions = [
+                            new THREE.Vector3(sessionSources[0].gamepad.axes[0], sessionSources[0].gamepad.axes[1], 0),
+                            new THREE.Vector3(sessionSources[1].gamepad.axes[0], sessionSources[1].gamepad.axes[1], 0)
+                        ];
+
+                        const distance = newFingerPositions[0].distanceTo(newFingerPositions[1]);
+                        const initialDistance = initialFingerPositions[0].distanceTo(initialFingerPositions[1]);
+                        const scale = distance / initialDistance;
+
+                        currentInteractedItem.scale.set(scale, scale, scale); // Scale the object
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        });
+    });
+
+    // Start the AR session
     initialize();
 });
