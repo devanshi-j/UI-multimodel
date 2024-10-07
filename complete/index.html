@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR App</title>
-    
     <style>
         body {
             margin: 0;
@@ -30,7 +29,7 @@
             left: 10px;
         }
         #close-button {
-            right: 10px;
+            left: 60px;
         }
         #sidebar-menu {
             width: 90px;
@@ -66,6 +65,9 @@
             cursor: pointer;
             display: none; /* Initially hidden */
         }
+        .submenu.open .item-image {
+            display: block; /* Show items when submenu is open */
+        }
         #confirm-buttons {
             display: none;
             position: fixed;
@@ -91,6 +93,7 @@
 <body>
     <!-- Menu Button -->
     <button id="menu-button">&equiv;</button>
+      <button id="close-button" style="display: none;">&times;</button>
 
     <!-- Sidebar with Categories -->
     <div id="sidebar-menu">
@@ -127,12 +130,13 @@
     </div>
 
     <!-- Close Button -->
-    <button id="close-button" style="display: none;">&times;</button>
+  
 
     <script>
         const menuButton = document.getElementById('menu-button');
         const closeButton = document.getElementById('close-button');
         const sidebarMenu = document.getElementById('sidebar-menu');
+        const icons = document.querySelectorAll('.icon');
 
         menuButton.addEventListener('click', function() {
             sidebarMenu.classList.add('open'); // Open the sidebar
@@ -144,6 +148,13 @@
             sidebarMenu.classList.remove('open'); // Close the sidebar
             closeButton.style.display = 'none'; // Hide close button
             menuButton.style.display = 'block'; // Show menu button
+        });
+
+        icons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                const submenu = icon.querySelector('.submenu');
+                submenu.classList.toggle('open'); // Toggle submenu visibility
+            });
         });
     </script>
 
