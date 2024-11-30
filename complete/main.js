@@ -123,6 +123,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Load the model only when selected
         try {
             const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+            if (!model || !model.scene) {
+                throw new Error(`Invalid model data for ${itemInfo.name}`);
+            }
+            console.log(`Successfully loaded model: ${itemInfo.name}`);
             normalizeModel(model.scene, itemInfo.height);
             currentInteractedItem = new THREE.Group();
             currentInteractedItem.add(model.scene);
@@ -232,16 +236,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             initialPinchDistance = distance;
                         }
 
-                        const scale = distance / initialPinchDistance;
-                        currentInteractedItem.scale.set(scale, scale, scale); // Scale the object
+                        const scaleFactor = distance / initialPinchDistance;
+                        currentInteractedItem.scale.multiplyScalar(scaleFactor);
+                        initialPinchDistance = distance; // Update the distance for the next frame
                     }
                 }
-
-                renderer.render(scene, camera);
             }
         });
     });
+};
 
-    // Start the AR session
-    initialize();
-});
+// Call initialize to start the AR session
+initialize();
