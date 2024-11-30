@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
-};
+});
 
 // Call initialize to start the AR session
 initialize();
