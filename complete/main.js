@@ -121,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const cancelButton = document.querySelector("#cancel");
 
         const showModel = (item) => {
+            console.log("Showing model:", item); // Debug
             selectedItem = item;
             selectedItem.visible = true;
             setOpacity(selectedItem, 0.5);
@@ -132,34 +133,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const placeModel = () => {
             if (selectedItem) {
+                console.log("Placing model:", selectedItem); // Debug
                 const clone = deepClone(selectedItem);
                 setOpacity(clone, 1.0);
                 scene.add(clone);
                 placedItems.push(clone);
-                cancelModel();
+                console.log("Model placed. Total placed items:", placedItems.length); // Debug
+                cancelModel(); // Hide the current model and reset the UI
+            } else {
+                console.log("No model selected to place."); // Debug
             }
         };
 
         const cancelModel = () => {
-            if (selectedItem) {
-                selectedItem.visible = false;
-                selectedItem = null;
-            }
-
-            // Hide buttons
+            // Hide buttons immediately
             placeButton.style.display = "none";
             cancelButton.style.display = "none";
+
+            if (selectedItem) {
+                console.log("Cancelling placement of:", selectedItem); // Debug
+                selectedItem.visible = false; // Hide the model
+                selectedItem = null; // Reset selection
+            }
         };
 
         placeButton.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log("Place button clicked."); // Debug
             placeModel();
         });
 
         cancelButton.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log("Cancel button clicked."); // Debug
             cancelModel();
         });
 
