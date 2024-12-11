@@ -117,7 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Interaction logic
-        let currentTransform = { scale: 1, rotation: 0 }; // Stores transformation state
+        let dragStart = null;
+        let isDragging = false;
+
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
@@ -153,13 +155,10 @@ document.addEventListener("DOMContentLoaded", () => {
         placeButton.addEventListener("click", placeModel);
         cancelButton.addEventListener("click", cancelModel);
 
-        // Raycasting for interactions
+        // Raycasting for selecting and interacting with placed models
         const raycaster = new THREE.Raycaster();
         const controller = renderer.xr.getController(0);
         scene.add(controller);
-
-        let isDragging = false;
-        let dragStart = null;
 
         controller.addEventListener("selectstart", () => {
             const tempMatrix = new THREE.Matrix4();
@@ -171,8 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const intersects = raycaster.intersectObjects(placedItems, true);
 
             if (intersects.length > 0) {
-                const selectedObject = intersects[0].object.parent;
-                selectedItem = selectedObject;
+                selectedItem = intersects[0].object.parent;
                 dragStart = intersects[0].point;
                 isDragging = true;
             }
@@ -185,30 +183,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Update loop for dragging, scaling, and rotating
         renderer.setAnimationLoop(() => {
-            if (isDragging && selectedItem && dragStart) {
+            if (isDragging && selectedItem) {
                 const tempMatrix = new THREE.Matrix4();
                 tempMatrix.identity().extractRotation(controller.matrixWorld);
 
                 raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
                 raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
-                const intersects = raycaster.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
-                if (intersects) {
-                    selectedItem.position.copy(intersects);
-                }
-            }
+                const intersects = raycaster.intersectObject(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
 
-            // Handle scaling with pinch gesture
-            if (selectedItem) {
-                const pinchScale = controller.getPinchScale(); // Assume this function exists
-                if (pinchScale) {
-                    selectedItem.scale.set(currentTransform.scale * pinchScale, currentTransform.scale * pinchScale, currentTransform.scale * pinchScale);
-                }
-
-                // Handle rotation with rotation gesture
-                const rotationDelta = controller.getRotationDelta(); // Assume this function exists
-                if (rotationDelta) {
-                    selectedItem.rotation.y += rotationDelta;
+                if (intersects.length > 0) {
+                    selectedItem.position.copy(intersects[0].point);
                 }
             }
 
