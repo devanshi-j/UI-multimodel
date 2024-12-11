@@ -79,6 +79,16 @@ document.addEventListener("DOMContentLoaded", () => {
             menuButton.style.display = "block";
         });
 
+        // Submenu toggle logic
+        const icons = document.querySelectorAll(".icon");
+        icons.forEach((icon) => {
+            icon.addEventListener("click", (event) => {
+                const submenu = icon.querySelector(".submenu");
+                submenu.classList.toggle("open");
+                event.stopPropagation();
+            });
+        });
+
         // Load models
         const placedItems = [];
         let selectedItem = null;
@@ -106,7 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Show and place item logic
+        // Interaction logic
+        let currentTransform = { scale: 1, rotation: 0 }; // Stores transformation state
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
@@ -126,41 +137,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 setOpacity(clone, 1.0);
                 scene.add(clone);
                 placedItems.push(clone);
-                cancelModel();
+                cancelModel(); // Hide the current model and reset the UI
             }
         };
 
         const cancelModel = () => {
             placeButton.style.display = "none";
             cancelButton.style.display = "none";
-
             if (selectedItem) {
                 selectedItem.visible = false;
                 selectedItem = null;
             }
         };
 
-        placeButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            placeModel();
-        });
+        placeButton.addEventListener("click", placeModel);
+        cancelButton.addEventListener("click", cancelModel);
 
-        cancelButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelModel();
-        });
-
-        // Raycasting for selection and interactions
+        // Raycasting for interactions
         const raycaster = new THREE.Raycaster();
-        const pointer = new THREE.Vector2();
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
         let isDragging = false;
-        let lastTouchDistance = null;
-        let rotationStart = null;
+        let dragStart = null;
 
         controller.addEventListener("selectstart", () => {
             const tempMatrix = new THREE.Matrix4();
@@ -172,85 +171,42 @@ document.addEventListener("DOMContentLoaded", () => {
             const intersects = raycaster.intersectObjects(placedItems, true);
 
             if (intersects.length > 0) {
-                selectedItem = intersects[0].object.parent;
-                console.log("Selected item:", selectedItem);
-            }
-        });
-
-        const handlePointerMove = (event) => {
-            if (!selectedItem) return;
-
-            const touch = event.touches[0];
-            pointer.x = (touch.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(pointer, camera);
-
-            const intersects = raycaster.intersectObjects(placedItems, true);
-            if (intersects.length > 0) {
-                const intersect = intersects[0];
-                selectedItem.position.copy(intersect.point);
+                const selectedObject = intersects[0].object.parent;
+                selectedItem = selectedObject;
+                dragStart = intersects[0].point;
                 isDragging = true;
             }
-        };
-
-        const handlePinch = (event) => {
-            if (event.touches.length === 2 && selectedItem) {
-                const dx = event.touches[0].clientX - event.touches[1].clientX;
-                const dy = event.touches[0].clientY - event.touches[1].clientY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (lastTouchDistance) {
-                    const scaleFactor = distance / lastTouchDistance;
-                    selectedItem.scale.multiplyScalar(scaleFactor);
-                }
-
-                lastTouchDistance = distance;
-            }
-        };
-
-        const handleRotation = (event) => {
-            if (event.touches.length === 2 && selectedItem) {
-                const dx = event.touches[0].clientX - event.touches[1].clientX;
-                const dy = event.touches[0].clientY - event.touches[1].clientY;
-                const angle = Math.atan2(dy, dx);
-
-                if (rotationStart !== null) {
-                    const deltaAngle = angle - rotationStart;
-                    selectedItem.rotation.y += deltaAngle;
-                }
-
-                rotationStart = angle;
-            }
-        };
-
-        document.addEventListener("touchmove", (event) => {
-            if (event.touches.length === 1) handlePointerMove(event);
-            else if (event.touches.length === 2) {
-                handlePinch(event);
-                handleRotation(event);
-            }
         });
 
-        document.addEventListener("touchend", () => {
-         isDragging = false;
-            lastTouchDistance = null;
-            rotationStart = null;
+        controller.addEventListener("selectend", () => {
+            isDragging = false;
+            dragStart = null;
         });
 
-        // Render loop
-        const animate = () => {
-            renderer.setAnimationLoop(() => {
-                renderer.render(scene, camera);
-            });
-        };
+        // Update loop for dragging
+        renderer.setAnimationLoop(() => {
+            if (isDragging && selectedItem && dragStart) {
+                const tempMatrix = new THREE.Matrix4();
+                tempMatrix.identity().extractRotation(controller.matrixWorld);
 
-        animate();
+                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+                raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
-        // Handle window resizing
+                const intersects = raycaster.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
+                if (intersects) {
+                    selectedItem.position.copy(intersects);
+                }
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        // Handle resizing
         window.addEventListener("resize", () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
             camera.updateProjectionMatrix();
         });
     };
