@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
             dragStart = null;
         });
 
-        // Update loop for dragging
+        // Update loop for dragging, scaling, and rotating
         renderer.setAnimationLoop(() => {
             if (isDragging && selectedItem && dragStart) {
                 const tempMatrix = new THREE.Matrix4();
@@ -195,6 +195,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 const intersects = raycaster.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
                 if (intersects) {
                     selectedItem.position.copy(intersects);
+                }
+            }
+
+            // Handle scaling with pinch gesture
+            if (selectedItem) {
+                const pinchScale = controller.getPinchScale(); // Assume this function exists
+                if (pinchScale) {
+                    selectedItem.scale.set(currentTransform.scale * pinchScale, currentTransform.scale * pinchScale, currentTransform.scale * pinchScale);
+                }
+
+                // Handle rotation with rotation gesture
+                const rotationDelta = controller.getRotationDelta(); // Assume this function exists
+                if (rotationDelta) {
+                    selectedItem.rotation.y += rotationDelta;
                 }
             }
 
