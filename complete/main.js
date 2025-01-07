@@ -171,38 +171,39 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        const onTouchMove = (event) => {
-            if (event.touches.length === 1 && initialTouchPositions.length === 1) {
-                const touch = event.touches[0];
-                const dx = touch.clientX - lastTouchPosition.x;
-                lastTouchPosition.set(touch.clientX, touch.clientY);
+       const onTouchMove = (event) => {
+    if (event.touches.length === 1 && initialTouchPositions.length === 1) {
+        const touch = event.touches[0];
+        const dx = touch.clientX - lastTouchPosition.x;
+        lastTouchPosition.set(touch.clientX, touch.clientY);
 
-                if (selectedItem) {
-                    const deltaRotationY = dx * 0.01;
-                    selectedItem.rotation.y = initialRotation + deltaRotationY;
-                }
-            } else if (event.touches.length === 2 && initialTouchPositions.length === 2) {
-                const newDistance = getDistance(event.touches[0], event.touches[1]);
-                const scale = newDistance / initialDistance;
+        if (selectedItem) {
+            const deltaRotationY = dx * 0.05; // Increased from 0.01 to 0.05 for faster rotation
+            selectedItem.rotation.y = initialRotation + deltaRotationY;
+        }
+    } else if (event.touches.length === 2 && initialTouchPositions.length === 2) {
+        const newDistance = getDistance(event.touches[0], event.touches[1]);
+        const scale = newDistance / initialDistance;
 
-                if (selectedItem) {
-                    selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale));
-                }
+        if (selectedItem) {
+            selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale * 0.5)); // Decreased scaling speed by multiplying with 0.5
+        }
 
-                const dx1 = event.touches[0].clientX - initialTouchPositions[0].clientX;
-                const dy1 = event.touches[0].clientY - initialTouchPositions[0].clientY;
-                const dx2 = event.touches[1].clientX - initialTouchPositions[1].clientX;
-                const dy2 = event.touches[1].clientY - initialTouchPositions[1].clientY;
+        const dx1 = event.touches[0].clientX - initialTouchPositions[0].clientX;
+        const dy1 = event.touches[0].clientY - initialTouchPositions[0].clientY;
+        const dx2 = event.touches[1].clientX - initialTouchPositions[1].clientX;
+        const dy2 = event.touches[1].clientY - initialTouchPositions[1].clientY;
 
-                const dx = (dx1 + dx2) / 2;
-                const dy = (dy1 + dy2) / 2;
+        const dx = (dx1 + dx2) / 2;
+        const dy = (dy1 + dy2) / 2;
 
-                if (selectedItem) {
-                    selectedItem.position.x += dx * 0.01;
-                    selectedItem.position.z -= dy * 0.01;
-                }
-            }
-        };
+        if (selectedItem) {
+            selectedItem.position.x += dx * 0.005; // Decreased dragging speed by reducing the factor
+            selectedItem.position.z -= dy * 0.005;
+        }
+    }
+};
+
 
         const onTouchEnd = (event) => {
             initialTouchPositions = [];
