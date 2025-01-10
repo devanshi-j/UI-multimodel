@@ -49,11 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
-        // Add lighting
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         scene.add(light);
 
-        // Add AR Button
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
@@ -62,24 +60,34 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
-        // Sidebar toggle logic
+        // UI Elements
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
+        const confirmButtons = document.getElementById("confirm-buttons");
+        const placeButton = document.querySelector("#place");
+        const cancelButton = document.querySelector("#cancel");
 
+        if (!placeButton || !cancelButton) {
+            console.error("Place or Cancel buttons not found in DOM");
+            return;
+        }
+
+        // UI Event Listeners
         menuButton.addEventListener("click", () => {
+            console.log("Menu button clicked");
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
             closeButton.style.display = "block";
         });
 
         closeButton.addEventListener("click", () => {
+            console.log("Close button clicked");
             sidebarMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
         });
 
-        // Submenu toggle logic
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
@@ -89,10 +97,85 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Load models
+        // Model Management
         const placedItems = [];
+        let previewItem = null;
         let selectedItem = null;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
 
+        const showModel = (item) => {
+            console.log("Showing model preview");
+            previewItem = item;
+            previewItem.visible = true;
+            setOpacity(previewItem, 0.5);
+            confirmButtons.style.display = "flex";
+            console.log("Preview model displayed");
+        };
+
+        const placeModel = () => {
+            console.log("Place button clicked");
+            if (previewItem) {
+                console.log("Preview item exists, placing model");
+                const clone = deepClone(previewItem);
+                setOpacity(clone, 1.0);
+                clone.position.copy(previewItem.position);
+                clone.rotation.copy(previewItem.rotation);
+                clone.scale.copy(previewItem.scale);
+                scene.add(clone);
+                placedItems.push(clone);
+                console.log("Model placed successfully");
+                cancelModel();
+            } else {
+                console.log("No preview item available");
+            }
+        };
+
+        const cancelModel = () => {
+            console.log("Cancel button clicked");
+            confirmButtons.style.display = "none";
+            if (previewItem) {
+                console.log("Hiding preview item");
+                previewItem.visible = false;
+                previewItem = null;
+            } else {
+                console.log("No preview item to cancel");
+            }
+        };
+
+        // Model Selection & Interaction
+        const selectModel = (model) => {
+            // Deselect previous model
+            if (selectedItem && selectedItem !== model) {
+                setOpacity(selectedItem, 1.0);
+            }
+            selectedItem = model;
+            setOpacity(selectedItem, 0.8); // Highlight selected model
+        };
+
+        const checkIntersection = (event) => {
+            // Calculate mouse position in normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(placedItems, true);
+
+            if (intersects.length > 0) {
+                // Find the top-level parent that's in placedItems
+                let targetObject = intersects[0].object;
+                while (targetObject.parent && !placedItems.includes(targetObject)) {
+                    targetObject = targetObject.parent;
+                }
+                if (placedItems.includes(targetObject)) {
+                    selectModel(targetObject);
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        // Load and setup models
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
                 const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
@@ -101,106 +184,108 @@ document.addEventListener("DOMContentLoaded", () => {
                 const item = new THREE.Group();
                 item.add(model.scene);
                 item.visible = false;
-                setOpacity(item, 0.5);
                 scene.add(item);
 
-                // Add event listener for the thumbnail
                 const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
                 if (thumbnail) {
                     thumbnail.addEventListener("click", (e) => {
+                        console.log(`Thumbnail clicked: ${category}-${itemInfo.name}`);
                         e.preventDefault();
                         e.stopPropagation();
                         showModel(item);
                     });
+                } else {
+                    console.error(`Thumbnail not found: ${category}-${itemInfo.name}`);
                 }
             }
         }
 
-        // Interaction logic
-        let dragStart = null;
-        let isDragging = false;
-
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-
-        const showModel = (item) => {
-            selectedItem = item;
-            selectedItem.visible = true;
-            setOpacity(selectedItem, 0.5);
-
-            // Show buttons
-            placeButton.style.display = "block";
-            cancelButton.style.display = "block";
-        };
-
-        const placeModel = () => {
-            if (selectedItem) {
-                const clone = deepClone(selectedItem);
-                setOpacity(clone, 1.0);
-                scene.add(clone);
-                placedItems.push(clone);
-                cancelModel(); // Hide the current model and reset the UI
-            }
-        };
-
-        const cancelModel = () => {
-            placeButton.style.display = "none";
-            cancelButton.style.display = "none";
-            if (selectedItem) {
-                selectedItem.visible = false;
-                selectedItem = null;
-            }
-        };
-
+        // Add button event listeners
         placeButton.addEventListener("click", placeModel);
         cancelButton.addEventListener("click", cancelModel);
 
-        // Raycasting for selecting and interacting with placed models
-        const raycaster = new THREE.Raycaster();
-        const controller = renderer.xr.getController(0);
-        scene.add(controller);
+        // Touch Interaction Variables
+        let initialTouchPositions = [];
+        let initialDistance = 0;
+        let initialScale = new THREE.Vector3();
+        let lastTouchPosition = new THREE.Vector2();
+        let initialRotation = 0;
 
-        controller.addEventListener("selectstart", () => {
-            const tempMatrix = new THREE.Matrix4();
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
+        const getDistance = (touch1, touch2) => {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
 
-            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        // Touch Event Handlers
+        const onTouchStart = (event) => {
+            if (event.touches.length === 1) {
+                // Single touch - try to select a model
+                const touch = event.touches[0];
+                const didSelect = checkIntersection({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
 
-            const intersects = raycaster.intersectObjects(placedItems, true);
-
-            if (intersects.length > 0) {
-                selectedItem = intersects[0].object.parent;
-                dragStart = intersects[0].point;
-                isDragging = true;
-            }
-        });
-
-        controller.addEventListener("selectend", () => {
-            isDragging = false;
-            dragStart = null;
-        });
-
-        // Update loop for dragging, scaling, and rotating
-        renderer.setAnimationLoop(() => {
-            if (isDragging && selectedItem) {
-                const tempMatrix = new THREE.Matrix4();
-                tempMatrix.identity().extractRotation(controller.matrixWorld);
-
-                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-                raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-                const intersects = raycaster.intersectObject(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
-
-                if (intersects.length > 0) {
-                    selectedItem.position.copy(intersects[0].point);
+                if (didSelect) {
+                    lastTouchPosition.set(touch.clientX, touch.clientY);
+                    initialRotation = selectedItem.rotation.y;
                 }
+            } 
+            
+            initialTouchPositions = Array.from(event.touches);
+            if (event.touches.length === 2 && selectedItem) {
+                initialDistance = getDistance(event.touches[0], event.touches[1]);
+                initialScale.copy(selectedItem.scale);
             }
+        };
 
+        const onTouchMove = (event) => {
+            if (event.touches.length === 1 && selectedItem) {
+                const touch = event.touches[0];
+                const dx = touch.clientX - lastTouchPosition.x;
+                lastTouchPosition.set(touch.clientX, touch.clientY);
+
+                const deltaRotationY = dx * 0.05;
+                selectedItem.rotation.y += deltaRotationY;
+            } else if (event.touches.length === 2 && selectedItem) {
+                const newDistance = getDistance(event.touches[0], event.touches[1]);
+                const scale = newDistance / initialDistance;
+
+                selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale * 0.3));
+
+                const dx1 = event.touches[0].clientX - initialTouchPositions[0].clientX;
+                const dy1 = event.touches[0].clientY - initialTouchPositions[0].clientY;
+                const dx2 = event.touches[1].clientX - initialTouchPositions[1].clientX;
+                const dy2 = event.touches[1].clientY - initialTouchPositions[1].clientY;
+
+                const dx = (dx1 + dx2) / 2;
+                const dy = (dy1 + dy2) / 2;
+
+                selectedItem.position.x += dx * 0.0002;
+                selectedItem.position.z -= dy * 0.0002;
+            }
+        };
+
+        const onTouchEnd = (event) => {
+            initialTouchPositions = [];
+            if (event.touches.length === 0) {
+                // No touches left, keep the current selection
+            }
+        };
+
+        // Add event listeners
+        window.addEventListener("touchstart", onTouchStart);
+        window.addEventListener("touchmove", onTouchMove);
+        window.addEventListener("touchend", onTouchEnd);
+        window.addEventListener("click", checkIntersection);
+
+        // Render loop
+        renderer.setAnimationLoop(() => {
             renderer.render(scene, camera);
         });
 
-        // Handle resizing
+        // Window resize handler
         window.addEventListener("resize", () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
