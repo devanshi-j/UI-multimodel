@@ -63,6 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
+        const placeButton = document.querySelector("#place");
+        const cancelButton = document.querySelector("#cancel");
 
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
@@ -88,35 +90,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const placedItems = [];
         let selectedItem = null;
 
-        for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
-                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                normalizeModel(model.scene, itemInfo.height);
-
-                const item = new THREE.Group();
-                item.add(model.scene);
-                item.visible = false;
-                setOpacity(item, 0.5); // Make it visible with 0.5 opacity initially
-                scene.add(item);
-
-                const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
-                if (thumbnail) {
-                    thumbnail.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showModel(item);
-                    });
-                }
-            }
-        }
-
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-
         const showModel = (item) => {
+            // Hide any previously selected item
+            if (selectedItem) {
+                selectedItem.visible = false;
+            }
+            
             selectedItem = item;
             selectedItem.visible = true;
-            setOpacity(selectedItem, 0.5); // Show with 0.5 opacity initially
+            setOpacity(selectedItem, 0.5); // Show with 0.5 opacity
             placeButton.style.display = "block";
             cancelButton.style.display = "block";
         };
@@ -125,6 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (selectedItem) {
                 const clone = deepClone(selectedItem);
                 setOpacity(clone, 1.0); // Full opacity when placed
+                // Copy the current position, rotation and scale
+                clone.position.copy(selectedItem.position);
+                clone.rotation.copy(selectedItem.rotation);
+                clone.scale.copy(selectedItem.scale);
                 scene.add(clone);
                 placedItems.push(clone);
                 cancelModel();
@@ -139,6 +125,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedItem = null;
             }
         };
+
+        // Load and setup models
+        for (const category in itemCategories) {
+            for (const itemInfo of itemCategories[category]) {
+                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+                normalizeModel(model.scene, itemInfo.height);
+
+                const item = new THREE.Group();
+                item.add(model.scene);
+                item.visible = false;
+                scene.add(item);
+
+                const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
+                if (thumbnail) {
+                    thumbnail.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showModel(item);
+                    });
+                }
+            }
+        }
 
         placeButton.addEventListener("click", placeModel);
         cancelButton.addEventListener("click", cancelModel);
@@ -178,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 lastTouchPosition.set(touch.clientX, touch.clientY);
 
                 if (selectedItem) {
-                    const deltaRotationY = dx * 0.05; // Increased from 0.01 to 0.05 for faster rotation
+                    const deltaRotationY = dx * 0.05;
                     selectedItem.rotation.y = initialRotation + deltaRotationY;
                 }
             } else if (event.touches.length === 2 && initialTouchPositions.length === 2) {
@@ -186,7 +194,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const scale = newDistance / initialDistance;
 
                 if (selectedItem) {
-                    selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale * 0.5)); // Decreased scaling speed by multiplying with 0.5
+                    // Reduced scaling speed
+                    selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale * 0.3));
                 }
 
                 const dx1 = event.touches[0].clientX - initialTouchPositions[0].clientX;
@@ -198,8 +207,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const dy = (dy1 + dy2) / 2;
 
                 if (selectedItem) {
-                    selectedItem.position.x += dx * 0.005; // Decreased dragging speed by reducing the factor
-                    selectedItem.position.z -= dy * 0.005;
+                    // Reduced dragging speed
+                    selectedItem.position.x += dx * 0.002;
+                    selectedItem.position.z -= dy * 0.002;
                 }
             }
         };
