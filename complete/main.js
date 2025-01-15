@@ -41,7 +41,7 @@ const itemCategories = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene and AR setup
+        // Scene and AR setup remain the same
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
-        // UI Elements
+        // UI Elements remain the same
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
-        // UI Event Listeners
+        // UI Event Listeners remain the same
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Model Management
+        // Model Management remains the same
         const placedItems = [];
         let previewItem = null;
         let selectedItem = null;
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
         };
 
-        // Touch Interaction Variables
+        // Modified Touch Interaction Variables
         let initialTouchPositions = [];
         let initialDistance = 0;
         let initialScale = new THREE.Vector3();
@@ -163,8 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let initialModelPosition = new THREE.Vector3();
         let isScaling = false;
         let isDragging = false;
-        let touchStartTime = 0;
-        const ROTATION_SPEED = 0.02;
+        const ROTATION_SPEED = 0.01;
         const MOVEMENT_SPEED = 0.005;
 
         const getDistance = (touch1, touch2) => {
@@ -173,17 +172,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return Math.sqrt(dx * dx + dy * dy);
         };
 
-        const getRotationAngle = (touch, center) => {
-            return Math.atan2(
-                touch.clientY - center.y,
-                touch.clientX - center.x
-            );
-        };
-
-        // Touch Event Handlers
+        // Modified Touch Event Handlers
         const onTouchStart = (event) => {
-            touchStartTime = Date.now();
-            
             if (event.touches.length === 1) {
                 const touch = event.touches[0];
                 const didSelect = checkIntersection({
@@ -192,24 +182,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (didSelect && selectedItem) {
-                    isDragging = true;
+                    isDragging = false; // Single finger is for rotation only
                     lastTouchPosition.set(touch.clientX, touch.clientY);
                     initialRotation = selectedItem.rotation.y;
-                    initialModelPosition.copy(selectedItem.position);
                 }
             } else if (event.touches.length === 2 && selectedItem) {
-                isScaling = true;
-                isDragging = false;
-                
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
+                isDragging = true;
+                isScaling = true;
+                
                 initialDistance = getDistance(touch1, touch2);
                 initialScale.copy(selectedItem.scale);
                 initialModelPosition.copy(selectedItem.position);
-                
-                const centerX = (touch1.clientX + touch2.clientX) / 2;
-                const centerY = (touch1.clientY + touch2.clientY) / 2;
-                initialRotation = getRotationAngle(touch1, { x: centerX, y: centerY });
+                lastTouchPosition.set(
+                    (touch1.clientX + touch2.clientX) / 2,
+                    (touch1.clientY + touch2.clientY) / 2
+                );
             }
             
             initialTouchPositions = Array.from(event.touches);
@@ -218,12 +207,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const onTouchMove = (event) => {
             if (!selectedItem) return;
 
-            if (event.touches.length === 1 && isDragging) {
+            if (event.touches.length === 1) {
+                // Single finger rotation
                 const touch = event.touches[0];
-                const deltaTime = Date.now() - touchStartTime;
-                
                 const dx = touch.clientX - lastTouchPosition.x;
-                const dy = touch.clientY - lastTouchPosition.y;
+                selectedItem.rotation.y = initialRotation + (dx * ROTATION_SPEED);
+                lastTouchPosition.set(touch.clientX, touch.clientY);
+            } else if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                
+                // Two-finger dragging
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                
+                const dx = centerX - lastTouchPosition.x;
+                const dy = centerY - lastTouchPosition.y;
                 
                 const worldDx = dx * MOVEMENT_SPEED;
                 const worldDy = -dy * MOVEMENT_SPEED;
@@ -231,24 +230,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedItem.position.x = initialModelPosition.x + worldDx;
                 selectedItem.position.y = initialModelPosition.y + worldDy;
                 
-                if (deltaTime > 200 && Math.abs(dx) > Math.abs(dy)) {
-                    selectedItem.rotation.y = initialRotation + (dx * ROTATION_SPEED);
+                // Scaling remains the same
+                if (isScaling) {
+                    const newDistance = getDistance(touch1, touch2);
+                    const scale = newDistance / initialDistance;
+                    selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale));
                 }
                 
-                lastTouchPosition.set(touch.clientX, touch.clientY);
-            } else if (event.touches.length === 2 && isScaling) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-                
-                const newDistance = getDistance(touch1, touch2);
-                const scale = newDistance / initialDistance;
-                selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale));
-                
-                const centerX = (touch1.clientX + touch2.clientX) / 2;
-                const centerY = (touch1.clientY + touch2.clientY) / 2;
-                const currentRotation = getRotationAngle(touch1, { x: centerX, y: centerY });
-                const rotationDelta = currentRotation - initialRotation;
-                selectedItem.rotation.y = initialRotation + rotationDelta;
+                lastTouchPosition.set(centerX, centerY);
             }
         };
 
@@ -256,9 +245,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (event.touches.length === 0) {
                 isDragging = false;
                 isScaling = false;
+            } else if (event.touches.length === 1) {
+                // Transition from two fingers to one finger
+                const touch = event.touches[0];
+                lastTouchPosition.set(touch.clientX, touch.clientY);
+                initialRotation = selectedItem.rotation.y;
+                isDragging = false;
+                isScaling = false;
             }
             initialTouchPositions = Array.from(event.touches);
-            touchStartTime = 0;
         };
 
         // Load and setup models
