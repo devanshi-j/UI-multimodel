@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions remain the same
+// Utility functions
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -32,7 +32,7 @@ const deepClone = (obj) => {
     return newObj;
 };
 
-// Item categories remain the same
+// Item categories
 const itemCategories = {
     lamp: [{ name: "lamp1", height: 0.3 }],
     sofa: [{ name: "sofa1", height: 0.1 }],
@@ -41,7 +41,7 @@ const itemCategories = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene and AR setup remains the same
+        // Scene and AR setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
-        // UI Elements and event listeners remain the same
+        // UI Elements
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
+        // UI Event Listeners
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
@@ -89,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Model Management remains the same
+        // Model Management
         const placedItems = [];
         let previewItem = null;
         let selectedItem = null;
@@ -124,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // Model Selection & Interaction remains the same
+        // Model Selection & Interaction
         const selectModel = (model) => {
             if (selectedItem && selectedItem !== model) {
                 setOpacity(selectedItem, 1.0);
@@ -153,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
         };
 
-        // Modified Touch Interaction Variables
+        // Touch Interaction Variables
         let initialTouchPositions = [];
         let initialDistance = 0;
         let initialScale = new THREE.Vector3();
@@ -162,6 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         let initialModelPosition = new THREE.Vector3();
         let isScaling = false;
         let isDragging = false;
+        let touchStartTime = 0;
+        const ROTATION_SPEED = 0.02;
+        const MOVEMENT_SPEED = 0.005;
 
         const getDistance = (touch1, touch2) => {
             const dx = touch1.clientX - touch2.clientX;
@@ -169,8 +173,17 @@ document.addEventListener("DOMContentLoaded", () => {
             return Math.sqrt(dx * dx + dy * dy);
         };
 
-        // Modified Touch Event Handlers
+        const getRotationAngle = (touch, center) => {
+            return Math.atan2(
+                touch.clientY - center.y,
+                touch.clientX - center.x
+            );
+        };
+
+        // Touch Event Handlers
         const onTouchStart = (event) => {
+            touchStartTime = Date.now();
+            
             if (event.touches.length === 1) {
                 const touch = event.touches[0];
                 const didSelect = checkIntersection({
@@ -187,31 +200,55 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (event.touches.length === 2 && selectedItem) {
                 isScaling = true;
                 isDragging = false;
-                initialDistance = getDistance(event.touches[0], event.touches[1]);
+                
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                initialDistance = getDistance(touch1, touch2);
                 initialScale.copy(selectedItem.scale);
                 initialModelPosition.copy(selectedItem.position);
+                
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                initialRotation = getRotationAngle(touch1, { x: centerX, y: centerY });
             }
             
             initialTouchPositions = Array.from(event.touches);
         };
 
         const onTouchMove = (event) => {
-            if (event.touches.length === 1 && isDragging && selectedItem) {
+            if (!selectedItem) return;
+
+            if (event.touches.length === 1 && isDragging) {
                 const touch = event.touches[0];
+                const deltaTime = Date.now() - touchStartTime;
+                
                 const dx = touch.clientX - lastTouchPosition.x;
                 const dy = touch.clientY - lastTouchPosition.y;
-                lastTouchPosition.set(touch.clientX, touch.clientY);
-
-                // Only move in X and Y axes (no Z-axis movement)
-                selectedItem.position.x = initialModelPosition.x + (dx * 0.002);
-                selectedItem.position.y = initialModelPosition.y - (dy * 0.002);
-            } else if (event.touches.length === 2 && isScaling && selectedItem) {
-                const newDistance = getDistance(event.touches[0], event.touches[1]);
-                const scale = newDistance / initialDistance;
                 
-                // Keep position stable while scaling
-                selectedItem.position.copy(initialModelPosition);
+                const worldDx = dx * MOVEMENT_SPEED;
+                const worldDy = -dy * MOVEMENT_SPEED;
+                
+                selectedItem.position.x = initialModelPosition.x + worldDx;
+                selectedItem.position.y = initialModelPosition.y + worldDy;
+                
+                if (deltaTime > 200 && Math.abs(dx) > Math.abs(dy)) {
+                    selectedItem.rotation.y = initialRotation + (dx * ROTATION_SPEED);
+                }
+                
+                lastTouchPosition.set(touch.clientX, touch.clientY);
+            } else if (event.touches.length === 2 && isScaling) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                
+                const newDistance = getDistance(touch1, touch2);
+                const scale = newDistance / initialDistance;
                 selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale));
+                
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                const currentRotation = getRotationAngle(touch1, { x: centerX, y: centerY });
+                const rotationDelta = currentRotation - initialRotation;
+                selectedItem.rotation.y = initialRotation + rotationDelta;
             }
         };
 
@@ -220,10 +257,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 isDragging = false;
                 isScaling = false;
             }
-            initialTouchPositions = [];
+            initialTouchPositions = Array.from(event.touches);
+            touchStartTime = 0;
         };
 
-        // Load and setup models remains the same
+        // Load and setup models
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
                 const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
