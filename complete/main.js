@@ -277,26 +277,31 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Button event listeners
-        placeButton.addEventListener("click", placeModel);
-        cancelButton.addEventListener("click", cancelModel);
-
-        // Event listeners
-        window.addEventListener("touchstart", onTouchStart, false);
-        window.addEventListener("touchmove", onTouchMove, false);
-        window.addEventListener("touchend", onTouchEnd, false);
-
-        // Animation loop
-        renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
+        // Button Event Listeners
+        placeButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            placeModel();
         });
 
-        // Handle window resize
-        window.addEventListener("resize", () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        cancelButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelModel();
         });
+
+        // Render Loop
+        const renderLoop = () => {
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
+        };
+
+        window.addEventListener("touchstart", onTouchStart, { passive: false });
+        window.addEventListener("touchmove", onTouchMove, { passive: false });
+        window.addEventListener("touchend", onTouchEnd, { passive: false });
+
+        renderLoop();
     };
 
     initialize();
