@@ -155,16 +155,21 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         // Touch Interaction Variables
-        let initialTouchPositions = [];
-        let initialDistance = 0;
-        let initialScale = new THREE.Vector3();
-        let lastTouchPosition = new THREE.Vector2();
-        let initialRotation = 0;
-        let initialModelPosition = new THREE.Vector3();
-        let isScaling = false;
-        let isDragging = false;
-        const ROTATION_SPEED = 0.01;
-        const MOVEMENT_SPEED = 0.005;
+        let touchState = {
+            isRotating: false,
+            isDragging: false,
+            isScaling: false,
+            lastTouch: new THREE.Vector2(),
+            initialRotation: 0,
+            initialScale: new THREE.Vector3(),
+            initialModelPosition: new THREE.Vector3(),
+            initialDistance: 0,
+            rotationSpeed: 0.01,
+            movementSpeed: 0.003,
+            scaleSpeed: 0.01,
+            movementThreshold: 1, // pixels
+            rotationThreshold: 1, // degrees
+        };
 
         const getDistance = (touch1, touch2) => {
             const dx = touch1.clientX - touch2.clientX;
@@ -172,8 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
             return Math.sqrt(dx * dx + dy * dy);
         };
 
-        // Touch Event Handlers
+        const getCenter = (touch1, touch2) => {
+            return {
+                x: (touch1.clientX + touch2.clientX) / 2,
+                y: (touch1.clientY + touch2.clientY) / 2
+            };
+        };
+
+        // Improved Touch Event Handlers
         const onTouchStart = (event) => {
+            event.preventDefault();
+            
             if (event.touches.length === 1) {
                 const touch = event.touches[0];
                 const didSelect = checkIntersection({
@@ -182,77 +196,94 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (didSelect && selectedItem) {
-                    isDragging = true;
-                    lastTouchPosition.set(touch.clientX, touch.clientY);
-                    initialRotation = selectedItem.rotation.y;
+                    touchState.isRotating = true;
+                    touchState.lastTouch.set(touch.clientX, touch.clientY);
+                    touchState.initialRotation = selectedItem.rotation.y;
                 }
             } else if (event.touches.length === 2 && selectedItem) {
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
-                isDragging = true;
-                isScaling = true;
-
-                initialDistance = getDistance(touch1, touch2);
-                initialScale.copy(selectedItem.scale);
-                initialModelPosition.copy(selectedItem.position);
-                lastTouchPosition.set(
-                    (touch1.clientX + touch2.clientX) / 2,
-                    (touch1.clientY + touch2.clientY) / 2
-                );
+                
+                touchState.isDragging = true;
+                touchState.isScaling = true;
+                touchState.isRotating = false;
+                
+                touchState.initialDistance = getDistance(touch1, touch2);
+                touchState.initialScale.copy(selectedItem.scale);
+                touchState.initialModelPosition.copy(selectedItem.position);
+                
+                const center = getCenter(touch1, touch2);
+                touchState.lastTouch.set(center.x, center.y);
             }
-
-            initialTouchPositions = Array.from(event.touches);
         };
 
         const onTouchMove = (event) => {
+            event.preventDefault();
+            
             if (!selectedItem) return;
 
-            if (event.touches.length === 1) {
-                // Single finger rotation
+            if (event.touches.length === 1 && touchState.isRotating) {
                 const touch = event.touches[0];
-                const dx = touch.clientX - lastTouchPosition.x;
-                selectedItem.rotation.y = initialRotation + dx * ROTATION_SPEED;
-                lastTouchPosition.set(touch.clientX, touch.clientY);
-            } else if (event.touches.length === 2) {
+                const dx = touch.clientX - touchState.lastTouch.x;
+                
+                // Apply smoothing to rotation
+                if (Math.abs(dx) > touchState.rotationThreshold) {
+                    const rotation = dx * touchState.rotationSpeed;
+                    selectedItem.rotation.y += rotation;
+                }
+                
+                touchState.lastTouch.set(touch.clientX, touch.clientY);
+            } else if (event.touches.length === 2 && (touchState.isDragging || touchState.isScaling)) {
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
+                const center = getCenter(touch1, touch2);
 
-                // Two-finger dragging
-                const centerX = (touch1.clientX + touch2.clientX) / 2;
-                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                // Smooth movement
+                if (touchState.isDragging) {
+                    const dx = center.x - touchState.lastTouch.x;
+                    const dy = center.y - touchState.lastTouch.y;
 
-                const dx = centerX - lastTouchPosition.x;
-                const dy = centerY - lastTouchPosition.y;
+                    if (Math.abs(dx) > touchState.movementThreshold || 
+                        Math.abs(dy) > touchState.movementThreshold) {
+                        const worldDx = dx * touchState.movementSpeed;
+                        const worldDy = -dy * touchState.movementSpeed;
 
-                const worldDx = dx * MOVEMENT_SPEED;
-                const worldDy = -dy * MOVEMENT_SPEED;
-
-                selectedItem.position.x = initialModelPosition.x + worldDx;
-                selectedItem.position.y = initialModelPosition.y + worldDy;
-
-                // Scaling
-                if (isScaling) {
-                    const newDistance = getDistance(touch1, touch2);
-                    const scale = newDistance / initialDistance;
-                    selectedItem.scale.copy(initialScale.clone().multiplyScalar(scale));
+                        selectedItem.position.x += worldDx;
+                        selectedItem.position.y += worldDy;
+                    }
                 }
 
-                lastTouchPosition.set(centerX, centerY);
+                // Smooth scaling
+                if (touchState.isScaling) {
+                    const newDistance = getDistance(touch1, touch2);
+                    const scaleFactor = newDistance / touchState.initialDistance;
+                    
+                    selectedItem.scale.copy(
+                        touchState.initialScale.clone().multiplyScalar(
+                            1 + (scaleFactor - 1) * touchState.scaleSpeed
+                        )
+                    );
+                }
+
+                touchState.lastTouch.set(center.x, center.y);
             }
         };
 
         const onTouchEnd = (event) => {
+            event.preventDefault();
+            
             if (event.touches.length === 0) {
-                isDragging = false;
-                isScaling = false;
+                touchState.isRotating = false;
+                touchState.isDragging = false;
+                touchState.isScaling = false;
             } else if (event.touches.length === 1) {
+                touchState.isDragging = false;
+                touchState.isScaling = false;
+                
                 const touch = event.touches[0];
-                lastTouchPosition.set(touch.clientX, touch.clientY);
-                initialRotation = selectedItem.rotation.y;
-                isDragging = false;
-                isScaling = false;
+                touchState.lastTouch.set(touch.clientX, touch.clientY);
+                touchState.initialRotation = selectedItem?.rotation.y || 0;
             }
-            initialTouchPositions = Array.from(event.touches);
         };
 
         // Load and setup models
@@ -297,9 +328,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         };
 
-        window.addEventListener("touchstart", onTouchStart, { passive: false });
-        window.addEventListener("touchmove", onTouchMove, { passive: false });
-        window.addEventListener("touchend", onTouchEnd, { passive: false });
+        // Add touch event listeners
+        renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: false });
+        renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
+        renderer.domElement.addEventListener("touchend", onTouchEnd, { passive: false });
 
         renderLoop();
     };
