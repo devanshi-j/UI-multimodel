@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions
+// Utility functions remain the same
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -41,7 +41,7 @@ const itemCategories = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene and AR setup
+        // Scene and AR setup remain the same
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
-        // UI Event Listeners
+        // UI Event Listeners remain the same
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
@@ -162,13 +162,15 @@ document.addEventListener("DOMContentLoaded", () => {
             lastTouch: new THREE.Vector2(),
             initialRotation: 0,
             initialScale: new THREE.Vector3(),
-            initialModelPosition: new THREE.Vector3(),
             initialDistance: 0,
+            lastPinchDistance: 0,
             rotationSpeed: 0.01,
             movementSpeed: 0.003,
-            scaleSpeed: 0.01,
-            movementThreshold: 1, // pixels
-            rotationThreshold: 1, // degrees
+            scaleSpeed: 0.5,  // Adjusted for better pinch response
+            minScale: 0.5,    // Minimum scale limit
+            maxScale: 2.0,    // Maximum scale limit
+            movementThreshold: 1,
+            rotationThreshold: 1,
         };
 
         const getDistance = (touch1, touch2) => {
@@ -209,8 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 touchState.isRotating = false;
                 
                 touchState.initialDistance = getDistance(touch1, touch2);
+                touchState.lastPinchDistance = touchState.initialDistance;
                 touchState.initialScale.copy(selectedItem.scale);
-                touchState.initialModelPosition.copy(selectedItem.position);
                 
                 const center = getCenter(touch1, touch2);
                 touchState.lastTouch.set(center.x, center.y);
@@ -226,43 +228,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 const touch = event.touches[0];
                 const dx = touch.clientX - touchState.lastTouch.x;
                 
-                // Apply smoothing to rotation
                 if (Math.abs(dx) > touchState.rotationThreshold) {
                     const rotation = dx * touchState.rotationSpeed;
                     selectedItem.rotation.y += rotation;
                 }
                 
                 touchState.lastTouch.set(touch.clientX, touch.clientY);
-            } else if (event.touches.length === 2 && (touchState.isDragging || touchState.isScaling)) {
+            } else if (event.touches.length === 2) {
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
                 const center = getCenter(touch1, touch2);
 
-                // Smooth movement
-                if (touchState.isDragging) {
-                    const dx = center.x - touchState.lastTouch.x;
-                    const dy = center.y - touchState.lastTouch.y;
-
-                    if (Math.abs(dx) > touchState.movementThreshold || 
-                        Math.abs(dy) > touchState.movementThreshold) {
-                        const worldDx = dx * touchState.movementSpeed;
-                        const worldDy = -dy * touchState.movementSpeed;
-
-                        selectedItem.position.x += worldDx;
-                        selectedItem.position.y += worldDy;
+                // Handle pinch-to-scale
+                if (touchState.isScaling) {
+                    const currentPinchDistance = getDistance(touch1, touch2);
+                    const pinchDelta = currentPinchDistance - touchState.lastPinchDistance;
+                    
+                    if (Math.abs(pinchDelta) > 0) {
+                        const scaleFactor = 1 + (pinchDelta * touchState.scaleSpeed / touchState.initialDistance);
+                        const newScale = selectedItem.scale.x * scaleFactor;
+                        
+                        // Apply scale with limits
+                        if (newScale >= touchState.minScale && newScale <= touchState.maxScale) {
+                            selectedItem.scale.multiplyScalar(scaleFactor);
+                        }
                     }
+                    
+                    touchState.lastPinchDistance = currentPinchDistance;
                 }
 
-                // Smooth scaling
-                if (touchState.isScaling) {
-                    const newDistance = getDistance(touch1, touch2);
-                    const scaleFactor = newDistance / touchState.initialDistance;
-                    
-                    selectedItem.scale.copy(
-                        touchState.initialScale.clone().multiplyScalar(
-                            1 + (scaleFactor - 1) * touchState.scaleSpeed
-                        )
-                    );
+                // Handle two-finger dragging
+                const dx = center.x - touchState.lastTouch.x;
+                const dy = center.y - touchState.lastTouch.y;
+
+                if (Math.abs(dx) > touchState.movementThreshold || 
+                    Math.abs(dy) > touchState.movementThreshold) {
+                    const worldDx = dx * touchState.movementSpeed;
+                    const worldDy = -dy * touchState.movementSpeed;
+
+                    selectedItem.position.x += worldDx;
+                    selectedItem.position.y += worldDy;
                 }
 
                 touchState.lastTouch.set(center.x, center.y);
