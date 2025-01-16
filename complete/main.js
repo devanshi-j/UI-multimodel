@@ -35,22 +35,22 @@ const deepClone = (obj) => {
     return newObj;
 };
 
-// Item categories
+// Item categories with improved organization
 const itemCategories = {
     lamp: [
-        { name: "lamp1", height: 0.3 },
-        { name: "lamp2", height: 0.3 },
-        { name: "lamp3", height: 0.3 }
+        { name: "lamp1", height: 0.3, id: "lamp-lamp1" },
+        { name: "lamp2", height: 0.3, id: "lamp-lamp2" },
+        { name: "lamp3", height: 0.3, id: "lamp-lamp3" }
     ],
     sofa: [
-        { name: "sofa1", height: 0.1 },
-        { name: "sofa2", height: 0.1 },
-        { name: "sofa3", height: 0.1 }
+        { name: "sofa1", height: 0.1, id: "sofa-sofa1" },
+        { name: "sofa2", height: 0.1, id: "sofa-sofa2" },
+        { name: "sofa3", height: 0.1, id: "sofa-sofa3" }
     ],
     table: [
-        { name: "table1", height: 0.2 },
-        { name: "table2", height: 0.2 },
-        { name: "table3", height: 0.2 }
+        { name: "table1", height: 0.2, id: "table-table1" },
+        { name: "table2", height: 0.2, id: "table-table2" },
+        { name: "table3", height: 0.2, id: "table-table3" }
     ],
 };
 
@@ -99,7 +99,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
-        // Improved UI Event Listeners
+        // Model Management
+        const placedItems = [];
+        let previewItem = null;
+        let selectedItem = null;
+        const modelCache = new Map();
+
+        // UI Event Listeners
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
@@ -113,33 +119,27 @@ document.addEventListener("DOMContentLoaded", () => {
             closeAllSubmenus();
         });
 
-        // Improved icon click handling
-        const icons = document.querySelectorAll(".icon");
-        icons.forEach((icon) => {
+        // Improved icon click handling with delegation
+        document.querySelectorAll(".icon").forEach((icon) => {
             icon.addEventListener("click", (event) => {
-                // Only handle clicks on the icon itself, not its children
                 if (event.target === icon || event.target.classList.contains('icon-image')) {
                     const submenu = icon.querySelector(".submenu");
-                    openSubmenu(submenu);
-                    event.stopPropagation();
+                    if (submenu) {
+                        openSubmenu(submenu);
+                        event.stopPropagation();
+                    }
                 }
             });
         });
 
         // Click outside detection
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.icon') && !e.target.closest('.submenu')) {
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.icon') && !event.target.closest('.submenu')) {
                 closeAllSubmenus();
             }
         });
 
-        // Model Management
-        const placedItems = [];
-        let previewItem = null;
-        let selectedItem = null;
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
+        // Model functions
         const showModel = (item) => {
             if (previewItem) {
                 previewItem.visible = false;
@@ -171,9 +171,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // Load and setup models with improved event handling
-        for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
+        // Improved model loading and thumbnail setup
+        const setupModelAndThumbnail = async (category, itemInfo) => {
+            try {
                 const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
                 normalizeModel(model.scene, itemInfo.height);
 
@@ -181,21 +181,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 item.add(model.scene);
                 item.visible = false;
                 scene.add(item);
+                modelCache.set(itemInfo.id, item);
 
-                const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
+                // Find and setup thumbnail
+                const thumbnail = document.getElementById(itemInfo.id);
                 if (thumbnail) {
                     thumbnail.addEventListener("click", (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        showModel(item);
-                        
-                        // Keep submenu open
-                        const parentSubmenu = e.target.closest('.submenu');
-                        if (parentSubmenu) {
-                            openSubmenu(parentSubmenu);
+                        const modelItem = modelCache.get(itemInfo.id);
+                        if (modelItem) {
+                            showModel(modelItem);
+                            
+                            // Keep submenu open
+                            const parentSubmenu = thumbnail.closest('.submenu');
+                            if (parentSubmenu) {
+                                openSubmenu(parentSubmenu);
+                            }
                         }
                     });
                 }
+            } catch (error) {
+                console.error(`Error loading model ${itemInfo.name}:`, error);
+            }
+        };
+
+        // Load all models and setup thumbnails
+        for (const category in itemCategories) {
+            for (const itemInfo of itemCategories[category]) {
+                await setupModelAndThumbnail(category, itemInfo);
             }
         }
 
@@ -212,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelModel();
         });
 
-        // Touch interaction setup remains the same
+        // Touch interaction setup
         const touchState = {
             isRotating: false,
             isDragging: false,
@@ -245,151 +259,93 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         };
 
-        // Touch Event Handlers
-        const onTouchStart = (event) => {
+        // Model selection and raycasting
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        const selectModel = (event) => {
+            mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            if (intersects.length > 0) {
+                selectedItem = intersects[0].object;
+                selectedItem.userData.touchStartPosition = selectedItem.position.clone();
+                selectedItem.userData.touchStartRotation = selectedItem.rotation.y;
+                selectedItem.userData.touchStartScale = selectedItem.scale.clone();
+            }
+        };
+
+        const handleTouchStart = (event) => {
             event.preventDefault();
-            
+
             if (event.touches.length === 1) {
-                const touch = event.touches[0];
-                const didSelect = checkIntersection({
-                    clientX: touch.clientX,
-                    clientY: touch.clientY,
-                });
-
-                if (didSelect && selectedItem) {
-                    touchState.isRotating = true;
-                    touchState.lastTouch.set(touch.clientX, touch.clientY);
-                    touchState.initialRotation = selectedItem.rotation.y;
+                touchState.isRotating = true;
+                selectModel(event);
+                if (selectedItem) {
+                    touchState.lastTouch.set(event.touches[0].clientX, event.touches[0].clientY);
                 }
-            } else if (event.touches.length === 2 && selectedItem) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-                
-                touchState.isDragging = true;
-                touchState.isScaling = true;
-                touchState.isRotating = false;
-                
-                touchState.initialDistance = getDistance(touch1, touch2);
-                touchState.lastPinchDistance = touchState.initialDistance;
-                touchState.initialScale.copy(selectedItem.scale);
-                
-                const center = getCenter(touch1, touch2);
-                touchState.lastTouch.set(center.x, center.y);
-            }
-        };
-
-        const onTouchMove = (event) => {
-            event.preventDefault();
-            
-            if (!selectedItem) return;
-
-            if (event.touches.length === 1 && touchState.isRotating) {
-                const touch = event.touches[0];
-                const dx = touch.clientX - touchState.lastTouch.x;
-                
-                if (Math.abs(dx) > touchState.rotationThreshold) {
-                    const rotation = dx * touchState.rotationSpeed;
-                    selectedItem.rotation.y += rotation;
-                }
-                
-                touchState.lastTouch.set(touch.clientX, touch.clientY);
             } else if (event.touches.length === 2) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-                const center = getCenter(touch1, touch2);
-
-                if (touchState.isScaling) {
-                    const currentPinchDistance = getDistance(touch1, touch2);
-                    const pinchDelta = currentPinchDistance - touchState.lastPinchDistance;
-                    
-                    if (Math.abs(pinchDelta) > 0) {
-                        const scaleFactor = 1 + (pinchDelta * touchState.scaleSpeed / touchState.initialDistance);
-                        const newScale = selectedItem.scale.x * scaleFactor;
-                        
-                        if (newScale >= touchState.minScale && newScale <= touchState.maxScale) {
-                            selectedItem.scale.multiplyScalar(scaleFactor);
-                        }
-                    }
-                    
-                    touchState.lastPinchDistance = currentPinchDistance;
+                touchState.isScaling = true;
+                const touchDistance = getDistance(event.touches[0], event.touches[1]);
+                touchState.initialDistance = touchDistance;
+                touchState.lastPinchDistance = touchDistance;
+                if (selectedItem) {
+                    touchState.initialScale.copy(selectedItem.scale);
                 }
-
-                const dx = center.x - touchState.lastTouch.x;
-                const dy = center.y - touchState.lastTouch.y;
-
-                if (Math.abs(dx) > touchState.movementThreshold || 
-                    Math.abs(dy) > touchState.movementThreshold) {
-                    const worldDx = dx * touchState.movementSpeed;
-                    const worldDy = -dy * touchState.movementSpeed;
-
-                    selectedItem.position.x += worldDx;
-                    selectedItem.position.y += worldDy;
-                }
-
-                touchState.lastTouch.set(center.x, center.y);
             }
         };
 
-        const onTouchEnd = (event) => {
+        const handleTouchMove = (event) => {
             event.preventDefault();
-            
+
+            if (event.touches.length === 1 && touchState.isRotating && selectedItem) {
+                const touch = new THREE.Vector2(event.touches[0].clientX, event.touches[0].clientY);
+                const deltaX = touch.x - touchState.lastTouch.x;
+                const deltaY = touch.y - touchState.lastTouch.y;
+
+                if (Math.abs(deltaX) > touchState.movementThreshold) {
+                    selectedItem.position.x += deltaX * touchState.movementSpeed;
+                    touchState.lastTouch.x = touch.x;
+                }
+                if (Math.abs(deltaY) > touchState.movementThreshold) {
+                    selectedItem.position.z += deltaY * touchState.movementSpeed;
+                    touchState.lastTouch.y = touch.y;
+                }
+            } else if (event.touches.length === 2 && touchState.isScaling && selectedItem) {
+                const currentDistance = getDistance(event.touches[0], event.touches[1]);
+                const scaleDelta = currentDistance / touchState.initialDistance;
+                const newScale = touchState.initialScale.clone().multiplyScalar(scaleDelta);
+                selectedItem.scale.copy(newScale.clampScalar(touchState.minScale, touchState.maxScale));
+                touchState.lastPinchDistance = currentDistance;
+            }
+        };
+
+        const handleTouchEnd = (event) => {
+            event.preventDefault();
+
             if (event.touches.length === 0) {
                 touchState.isRotating = false;
                 touchState.isDragging = false;
                 touchState.isScaling = false;
-            } else if (event.touches.length === 1) {
-                touchState.isDragging = false;
-                touchState.isScaling = false;
-                
-                const touch = event.touches[0];
-                touchState.lastTouch.set(touch.clientX, touch.clientY);
-                touchState.initialRotation = selectedItem?.rotation.y || 0;
+                selectedItem = null;
             }
         };
 
-        // Add touch event listeners
-        renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: false });
-        renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
-        renderer.domElement.addEventListener("touchend", onTouchEnd, { passive: false });
+        // Add event listeners for touch events
+        window.addEventListener("touchstart", handleTouchStart, false);
+        window.addEventListener("touchmove", handleTouchMove, false);
+        window.addEventListener("touchend", handleTouchEnd, false);
 
-        // Model selection function
-        const selectModel = (model) => {
-            if (selectedItem && selectedItem !== model) {
-                setOpacity(selectedItem, 1.0);
-            }
-            selectedItem = model;
-            setOpacity(selectedItem, 0.8);
-        };
-
-        // Intersection check function
-        const checkIntersection = (event) => {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(placedItems, true);
-
-            if (intersects.length > 0) {
-                let targetObject = intersects[0].object;
-                while (targetObject.parent && !placedItems.includes(targetObject)) {
-                    targetObject = targetObject.parent;
-                }
-                if (placedItems.includes(targetObject)) {
-                    selectModel(targetObject);
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        // Render Loop
-        const renderLoop = () => {
+        // Render loop
+        const render = () => {
             renderer.setAnimationLoop(() => {
                 renderer.render(scene, camera);
             });
         };
 
-        renderLoop();
+        render();
     };
 
     initialize();
