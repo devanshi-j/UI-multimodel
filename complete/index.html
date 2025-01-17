@@ -260,6 +260,34 @@
         Please ensure you have adequate lighting and space for the AR experience.
     </div>
 
-    <script type="module" src="../complete/main.js"></script>
+    <script type="module">
+        document.getElementById("menu-button").addEventListener("click", () => {
+            document.getElementById("sidebar-menu").classList.add("open");
+            document.getElementById("menu-button").style.display = "none";
+            document.getElementById("close-button").style.display = "flex";
+        });
+
+        document.getElementById("close-button").addEventListener("click", () => {
+            document.getElementById("sidebar-menu").classList.remove("open");
+            document.getElementById("menu-button").style.display = "flex";
+            document.getElementById("close-button").style.display = "none";
+        });
+
+        const items = document.querySelectorAll(".item-image");
+        items.forEach(item => {
+            item.addEventListener("click", (e) => {
+                // Prevent submenu collapse
+                e.stopPropagation();
+                
+                // Add the selected model to the AR scene
+                let modelId = e.target.id;
+                console.log("Model Selected:", modelId);
+                
+                // Add AR code for loading the model here
+                // Example:
+                // loadModel(modelId); // Replace with your actual model loading logic
+            });
+        });
+    </script>
 </body>
 </html>
