@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
             movementSpeed: 0.003,
             scaleSpeed: 0.5,  // Adjusted for better pinch response
             minScale: 0.5,    // Minimum scale limit
-            maxScale: 2.0,    // Maximum scale limit
+            maxScale: 8.0,    // Maximum scale limit
             movementThreshold: 1,
             rotationThreshold: 1,
         };
