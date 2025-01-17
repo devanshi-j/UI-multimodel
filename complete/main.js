@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions remain the same
+// Utility functions
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -41,7 +41,7 @@ const itemCategories = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene and AR setup remain the same
+        // Scene and AR setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
-        // UI Event Listeners remain the same
+        // UI Event Listeners
         menuButton.addEventListener("click", () => {
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
@@ -260,60 +260,49 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Handle two-finger dragging
                 const dx = center.x - touchState.lastTouch.x;
                 const dy = center.y - touchState.lastTouch.y;
-
-                if (Math.abs(dx) > touchState.movementThreshold || 
-                    Math.abs(dy) > touchState.movementThreshold) {
-                    const worldDx = dx * touchState.movementSpeed;
-                    const worldDy = -dy * touchState.movementSpeed;
-
-                    selectedItem.position.x += worldDx;
-                    selectedItem.position.y += worldDy;
+                
+                if (Math.abs(dx) > touchState.movementThreshold || Math.abs(dy) > touchState.movementThreshold) {
+                    const offsetX = dx * touchState.movementSpeed;
+                    const offsetZ = dy * touchState.movementSpeed;
+                    selectedItem.position.x += offsetX;
+                    selectedItem.position.z += offsetZ;
+                    
+                    touchState.lastTouch.set(center.x, center.y);
                 }
-
-                touchState.lastTouch.set(center.x, center.y);
             }
         };
 
         const onTouchEnd = (event) => {
             event.preventDefault();
-            
-            if (event.touches.length === 0) {
-                touchState.isRotating = false;
-                touchState.isDragging = false;
-                touchState.isScaling = false;
-            } else if (event.touches.length === 1) {
-                touchState.isDragging = false;
-                touchState.isScaling = false;
-                
-                const touch = event.touches[0];
-                touchState.lastTouch.set(touch.clientX, touch.clientY);
-                touchState.initialRotation = selectedItem?.rotation.y || 0;
-            }
+
+            touchState.isRotating = false;
+            touchState.isDragging = false;
+            touchState.isScaling = false;
         };
 
-        // Load and setup models
+        // Item Loading
         for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
-                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                normalizeModel(model.scene, itemInfo.height);
+            for (const item of itemCategories[category]) {
+                const { name, height } = item;
+                const iconId = `${name}-icon`;
 
-                const item = new THREE.Group();
-                item.add(model.scene);
-                item.visible = false;
-                scene.add(item);
+                const loadItem = async () => {
+                    const obj = await loadGLTF(`/assets/${category}/${name}.glb`);
+                    normalizeModel(obj.scene, height);
+                    obj.scene.visible = false;
+                    scene.add(obj.scene);
 
-                const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
-                if (thumbnail) {
-                    thumbnail.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showModel(item);
+                    const icon = document.getElementById(iconId);
+                    icon.addEventListener("click", () => {
+                        showModel(obj.scene);
                     });
-                }
+                };
+
+                await loadItem();
             }
         }
 
-        // Button Event Listeners
+        // Confirm Buttons Event Listeners
         placeButton.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -326,19 +315,23 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelModel();
         });
 
-        // Render Loop
-        const renderLoop = () => {
+        // Animation loop
+        const animate = () => {
             renderer.setAnimationLoop(() => {
+                if (selectedItem) {
+                    // Additional logic for continuously updating the selected item if needed
+                }
                 renderer.render(scene, camera);
             });
         };
 
-        // Add touch event listeners
-        renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: false });
-        renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
-        renderer.domElement.addEventListener("touchend", onTouchEnd, { passive: false });
+        // Touch event listeners
+        window.addEventListener("touchstart", onTouchStart, false);
+        window.addEventListener("touchmove", onTouchMove, false);
+        window.addEventListener("touchend", onTouchEnd, false);
 
-        renderLoop();
+        // Start animation
+        animate();
     };
 
     initialize();
