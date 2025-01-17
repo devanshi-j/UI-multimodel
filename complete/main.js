@@ -2,9 +2,6 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// State management for active submenu
-let activeSubmenu = null;
-
 // Utility functions
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
@@ -35,39 +32,23 @@ const deepClone = (obj) => {
     return newObj;
 };
 
-// Item categories with improved organization
+// Updated item categories with multiple items per category
 const itemCategories = {
     lamp: [
-        { name: "lamp1", height: 0.3, id: "lamp-lamp1" },
-        { name: "lamp2", height: 0.3, id: "lamp-lamp2" },
-        { name: "lamp3", height: 0.3, id: "lamp-lamp3" }
+        { name: "lamp1", height: 0.3 },
+        { name: "lamp2", height: 0.35 },
+        { name: "lamp3", height: 0.28 }
     ],
     sofa: [
-        { name: "sofa1", height: 0.1, id: "sofa-sofa1" },
-        { name: "sofa2", height: 0.1, id: "sofa-sofa2" },
-        { name: "sofa3", height: 0.1, id: "sofa-sofa3" }
+        { name: "sofa1", height: 0.1 },
+        { name: "sofa2", height: 0.12 },
+        { name: "sofa3", height: 0.15 }
     ],
     table: [
-        { name: "table1", height: 0.2, id: "table-table1" },
-        { name: "table2", height: 0.2, id: "table-table2" },
-        { name: "table3", height: 0.2, id: "table-table3" }
-    ],
-};
-
-// Submenu management functions
-const openSubmenu = (submenu) => {
-    if (activeSubmenu && activeSubmenu !== submenu) {
-        activeSubmenu.classList.remove('open');
-    }
-    submenu.classList.add('open');
-    activeSubmenu = submenu;
-};
-
-const closeAllSubmenus = () => {
-    document.querySelectorAll('.submenu').forEach(submenu => {
-        submenu.classList.remove('open');
-    });
-    activeSubmenu = null;
+        { name: "table1", height: 0.2 },
+        { name: "table2", height: 0.25 },
+        { name: "table3", height: 0.22 }
+    ]
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -100,10 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const cancelButton = document.querySelector("#cancel");
 
         // Model Management
+        const loadedModels = new Map(); // Store loaded models
         const placedItems = [];
         let previewItem = null;
         let selectedItem = null;
-        const modelCache = new Map();
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
 
         // UI Event Listeners
         menuButton.addEventListener("click", () => {
@@ -116,30 +99,17 @@ document.addEventListener("DOMContentLoaded", () => {
             sidebarMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
-            closeAllSubmenus();
         });
 
-        // Improved icon click handling with delegation
-        document.querySelectorAll(".icon").forEach((icon) => {
+        const icons = document.querySelectorAll(".icon");
+        icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
-                if (event.target === icon || event.target.classList.contains('icon-image')) {
-                    const submenu = icon.querySelector(".submenu");
-                    if (submenu) {
-                        openSubmenu(submenu);
-                        event.stopPropagation();
-                    }
-                }
+                const submenu = icon.querySelector(".submenu");
+                submenu.classList.toggle("open");
+                event.stopPropagation();
             });
         });
 
-        // Click outside detection
-        document.addEventListener('click', (event) => {
-            if (!event.target.closest('.icon') && !event.target.closest('.submenu')) {
-                closeAllSubmenus();
-            }
-        });
-
-        // Model functions
         const showModel = (item) => {
             if (previewItem) {
                 previewItem.visible = false;
@@ -171,63 +141,37 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // Improved model loading and thumbnail setup
-        const setupModelAndThumbnail = async (category, itemInfo) => {
-            try {
-                const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                normalizeModel(model.scene, itemInfo.height);
-
-                const item = new THREE.Group();
-                item.add(model.scene);
-                item.visible = false;
-                scene.add(item);
-                modelCache.set(itemInfo.id, item);
-
-                // Find and setup thumbnail
-                const thumbnail = document.getElementById(itemInfo.id);
-                if (thumbnail) {
-                    thumbnail.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const modelItem = modelCache.get(itemInfo.id);
-                        if (modelItem) {
-                            showModel(modelItem);
-                            
-                            // Keep submenu open
-                            const parentSubmenu = thumbnail.closest('.submenu');
-                            if (parentSubmenu) {
-                                openSubmenu(parentSubmenu);
-                            }
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error(`Error loading model ${itemInfo.name}:`, error);
+        // Model Selection & Interaction
+        const selectModel = (model) => {
+            if (selectedItem && selectedItem !== model) {
+                setOpacity(selectedItem, 1.0);
             }
+            selectedItem = model;
+            setOpacity(selectedItem, 0.8);
         };
 
-        // Load all models and setup thumbnails
-        for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
-                await setupModelAndThumbnail(category, itemInfo);
+        const checkIntersection = (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(placedItems, true);
+
+            if (intersects.length > 0) {
+                let targetObject = intersects[0].object;
+                while (targetObject.parent && !placedItems.includes(targetObject)) {
+                    targetObject = targetObject.parent;
+                }
+                if (placedItems.includes(targetObject)) {
+                    selectModel(targetObject);
+                    return true;
+                }
             }
-        }
+            return false;
+        };
 
-        // Button Event Listeners
-        placeButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            placeModel();
-        });
-
-        cancelButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelModel();
-        });
-
-        // Touch interaction setup
-        const touchState = {
+        // Touch Interaction setup remains the same
+        let touchState = {
             isRotating: false,
             isDragging: false,
             isScaling: false,
@@ -245,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
             rotationThreshold: 1,
         };
 
-        // Touch utility functions
+        // Touch interaction helper functions
         const getDistance = (touch1, touch2) => {
             const dx = touch1.clientX - touch2.clientX;
             const dy = touch1.clientY - touch2.clientY;
@@ -259,93 +203,167 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         };
 
-        // Model selection and raycasting
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        const selectModel = (event) => {
-            mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            if (intersects.length > 0) {
-                selectedItem = intersects[0].object;
-                selectedItem.userData.touchStartPosition = selectedItem.position.clone();
-                selectedItem.userData.touchStartRotation = selectedItem.rotation.y;
-                selectedItem.userData.touchStartScale = selectedItem.scale.clone();
-            }
-        };
-
-        const handleTouchStart = (event) => {
+        // Touch Event Handlers
+        const onTouchStart = (event) => {
             event.preventDefault();
-
+            
             if (event.touches.length === 1) {
-                touchState.isRotating = true;
-                selectModel(event);
-                if (selectedItem) {
-                    touchState.lastTouch.set(event.touches[0].clientX, event.touches[0].clientY);
+                const touch = event.touches[0];
+                const didSelect = checkIntersection({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                });
+
+                if (didSelect && selectedItem) {
+                    touchState.isRotating = true;
+                    touchState.lastTouch.set(touch.clientX, touch.clientY);
+                    touchState.initialRotation = selectedItem.rotation.y;
                 }
-            } else if (event.touches.length === 2) {
+            } else if (event.touches.length === 2 && selectedItem) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                
+                touchState.isDragging = true;
                 touchState.isScaling = true;
-                const touchDistance = getDistance(event.touches[0], event.touches[1]);
-                touchState.initialDistance = touchDistance;
-                touchState.lastPinchDistance = touchDistance;
-                if (selectedItem) {
-                    touchState.initialScale.copy(selectedItem.scale);
-                }
+                touchState.isRotating = false;
+                
+                touchState.initialDistance = getDistance(touch1, touch2);
+                touchState.lastPinchDistance = touchState.initialDistance;
+                touchState.initialScale.copy(selectedItem.scale);
+                
+                const center = getCenter(touch1, touch2);
+                touchState.lastTouch.set(center.x, center.y);
             }
         };
 
-        const handleTouchMove = (event) => {
+        const onTouchMove = (event) => {
             event.preventDefault();
+            
+            if (!selectedItem) return;
 
-            if (event.touches.length === 1 && touchState.isRotating && selectedItem) {
-                const touch = new THREE.Vector2(event.touches[0].clientX, event.touches[0].clientY);
-                const deltaX = touch.x - touchState.lastTouch.x;
-                const deltaY = touch.y - touchState.lastTouch.y;
+            if (event.touches.length === 1 && touchState.isRotating) {
+                const touch = event.touches[0];
+                const dx = touch.clientX - touchState.lastTouch.x;
+                
+                if (Math.abs(dx) > touchState.rotationThreshold) {
+                    const rotation = dx * touchState.rotationSpeed;
+                    selectedItem.rotation.y += rotation;
+                }
+                
+                touchState.lastTouch.set(touch.clientX, touch.clientY);
+            } else if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                const center = getCenter(touch1, touch2);
 
-                if (Math.abs(deltaX) > touchState.movementThreshold) {
-                    selectedItem.position.x += deltaX * touchState.movementSpeed;
-                    touchState.lastTouch.x = touch.x;
+                if (touchState.isScaling) {
+                    const currentPinchDistance = getDistance(touch1, touch2);
+                    const pinchDelta = currentPinchDistance - touchState.lastPinchDistance;
+                    
+                    if (Math.abs(pinchDelta) > 0) {
+                        const scaleFactor = 1 + (pinchDelta * touchState.scaleSpeed / touchState.initialDistance);
+                        const newScale = selectedItem.scale.x * scaleFactor;
+                        
+                        if (newScale >= touchState.minScale && newScale <= touchState.maxScale) {
+                            selectedItem.scale.multiplyScalar(scaleFactor);
+                        }
+                    }
+                    
+                    touchState.lastPinchDistance = currentPinchDistance;
                 }
-                if (Math.abs(deltaY) > touchState.movementThreshold) {
-                    selectedItem.position.z += deltaY * touchState.movementSpeed;
-                    touchState.lastTouch.y = touch.y;
+
+                const dx = center.x - touchState.lastTouch.x;
+                const dy = center.y - touchState.lastTouch.y;
+
+                if (Math.abs(dx) > touchState.movementThreshold || 
+                    Math.abs(dy) > touchState.movementThreshold) {
+                    const worldDx = dx * touchState.movementSpeed;
+                    const worldDy = -dy * touchState.movementSpeed;
+
+                    selectedItem.position.x += worldDx;
+                    selectedItem.position.y += worldDy;
                 }
-            } else if (event.touches.length === 2 && touchState.isScaling && selectedItem) {
-                const currentDistance = getDistance(event.touches[0], event.touches[1]);
-                const scaleDelta = currentDistance / touchState.initialDistance;
-                const newScale = touchState.initialScale.clone().multiplyScalar(scaleDelta);
-                selectedItem.scale.copy(newScale.clampScalar(touchState.minScale, touchState.maxScale));
-                touchState.lastPinchDistance = currentDistance;
+
+                touchState.lastTouch.set(center.x, center.y);
             }
         };
 
-        const handleTouchEnd = (event) => {
+        const onTouchEnd = (event) => {
             event.preventDefault();
-
+            
             if (event.touches.length === 0) {
                 touchState.isRotating = false;
                 touchState.isDragging = false;
                 touchState.isScaling = false;
-                selectedItem = null;
+            } else if (event.touches.length === 1) {
+                touchState.isDragging = false;
+                touchState.isScaling = false;
+                
+                const touch = event.touches[0];
+                touchState.lastTouch.set(touch.clientX, touch.clientY);
+                touchState.initialRotation = selectedItem?.rotation.y || 0;
             }
         };
 
-        // Add event listeners for touch events
-        window.addEventListener("touchstart", handleTouchStart, false);
-        window.addEventListener("touchmove", handleTouchMove, false);
-        window.addEventListener("touchend", handleTouchEnd, false);
+        // Load all models
+        for (const category in itemCategories) {
+            for (const itemInfo of itemCategories[category]) {
+                try {
+                    const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+                    normalizeModel(model.scene, itemInfo.height);
 
-        // Render loop
-        const render = () => {
+                    const item = new THREE.Group();
+                    item.add(model.scene);
+                    item.visible = false;
+                    scene.add(item);
+
+                    // Store the loaded model
+                    loadedModels.set(`${category}-${itemInfo.name}`, item);
+
+                    // Add click event listener for each thumbnail
+                    const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
+                    if (thumbnail) {
+                        thumbnail.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const model = loadedModels.get(`${category}-${itemInfo.name}`);
+                            if (model) {
+                                showModel(model);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error loading model ${category}/${itemInfo.name}:`, error);
+                }
+            }
+        }
+
+        // Button Event Listeners
+        placeButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            placeModel();
+        });
+
+        cancelButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelModel();
+        });
+
+        // Add touch event listeners
+        renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: false });
+        renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
+        renderer.domElement.addEventListener("touchend", onTouchEnd, { passive: false });
+
+        // Render Loop
+        const renderLoop = () => {
             renderer.setAnimationLoop(() => {
                 renderer.render(scene, camera);
             });
         };
 
-        render();
+        renderLoop();
     };
 
     initialize();
