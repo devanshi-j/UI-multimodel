@@ -223,7 +223,7 @@
 
     <!-- Sidebar Menu -->
     <div id="sidebar-menu">
-        <div class="icon" data-category="lamp">
+        <div class="icon" id="lamp-category">
             <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Lamps" width="50">
             <div class="submenu">
                 <img class="item-image" id="lamp-lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="Table Lamp">
@@ -231,7 +231,7 @@
                 <img class="item-image" id="lamp-lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="Desk Lamp">
             </div>
         </div>
-        <div class="icon" data-category="sofa">
+        <div class="icon" id="sofa-category">
             <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Sofas" width="50">
             <div class="submenu">
                 <img class="item-image" id="sofa-sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="Modern Sofa">
@@ -239,7 +239,7 @@
                 <img class="item-image" id="sofa-sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="Sectional Sofa">
             </div>
         </div>
-        <div class="icon" data-category="table">
+        <div class="icon" id="table-category">
             <img src="../assets/models/table/table1/thumbnail.png" alt="Tables" width="50">
             <div class="submenu">
                 <img class="item-image" id="table-table1" src="../assets/models/table/table1/thumbnail.png" alt="Coffee Table">
@@ -273,12 +273,31 @@
             document.getElementById("close-button").style.display = "none";
         });
 
+        // Show/hide submenu on category click
+        document.getElementById("lamp-category").addEventListener("click", () => {
+            toggleSubmenu("lamp-category");
+        });
+
+        document.getElementById("sofa-category").addEventListener("click", () => {
+            toggleSubmenu("sofa-category");
+        });
+
+        document.getElementById("table-category").addEventListener("click", () => {
+            toggleSubmenu("table-category");
+        });
+
+        function toggleSubmenu(category) {
+            const submenu = document.getElementById(category).querySelector(".submenu");
+            submenu.classList.toggle("open");
+        }
+
+        // Model selection logic
         const items = document.querySelectorAll(".item-image");
         items.forEach(item => {
             item.addEventListener("click", (e) => {
                 // Prevent submenu collapse
                 e.stopPropagation();
-                
+
                 // Add the selected model to the AR scene
                 let modelId = e.target.id;
                 console.log("Model Selected:", modelId);
