@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Furniture Viewer</title>
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         #menu-button, #close-button {
@@ -24,7 +28,9 @@
             position: fixed;
             top: 10px;
             z-index: 200;
-            background-color: transparent;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
         }
 
         #menu-button {
@@ -37,19 +43,20 @@
         }
 
         #sidebar-menu {
-            width: 120px; /* Increased width to accommodate larger thumbnails */
+            width: 140px;
             height: 100vh;
-            background-color: rgba(17, 17, 17, 0.9); /* Added some transparency */
+            background-color: rgba(17, 17, 17, 0.95);
             position: fixed;
-            left: -120px; /* Adjusted to match new width */
+            left: -140px;
             top: 0;
             transition: left 0.3s ease;
             z-index: 100;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 20px;
+            padding-top: 70px;
             overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
         }
 
         #sidebar-menu.open {
@@ -57,7 +64,6 @@
         }
 
         .icon {
-            font-size: 50px;
             margin-bottom: 20px;
             color: white;
             cursor: pointer;
@@ -65,12 +71,22 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .icon > img {
-            width: 40px; /* Main category icon slightly larger */
-            height: 40px;
+            width: 50px;
+            height: 50px;
             margin: 10px;
+            padding: 5px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .icon > img:hover {
+            transform: scale(1.1);
         }
 
         .submenu {
@@ -78,27 +94,47 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px; /* Space between submenu items */
-            padding: 10px 0;
+            gap: 15px;
+            padding: 15px 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .submenu.open {
+            max-height: 300px;
         }
 
         .item-image {
-            width: 60px; /* Increased size of submenu thumbnails */
-            height: 60px;
+            width: 80px;
+            height: 80px;
             cursor: pointer;
-            display: none;
             border: 2px solid transparent;
             border-radius: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            display: block;
+            object-fit: cover;
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .item-image:hover {
             border-color: #FFF44F;
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
-        .submenu.open .item-image {
-            display: block;
+        #confirm-buttons {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: none;
+            gap: 20px;
+            justify-content: center;
+            padding: 15px 25px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
         }
 
         #place, #cancel {
@@ -107,9 +143,11 @@
             cursor: pointer;
             border: none;
             border-radius: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             margin: 0 10px;
             min-width: 120px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         #place {
@@ -132,31 +170,49 @@
             transform: scale(1.05);
         }
 
-        #confirm-buttons {
-            position: fixed;
-            bottom: 40px; /* Increased distance from bottom */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 300;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            padding: 15px;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            border-radius: 12px;
-            display: none; /* Hidden by default */
-        }
-
-        /* Add some padding at the bottom of sidebar to prevent content from being cut off */
-        #sidebar-menu::after {
-            content: '';
-            display: block;
-            height: 20px;
-        }
-
-        /* Improve visibility of buttons on light backgrounds */
         .button-shadow {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading indicator for models */
+        .loading {
+            position: relative;
+            opacity: 0.5;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #FFF44F;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: loading 0.8s linear infinite;
+        }
+
+        @keyframes loading {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* AR Session warning */
+        #ar-warning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 400;
         }
     </style>
 </head>
@@ -168,40 +224,41 @@
     <!-- Sidebar Menu -->
     <div id="sidebar-menu">
         <div class="icon" data-category="lamp">
-            <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp" width="40">
+            <img src="../assets/icons/lamp-icon.png" alt="Lamps" width="50">
             <div class="submenu">
-                <img class="item-image" id="lamp-lamp1" data-item="lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="lamp1">
-                <img class="item-image" id="lamp-lamp2" data-item="lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="lamp2">
-                <img class="item-image" id="lamp-lamp3" data-item="lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="lamp3">
+                <img class="item-image" id="lamp-lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="Table Lamp">
+                <img class="item-image" id="lamp-lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="Floor Lamp">
+                <img class="item-image" id="lamp-lamp3" src="../assets/models/lamp/lamp3/thumbnail.png" alt="Desk Lamp">
             </div>
         </div>
         <div class="icon" data-category="sofa">
-            <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa" width="40">
+            <img src="../assets/icons/sofa-icon.png" alt="Sofas" width="50">
             <div class="submenu">
-                <img class="item-image" id="sofa-sofa1" data-item="sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="sofa1">
-                <img class="item-image" id="sofa-sofa2" data-item="sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="sofa2">
-                <img class="item-image" id="sofa-sofa3" data-item="sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="sofa3">
+                <img class="item-image" id="sofa-sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="Modern Sofa">
+                <img class="item-image" id="sofa-sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="Classic Sofa">
+                <img class="item-image" id="sofa-sofa3" src="../assets/models/sofa/sofa3/thumbnail.png" alt="Sectional Sofa">
             </div>
         </div>
         <div class="icon" data-category="table">
-            <img src="../assets/models/table/table1/thumbnail.png" alt="table" width="40">
+            <img src="../assets/icons/table-icon.png" alt="Tables" width="50">
             <div class="submenu">
-                <img class="item-image" id="table-table1" data-item="table1" src="../assets/models/table/table1/thumbnail.png" alt="table1">
-                <img class="item-image" id="table-table2" data-item="table2" src="../assets/models/table/table2/thumbnail.png" alt="table2">
-                <img class="item-image" id="table-table3" data-item="table3" src="../assets/models/table/table3/thumbnail.png" alt="table3">
+                <img class="item-image" id="table-table1" src="../assets/models/table/table1/thumbnail.png" alt="Coffee Table">
+                <img class="item-image" id="table-table2" src="../assets/models/table/table2/thumbnail.png" alt="Dining Table">
+                <img class="item-image" id="table-table3" src="../assets/models/table/table3/thumbnail.png" alt="Side Table">
             </div>
         </div>
     </div>
 
-    <div id="confirm-buttons">
-    <button id="place">Place</button>
-    <button id="cancel">Cancel</button>
-</div>
     <!-- Confirm Buttons -->
-   <!-- <div id="confirm-buttons">
+    <div id="confirm-buttons">
         <button id="place" class="button-shadow">Place</button>
         <button id="cancel" class="button-shadow">Cancel</button>
-    </div>-->
+    </div>
+
+    <!-- AR Warning -->
+    <div id="ar-warning">
+        Please ensure you have adequate lighting and space for the AR experience.
+    </div>
 
     <script type="module" src="../complete/main.js"></script>
 </body>
