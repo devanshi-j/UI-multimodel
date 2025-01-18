@@ -91,25 +91,64 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
+        // Close menu when clicking outside
+        document.addEventListener("click", (event) => {
+            const isClickInsideMenu = sidebarMenu?.contains(event.target);
+            const isClickOnMenuButton = menuButton?.contains(event.target);
+            const isMenuOpen = sidebarMenu?.classList.contains("open");
+            
+            if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
+                sidebarMenu.classList.remove("open");
+                closeButton.style.display = "none";
+                menuButton.style.display = "block";
+                // Close all submenus
+                document.querySelectorAll('.submenu.open').forEach(submenu => {
+                    submenu.classList.remove('open');
+                });
+            }
+        });
+
         // UI Event Listeners
-        menuButton.addEventListener("click", () => {
+        menuButton.addEventListener("click", (event) => {
+            event.stopPropagation();
             sidebarMenu.classList.add("open");
             menuButton.style.display = "none";
             closeButton.style.display = "block";
         });
 
-        closeButton.addEventListener("click", () => {
+        closeButton.addEventListener("click", (event) => {
+            event.stopPropagation();
             sidebarMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
+            // Close all submenus
+            document.querySelectorAll('.submenu.open').forEach(submenu => {
+                submenu.classList.remove('open');
+            });
         });
 
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
+                event.stopPropagation();
+                // Close other open submenus
+                document.querySelectorAll('.submenu.open').forEach(submenu => {
+                    if (submenu !== icon.querySelector('.submenu')) {
+                        submenu.classList.remove('open');
+                    }
+                });
                 const submenu = icon.querySelector(".submenu");
                 submenu.classList.toggle("open");
+            });
+        });
+
+        // Add click handlers to submenu items
+        document.querySelectorAll('.submenu .item').forEach(item => {
+            item.addEventListener('click', (event) => {
                 event.stopPropagation();
+                sidebarMenu.classList.remove("open");
+                closeButton.style.display = "none";
+                menuButton.style.display = "block";
             });
         });
 
@@ -143,18 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // AR Setup and Hit Testing
-        const arButton = ARButton.createButton(renderer, {
-            requiredFeatures: ["hit-test"],
-            optionalFeatures: ["dom-overlay"],
-            domOverlay: { root: document.body },
-        });
-        document.body.appendChild(renderer.domElement);
-        document.body.appendChild(arButton);
-
-        controller = renderer.xr.getController(0);
-        scene.add(controller);
-
         // Load all models
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
@@ -165,10 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     const item = new THREE.Group();
                     item.add(model.scene);
                     
-                    // Store the loaded model
                     loadedModels.set(`${category}-${itemInfo.name}`, item);
 
-                    // Add click event listener for each thumbnail
                     const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
                     if (thumbnail) {
                         thumbnail.addEventListener("click", (e) => {
@@ -199,6 +224,18 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             cancelModel();
         });
+
+        // AR Setup and Hit Testing
+        const arButton = ARButton.createButton(renderer, {
+            requiredFeatures: ["hit-test"],
+            optionalFeatures: ["dom-overlay"],
+            domOverlay: { root: document.body },
+        });
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(arButton);
+
+        controller = renderer.xr.getController(0);
+        scene.add(controller);
 
         // AR Session and Render Loop
         renderer.setAnimationLoop((timestamp, frame) => {
