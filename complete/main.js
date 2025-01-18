@@ -60,16 +60,22 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
+        document.body.appendChild(renderer.domElement);
+
+        // Add lights
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         scene.add(light);
+        scene.add(directionalLight);
 
         // Controller setup for AR
-        let controller;
-        const raycaster = new THREE.Raycaster();
-        const tempMatrix = new THREE.Matrix4();
+        const controller = renderer.xr.getController(0);
+        scene.add(controller);
+
+        // Create reticle
         const reticle = new THREE.Mesh(
             new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
-            new THREE.MeshBasicMaterial()
+            new THREE.MeshBasicMaterial({ color: 0xffffff })
         );
         reticle.visible = false;
         reticle.matrixAutoUpdate = false;
@@ -87,11 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const loadedModels = new Map();
         const placedItems = [];
         let previewItem = null;
-        let selectedItem = null;
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
-        // Close menu when clicking outside
+        // Close menu only when clicking outside (not submenu items)
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = sidebarMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
@@ -101,14 +106,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 sidebarMenu.classList.remove("open");
                 closeButton.style.display = "none";
                 menuButton.style.display = "block";
-                // Close all submenus
-                document.querySelectorAll('.submenu.open').forEach(submenu => {
-                    submenu.classList.remove('open');
-                });
             }
         });
 
-        // UI Event Listeners
+        // Menu button handlers
         menuButton.addEventListener("click", (event) => {
             event.stopPropagation();
             sidebarMenu.classList.add("open");
@@ -121,34 +122,24 @@ document.addEventListener("DOMContentLoaded", () => {
             sidebarMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
-            // Close all submenus
-            document.querySelectorAll('.submenu.open').forEach(submenu => {
-                submenu.classList.remove('open');
-            });
         });
 
+        // Category click handlers (only toggle submenu)
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
                 event.stopPropagation();
-                // Close other open submenus
-                document.querySelectorAll('.submenu.open').forEach(submenu => {
-                    if (submenu !== icon.querySelector('.submenu')) {
+                const clickedSubmenu = icon.querySelector(".submenu");
+                
+                // Close other submenus
+                document.querySelectorAll('.submenu').forEach(submenu => {
+                    if (submenu !== clickedSubmenu) {
                         submenu.classList.remove('open');
                     }
                 });
-                const submenu = icon.querySelector(".submenu");
-                submenu.classList.toggle("open");
-            });
-        });
-
-        // Add click handlers to submenu items
-        document.querySelectorAll('.submenu .item').forEach(item => {
-            item.addEventListener('click', (event) => {
-                event.stopPropagation();
-                sidebarMenu.classList.remove("open");
-                closeButton.style.display = "none";
-                menuButton.style.display = "block";
+                
+                // Toggle clicked submenu
+                clickedSubmenu.classList.toggle("open");
             });
         });
 
@@ -194,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     loadedModels.set(`${category}-${itemInfo.name}`, item);
 
+                    // Add click handlers for thumbnails (won't close menu)
                     const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
                     if (thumbnail) {
                         thumbnail.addEventListener("click", (e) => {
@@ -225,17 +217,17 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelModel();
         });
 
-        // AR Setup and Hit Testing
+        // Initialize AR
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
             domOverlay: { root: document.body },
+            sessionInit: {
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.body }
+            }
         });
-        document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
-
-        controller = renderer.xr.getController(0);
-        scene.add(controller);
 
         // AR Session and Render Loop
         renderer.setAnimationLoop((timestamp, frame) => {
@@ -260,8 +252,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
 
                         if (previewItem) {
-                            previewItem.position.copy(reticle.position);
-                            previewItem.rotation.copy(reticle.rotation);
+                            const position = new THREE.Vector3();
+                            const rotation = new THREE.Quaternion();
+                            const scale = new THREE.Vector3();
+                            reticle.matrix.decompose(position, rotation, scale);
+                            
+                            previewItem.position.copy(position);
+                            previewItem.quaternion.copy(rotation);
                         }
                     } else {
                         reticle.visible = false;
@@ -271,7 +268,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             renderer.render(scene, camera);
         });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     };
 
-    initialize();
+    initialize().catch(console.error);
 });
