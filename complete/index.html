@@ -174,7 +174,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* Loading indicator for models */
+        /* Loading indicator */
         .loading {
             position: relative;
             opacity: 0.5;
@@ -200,19 +200,47 @@
             }
         }
 
-        /* AR Session warning */
-        #ar-warning {
+        /* Reticle styles */
+        #reticle {
             position: fixed;
             top: 50%;
             left: 50%;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #FFF44F;
+            border-radius: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
+            pointer-events: none;
             display: none;
-            z-index: 400;
+        }
+
+        /* AR surface indicator */
+        #surface-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Status messages */
+        #status-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -221,10 +249,15 @@
     <button id="menu-button" class="button-shadow">&equiv;</button>
     <button id="close-button" class="button-shadow">&times;</button>
 
+    <!-- AR Elements -->
+    <div id="reticle"></div>
+    <div id="surface-indicator">Looking for surface...</div>
+    <div id="status-message"></div>
+
     <!-- Sidebar Menu -->
     <div id="sidebar-menu">
         <div class="icon" id="lamp-category">
-            <img src="../assets/models/lamp/lamp1/thumbnail.png" alt="Lamps" width="50">
+            <img src="../assets/icons/lamp-icon.png" alt="Lamps" width="50">
             <div class="submenu">
                 <img class="item-image" id="lamp-lamp1" src="../assets/models/lamp/lamp1/thumbnail.png" alt="Table Lamp">
                 <img class="item-image" id="lamp-lamp2" src="../assets/models/lamp/lamp2/thumbnail.png" alt="Floor Lamp">
@@ -232,7 +265,7 @@
             </div>
         </div>
         <div class="icon" id="sofa-category">
-            <img src="../assets/models/sofa/sofa1/thumbnail.png" alt="Sofas" width="50">
+            <img src="../assets/icons/sofa-icon.png" alt="Sofas" width="50">
             <div class="submenu">
                 <img class="item-image" id="sofa-sofa1" src="../assets/models/sofa/sofa1/thumbnail.png" alt="Modern Sofa">
                 <img class="item-image" id="sofa-sofa2" src="../assets/models/sofa/sofa2/thumbnail.png" alt="Classic Sofa">
@@ -240,7 +273,7 @@
             </div>
         </div>
         <div class="icon" id="table-category">
-            <img src="../assets/models/table/table1/thumbnail.png" alt="Tables" width="50">
+            <img src="../assets/icons/table-icon.png" alt="Tables" width="50">
             <div class="submenu">
                 <img class="item-image" id="table-table1" src="../assets/models/table/table1/thumbnail.png" alt="Coffee Table">
                 <img class="item-image" id="table-table2" src="../assets/models/table/table2/thumbnail.png" alt="Dining Table">
@@ -255,58 +288,7 @@
         <button id="cancel" class="button-shadow">Cancel</button>
     </div>
 
-    <!-- AR Warning -->
-    <div id="ar-warning">
-        Please ensure you have adequate lighting and space for the AR experience.
-    </div>
-
-    <script type="module">
-        document.getElementById("menu-button").addEventListener("click", () => {
-            document.getElementById("sidebar-menu").classList.add("open");
-            document.getElementById("menu-button").style.display = "none";
-            document.getElementById("close-button").style.display = "flex";
-        });
-
-        document.getElementById("close-button").addEventListener("click", () => {
-            document.getElementById("sidebar-menu").classList.remove("open");
-            document.getElementById("menu-button").style.display = "flex";
-            document.getElementById("close-button").style.display = "none";
-        });
-
-        // Show/hide submenu on category click
-        document.getElementById("lamp-category").addEventListener("click", () => {
-            toggleSubmenu("lamp-category");
-        });
-
-        document.getElementById("sofa-category").addEventListener("click", () => {
-            toggleSubmenu("sofa-category");
-        });
-
-        document.getElementById("table-category").addEventListener("click", () => {
-            toggleSubmenu("table-category");
-        });
-
-        function toggleSubmenu(category) {
-            const submenu = document.getElementById(category).querySelector(".submenu");
-            submenu.classList.toggle("open");
-        }
-
-        // Model selection logic
-        const items = document.querySelectorAll(".item-image");
-        items.forEach(item => {
-            item.addEventListener("click", (e) => {
-                // Prevent submenu collapse
-                e.stopPropagation();
-
-                // Add the selected model to the AR scene
-                let modelId = e.target.id;
-                console.log("Model Selected:", modelId);
-                
-                // Add AR code for loading the model here
-                // Example:
-                // loadModel(modelId); // Replace with your actual model loading logic
-            });
-        });
-    </script>
+    <!-- Import our JS module -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
