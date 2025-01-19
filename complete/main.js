@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions remain the same
+// Utility functions
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
-        // Create and append AR button first
+        // Create and append AR button
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
@@ -71,32 +71,33 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         document.body.appendChild(arButton);
-        
         document.body.appendChild(renderer.domElement);
 
-        // Add lights
+        // Lighting
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         scene.add(light);
         scene.add(directionalLight);
 
-        // Raycaster setup
+        // Touch interaction setup
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
         let selectedObject = null;
-        let isDragging = false;
-        let isRotating = false;
-        let isPinching = false;
+        let interactionState = null; // 'rotating', 'scaling', or 'dragging'
         let initialPinchDistance = 0;
         let initialScale = new THREE.Vector3();
         let previousTouchX = 0;
         let previousTouchY = 0;
+        let previousTouchDistance = 0;
+        let touch1StartX = 0;
+        let touch1StartY = 0;
+        let touch2StartX = 0;
+        let touch2StartY = 0;
 
-        // Controller setup for AR
+        // Controller and reticle setup
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
-        // Create reticle
         const reticle = new THREE.Mesh(
             new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -105,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // UI Elements setup
+        // UI Elements
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -121,6 +122,12 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSourceRequested = false;
 
         // Enhanced touch event handlers
+        const getTouchDistance = (touch1, touch2) => {
+            const dx = touch1.pageX - touch2.pageX;
+            const dy = touch1.pageY - touch2.pageY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
         const onTouchStart = (event) => {
             event.preventDefault();
             
@@ -133,30 +140,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (intersects.length > 0) {
                     selectedObject = intersects[0].object.parent;
-                    isRotating = true;
+                    interactionState = 'rotating';
                     previousTouchX = event.touches[0].pageX;
                 }
             } else if (event.touches.length === 2) {
-                const dx = event.touches[0].pageX - event.touches[1].pageX;
-                const dy = event.touches[0].pageY - event.touches[1].pageY;
-                initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                touch1StartX = event.touches[0].pageX;
+                touch1StartY = event.touches[0].pageY;
+                touch2StartX = event.touches[1].pageX;
+                touch2StartY = event.touches[1].pageY;
                 
-                touches.x = (((event.touches[0].pageX + event.touches[1].pageX) / 2) / window.innerWidth) * 2 - 1;
-                touches.y = -(((event.touches[0].pageY + event.touches[1].pageY) / 2) / window.innerHeight) * 2 + 1;
+                initialPinchDistance = getTouchDistance(event.touches[0], event.touches[1]);
+                previousTouchDistance = initialPinchDistance;
+                
+                const midX = (touch1StartX + touch2StartX) / 2;
+                const midY = (touch1StartY + touch2StartY) / 2;
+                touches.x = (midX / window.innerWidth) * 2 - 1;
+                touches.y = -(midY / window.innerHeight) * 2 + 1;
                 
                 raycaster.setFromCamera(touches, camera);
-                const intersects = raycaster.intersectObjects(placedItems, true);
+                const intersects = raycaster.intersertObjects(placedItems, true);
                 
                 if (intersects.length > 0) {
                     selectedObject = intersects[0].object.parent;
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        isPinching = true;
-                        initialScale.copy(selectedObject.scale);
-                    } else {
-                        isDragging = true;
-                        previousTouchX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-                        previousTouchY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-                    }
+                    initialScale.copy(selectedObject.scale);
+                    interactionState = 'scaling';
                 }
             }
         };
@@ -164,40 +171,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const onTouchMove = (event) => {
             event.preventDefault();
             
-            if (isRotating && event.touches.length === 1) {
+            if (!selectedObject) return;
+
+            if (interactionState === 'rotating' && event.touches.length === 1) {
                 const deltaX = event.touches[0].pageX - previousTouchX;
                 selectedObject.rotation.y += deltaX * 0.01;
                 previousTouchX = event.touches[0].pageX;
-            } else if (isPinching && event.touches.length === 2) {
-                const dx = event.touches[0].pageX - event.touches[1].pageX;
-                const dy = event.touches[0].pageY - event.touches[1].pageY;
-                const pinchDistance = Math.sqrt(dx * dx + dy * dy);
-                const scale = (pinchDistance / initialPinchDistance);
+            } 
+            else if (interactionState === 'scaling' && event.touches.length === 2) {
+                const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
+                const scaleFactor = currentDistance / initialPinchDistance;
                 
-                selectedObject.scale.x = initialScale.x * scale;
-                selectedObject.scale.y = initialScale.y * scale;
-                selectedObject.scale.z = initialScale.z * scale;
-            } else if (isDragging && event.touches.length === 2) {
-                const currentX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-                const currentY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+                // Apply scaling relative to initial scale
+                selectedObject.scale.x = initialScale.x * scaleFactor;
+                selectedObject.scale.y = initialScale.y * scaleFactor;
+                selectedObject.scale.z = initialScale.z * scaleFactor;
                 
-                const deltaX = (currentX - previousTouchX) * 0.01;
-                const deltaY = (currentY - previousTouchY) * 0.01;
-                
-                selectedObject.position.x += deltaX;
-                selectedObject.position.y += deltaY; // Added Y-axis movement
-                selectedObject.position.z += deltaY;
-                
-                previousTouchX = currentX;
-                previousTouchY = currentY;
+                // Update previous distance for next frame
+                previousTouchDistance = currentDistance;
             }
         };
 
         const onTouchEnd = (event) => {
             if (event.touches.length === 0) {
-                isRotating = false;
-                isPinching = false;
-                isDragging = false;
+                interactionState = null;
                 selectedObject = null;
             }
         };
@@ -207,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
 
-        // Menu event handlers remain the same
+        // Menu event handlers
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = sidebarMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
@@ -234,7 +231,7 @@ document.addEventListener("DOMContentLoaded", () => {
             menuButton.style.display = "block";
         });
 
-        // Category handlers remain the same
+        // Category handlers
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
@@ -251,6 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
+        // Model handling functions
         const showModel = (item) => {
             if (previewItem) {
                 scene.remove(previewItem);
