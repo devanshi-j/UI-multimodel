@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions
+// Utility functions remain the same
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -32,7 +32,6 @@ const deepClone = (obj) => {
     return newObj;
 };
 
-// Item categories configuration
 const itemCategories = {
     lamp: [
         { name: "lamp1", height: 0.3 },
@@ -53,22 +52,15 @@ const itemCategories = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene setup
+        // Scene and AR setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
 
-        // Lights
-        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        scene.add(light);
-        scene.add(directionalLight);
-
-        // Initialize AR
+        // Create and append AR button first
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
@@ -79,8 +71,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         document.body.appendChild(arButton);
+        
+        document.body.appendChild(renderer.domElement);
 
-        // Touch interaction variables
+        // Add lights
+        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        scene.add(light);
+        scene.add(directionalLight);
+
+        // Raycaster setup
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
         let selectedObject = null;
@@ -88,16 +88,15 @@ document.addEventListener("DOMContentLoaded", () => {
         let isRotating = false;
         let isPinching = false;
         let initialPinchDistance = 0;
-        let initialScale = 1;
+        let initialScale = new THREE.Vector3();
         let previousTouchX = 0;
         let previousTouchY = 0;
-        let lastPinchScale = 1;
 
-        // Controller setup
+        // Controller setup for AR
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
-        // Reticle setup
+        // Create reticle
         const reticle = new THREE.Mesh(
             new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -106,7 +105,22 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // Touch event handlers
+        // UI Elements setup
+        const menuButton = document.getElementById("menu-button");
+        const closeButton = document.getElementById("close-button");
+        const sidebarMenu = document.getElementById("sidebar-menu");
+        const confirmButtons = document.getElementById("confirm-buttons");
+        const placeButton = document.querySelector("#place");
+        const cancelButton = document.querySelector("#cancel");
+
+        // Model Management
+        const loadedModels = new Map();
+        const placedItems = [];
+        let previewItem = null;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+
+        // Enhanced touch event handlers
         const onTouchStart = (event) => {
             event.preventDefault();
             
@@ -123,31 +137,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     previousTouchX = event.touches[0].pageX;
                 }
             } else if (event.touches.length === 2) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
                 
-                const midX = (touch1.pageX + touch2.pageX) / 2;
-                const midY = (touch1.pageY + touch2.pageY) / 2;
-                
-                touches.x = (midX / window.innerWidth) * 2 - 1;
-                touches.y = -(midY / window.innerHeight) * 2 + 1;
+                touches.x = (((event.touches[0].pageX + event.touches[1].pageX) / 2) / window.innerWidth) * 2 - 1;
+                touches.y = -(((event.touches[0].pageY + event.touches[1].pageY) / 2) / window.innerHeight) * 2 + 1;
                 
                 raycaster.setFromCamera(touches, camera);
                 const intersects = raycaster.intersectObjects(placedItems, true);
                 
                 if (intersects.length > 0) {
                     selectedObject = intersects[0].object.parent;
-                    
-                    const dx = touch1.pageX - touch2.pageX;
-                    const dy = touch1.pageY - touch2.pageY;
-                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    isPinching = true;
-                    isDragging = true;
-                    initialScale = selectedObject.scale.x;
-                    previousTouchX = midX;
-                    previousTouchY = midY;
-                    lastPinchScale = 1;
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        isPinching = true;
+                        initialScale.copy(selectedObject.scale);
+                    } else {
+                        isDragging = true;
+                        previousTouchX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                        previousTouchY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+                    }
                 }
             }
         };
@@ -159,45 +168,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 const deltaX = event.touches[0].pageX - previousTouchX;
                 selectedObject.rotation.y += deltaX * 0.01;
                 previousTouchX = event.touches[0].pageX;
-            } else if (event.touches.length === 2 && selectedObject) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
+            } else if (isPinching && event.touches.length === 2) {
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                const pinchDistance = Math.sqrt(dx * dx + dy * dy);
+                const scale = (pinchDistance / initialPinchDistance);
                 
-                if (isPinching) {
-                    const dx = touch1.pageX - touch2.pageX;
-                    const dy = touch1.pageY - touch2.pageY;
-                    const pinchDistance = Math.sqrt(dx * dx + dy * dy);
-                    const newScale = (pinchDistance / initialPinchDistance) * initialScale;
-                    const scaleDelta = newScale / lastPinchScale;
-                    
-                    const minScale = 0.5;
-                    const maxScale = 2.0;
-                    const currentScale = selectedObject.scale.x * scaleDelta;
-                    
-                    if (currentScale >= minScale && currentScale <= maxScale) {
-                        selectedObject.scale.multiplyScalar(scaleDelta);
-                        lastPinchScale = newScale;
-                    }
-                }
+                selectedObject.scale.x = initialScale.x * scale;
+                selectedObject.scale.y = initialScale.y * scale;
+                selectedObject.scale.z = initialScale.z * scale;
+            } else if (isDragging && event.touches.length === 2) {
+                const currentX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                const currentY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
                 
-                if (isDragging) {
-                    const midX = (touch1.pageX + touch2.pageX) / 2;
-                    const midY = (touch1.pageY + touch2.pageY) / 2;
-                    
-                    const deltaX = (midX - previousTouchX) * 0.005;
-                    const deltaZ = (midY - previousTouchY) * 0.005;
-                    
-                    const cameraDirection = new THREE.Vector3();
-                    camera.getWorldDirection(cameraDirection);
-                    const cameraRight = new THREE.Vector3(1, 0, 0);
-                    cameraRight.applyQuaternion(camera.quaternion);
-                    
-                    selectedObject.position.add(cameraRight.multiplyScalar(deltaX));
-                    selectedObject.position.add(cameraDirection.multiplyScalar(-deltaZ));
-                    
-                    previousTouchX = midX;
-                    previousTouchY = midY;
-                }
+                const deltaX = (currentX - previousTouchX) * 0.01;
+                const deltaY = (currentY - previousTouchY) * 0.01;
+                
+                selectedObject.position.x += deltaX;
+                selectedObject.position.y += deltaY; // Added Y-axis movement
+                selectedObject.position.z += deltaY;
+                
+                previousTouchX = currentX;
+                previousTouchY = currentY;
             }
         };
 
@@ -207,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 isPinching = false;
                 isDragging = false;
                 selectedObject = null;
-                lastPinchScale = 1;
             }
         };
 
@@ -216,22 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
 
-        // UI Elements
-        const menuButton = document.getElementById("menu-button");
-        const closeButton = document.getElementById("close-button");
-        const sidebarMenu = document.getElementById("sidebar-menu");
-        const confirmButtons = document.getElementById("confirm-buttons");
-        const placeButton = document.querySelector("#place");
-        const cancelButton = document.querySelector("#cancel");
-
-        // Model Management
-        const loadedModels = new Map();
-        const placedItems = [];
-        let previewItem = null;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
-
-        // Menu event handlers
+        // Menu event handlers remain the same
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = sidebarMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
@@ -258,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
             menuButton.style.display = "block";
         });
 
-        // Category handlers
+        // Category handlers remain the same
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
@@ -275,7 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Model handling functions
         const showModel = (item) => {
             if (previewItem) {
                 scene.remove(previewItem);
@@ -374,6 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             const rotation = new THREE.Quaternion();
                             const scale = new THREE.Vector3();
                             reticle.matrix.decompose(position, rotation, scale);
+                            
                             previewItem.position.copy(position);
                             previewItem.quaternion.copy(rotation);
                         }
@@ -383,53 +359,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Update lights to follow camera
-            const cameraPosition = new THREE.Vector3();
-            camera.getWorldPosition(cameraPosition);
-            directionalLight.position.copy(cameraPosition);
-
-            // Render the scene
             renderer.render(scene, camera);
         });
-// Handle window resize
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
 
-// Handle AR session end
-const onSessionEnd = () => {
-    hitTestSourceRequested = false;
-    hitTestSource = null;
-    
-    // Clean up placed items
-    placedItems.forEach(item => scene.remove(item));
-    placedItems.length = 0;
-    
-    // Reset UI elements
-    confirmButtons.style.display = "none";
-    if (previewItem) {
-        scene.remove(previewItem);
-        previewItem = null;
-    }
-};
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    };
 
-renderer.xr.addEventListener('sessionend', onSessionEnd);
-};
-
-// Error handling for AR session
-initialize().catch(error => {
-    console.error('Error initializing AR session:', error);
-    const errorMessage = document.createElement('div');
-    errorMessage.style.position = 'fixed';
-    errorMessage.style.top = '50%';
-    errorMessage.style.left = '50%';
-    errorMessage.style.transform = 'translate(-50%, -50%)';
-    errorMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    errorMessage.style.color = 'white';
-    errorMessage.style.padding = '20px';
-    errorMessage.style.borderRadius = '10px';
-    errorMessage.textContent = 'Failed to initialize AR. Please ensure your device supports WebXR and you have granted the necessary permissions.';
-    document.body.appendChild(errorMessage);
+    initialize().catch(console.error);
 });
