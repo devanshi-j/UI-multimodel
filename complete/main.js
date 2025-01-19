@@ -68,6 +68,18 @@ document.addEventListener("DOMContentLoaded", () => {
         scene.add(light);
         scene.add(directionalLight);
 
+        // Raycaster setup
+        const raycaster = new THREE.Raycaster();
+        const touches = new THREE.Vector2();
+        let selectedObject = null;
+        let isDragging = false;
+        let isRotating = false;
+        let isPinching = false;
+        let initialPinchDistance = 0;
+        let initialScale = 1;
+        let previousTouchX = 0;
+        let previousTouchY = 0;
+
         // Controller setup for AR
         const controller = renderer.xr.getController(0);
         scene.add(controller);
@@ -81,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // UI Elements
+        // UI Elements setup
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -96,7 +108,96 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
-        // Close menu only when clicking outside (not submenu items)
+        // Touch event handlers
+        const onTouchStart = (event) => {
+            event.preventDefault();
+            
+            if (event.touches.length === 1) {
+                // Single touch for selection or rotation
+                touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
+                touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(touches, camera);
+                const intersects = raycaster.intersectObjects(placedItems, true);
+                
+                if (intersects.length > 0) {
+                    selectedObject = intersects[0].object.parent;
+                    isRotating = true;
+                    previousTouchX = event.touches[0].pageX;
+                }
+            } else if (event.touches.length === 2) {
+                // Two finger touch for scaling or dragging
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (selectedObject) {
+                    isPinching = true;
+                    initialScale = selectedObject.scale.x;
+                } else {
+                    // Check if we're starting a drag
+                    touches.x = (((event.touches[0].pageX + event.touches[1].pageX) / 2) / window.innerWidth) * 2 - 1;
+                    touches.y = -(((event.touches[0].pageY + event.touches[1].pageY) / 2) / window.innerHeight) * 2 + 1;
+                    
+                    raycaster.setFromCamera(touches, camera);
+                    const intersects = raycaster.intersectObjects(placedItems, true);
+                    
+                    if (intersects.length > 0) {
+                        selectedObject = intersects[0].object.parent;
+                        isDragging = true;
+                        previousTouchX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                        previousTouchY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+                    }
+                }
+            }
+        };
+
+        const onTouchMove = (event) => {
+            event.preventDefault();
+            
+            if (isRotating && event.touches.length === 1) {
+                // Rotate object
+                const deltaX = event.touches[0].pageX - previousTouchX;
+                selectedObject.rotation.y += deltaX * 0.01;
+                previousTouchX = event.touches[0].pageX;
+            } else if (isPinching && event.touches.length === 2) {
+                // Scale object
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                const pinchDistance = Math.sqrt(dx * dx + dy * dy);
+                const scale = (pinchDistance / initialPinchDistance) * initialScale;
+                selectedObject.scale.set(scale, scale, scale);
+            } else if (isDragging && event.touches.length === 2) {
+                // Move object
+                const currentX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                const currentY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+                
+                const deltaX = (currentX - previousTouchX) * 0.01;
+                const deltaY = (currentY - previousTouchY) * 0.01;
+                
+                selectedObject.position.x += deltaX;
+                selectedObject.position.z += deltaY;
+                
+                previousTouchX = currentX;
+                previousTouchY = currentY;
+            }
+        };
+
+        const onTouchEnd = (event) => {
+            if (event.touches.length === 0) {
+                isRotating = false;
+                isPinching = false;
+                isDragging = false;
+                selectedObject = null;
+            }
+        };
+
+        // Add touch event listeners
+        renderer.domElement.addEventListener('touchstart', onTouchStart, false);
+        renderer.domElement.addEventListener('touchmove', onTouchMove, false);
+        renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+
+        // Menu event handlers
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = sidebarMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
@@ -109,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Menu button handlers
         menuButton.addEventListener("click", (event) => {
             event.stopPropagation();
             sidebarMenu.classList.add("open");
@@ -124,21 +224,19 @@ document.addEventListener("DOMContentLoaded", () => {
             menuButton.style.display = "block";
         });
 
-        // Category click handlers (only toggle submenu)
+        // Category handlers
         const icons = document.querySelectorAll(".icon");
         icons.forEach((icon) => {
             icon.addEventListener("click", (event) => {
                 event.stopPropagation();
                 const clickedSubmenu = icon.querySelector(".submenu");
                 
-                // Close other submenus
                 document.querySelectorAll('.submenu').forEach(submenu => {
                     if (submenu !== clickedSubmenu) {
                         submenu.classList.remove('open');
                     }
                 });
                 
-                // Toggle clicked submenu
                 clickedSubmenu.classList.toggle("open");
             });
         });
@@ -157,8 +255,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (previewItem && reticle.visible) {
                 const clone = deepClone(previewItem);
                 setOpacity(clone, 1.0);
-                clone.position.copy(reticle.position);
-                clone.rotation.copy(reticle.rotation);
+                
+                // Get the reticle's world position and rotation
+                const position = new THREE.Vector3();
+                const rotation = new THREE.Quaternion();
+                const scale = new THREE.Vector3();
+                reticle.matrix.decompose(position, rotation, scale);
+                
+                clone.position.copy(position);
+                clone.quaternion.copy(rotation);
+                
                 scene.add(clone);
                 placedItems.push(clone);
                 cancelModel();
@@ -173,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        // Load all models
+        // Load models
         for (const category in itemCategories) {
             for (const itemInfo of itemCategories[category]) {
                 try {
@@ -185,7 +291,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     loadedModels.set(`${category}-${itemInfo.name}`, item);
 
-                    // Add click handlers for thumbnails (won't close menu)
                     const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
                     if (thumbnail) {
                         thumbnail.addEventListener("click", (e) => {
@@ -205,17 +310,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Button Event Listeners
-        placeButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            placeModel();
-        });
-
-        cancelButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            cancelModel();
-        });
+        placeButton.addEventListener("click", placeModel);
+        cancelButton.addEventListener("click", cancelModel);
 
         // Initialize AR
         const arButton = ARButton.createButton(renderer, {
