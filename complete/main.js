@@ -32,6 +32,7 @@ const deepClone = (obj) => {
     return newObj;
 };
 
+// Item categories
 const itemCategories = {
     lamp: [
         { name: "lamp1", height: 0.3 },
@@ -60,39 +61,36 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
-        // Create and append AR button
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
-            domOverlay: { root: document.body },
-            sessionInit: {
-                optionalFeatures: ['dom-overlay'],
-                domOverlay: { root: document.body }
-            }
+            domOverlay: { root: document.body }
         });
         document.body.appendChild(arButton);
         document.body.appendChild(renderer.domElement);
 
-        // Lighting
+        // Lighting setup
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         scene.add(light);
         scene.add(directionalLight);
 
-        // Touch interaction setup
+        // Interaction state management
+        const interactionState = {
+            selectedObject: null,
+            mode: null,
+            initialTouchDistance: 0,
+            initialScale: new THREE.Vector3(),
+            previousTouchX: 0,
+            startPosition: new THREE.Vector3(),
+            dragPlane: new THREE.Plane(),
+            touchCount: 0,
+            lastTapTime: 0
+        };
+
+        // Raycaster setup
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
-        let selectedObject = null;
-        let interactionState = null; // 'rotating', 'scaling', or 'dragging'
-        let initialPinchDistance = 0;
-        let initialScale = new THREE.Vector3();
-        let previousTouchX = 0;
-        let previousTouchY = 0;
-        let previousTouchDistance = 0;
-        let touch1StartX = 0;
-        let touch1StartY = 0;
-        let touch2StartX = 0;
-        let touch2StartY = 0;
 
         // Controller and reticle setup
         const controller = renderer.xr.getController(0);
@@ -121,17 +119,37 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
-        // Enhanced touch event handlers
+        // Touch event utilities
         const getTouchDistance = (touch1, touch2) => {
             const dx = touch1.pageX - touch2.pageX;
             const dy = touch1.pageY - touch2.pageY;
             return Math.sqrt(dx * dx + dy * dy);
         };
 
+        const getTouchMidpoint = (touch1, touch2) => {
+            return {
+                x: (touch1.pageX + touch2.pageX) / 2,
+                y: (touch1.pageY + touch2.pageY) / 2
+            };
+        };
+
+        const updateDragPlane = (camera, object) => {
+            const normal = new THREE.Vector3(0, 0, 1);
+            normal.applyQuaternion(camera.quaternion);
+            interactionState.dragPlane.setFromNormalAndCoplanarPoint(
+                normal,
+                object.position
+            );
+        };
+
+        // Enhanced touch event handlers
         const onTouchStart = (event) => {
             event.preventDefault();
             
+            interactionState.touchCount = event.touches.length;
+
             if (event.touches.length === 1) {
+                // Single touch - Rotation
                 touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
                 touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
                 
@@ -139,31 +157,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 const intersects = raycaster.intersectObjects(placedItems, true);
                 
                 if (intersects.length > 0) {
-                    selectedObject = intersects[0].object.parent;
-                    interactionState = 'rotating';
-                    previousTouchX = event.touches[0].pageX;
+                    interactionState.selectedObject = intersects[0].object.parent;
+                    interactionState.mode = 'rotating';
+                    interactionState.previousTouchX = event.touches[0].pageX;
                 }
-            } else if (event.touches.length === 2) {
-                touch1StartX = event.touches[0].pageX;
-                touch1StartY = event.touches[0].pageY;
-                touch2StartX = event.touches[1].pageX;
-                touch2StartY = event.touches[1].pageY;
+            } 
+            else if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
                 
-                initialPinchDistance = getTouchDistance(event.touches[0], event.touches[1]);
-                previousTouchDistance = initialPinchDistance;
-                
-                const midX = (touch1StartX + touch2StartX) / 2;
-                const midY = (touch1StartY + touch2StartY) / 2;
-                touches.x = (midX / window.innerWidth) * 2 - 1;
-                touches.y = -(midY / window.innerHeight) * 2 + 1;
+                touches.x = (getTouchMidpoint(touch1, touch2).x / window.innerWidth) * 2 - 1;
+                touches.y = -(getTouchMidpoint(touch1, touch2).y / window.innerHeight) * 2 + 1;
                 
                 raycaster.setFromCamera(touches, camera);
-                const intersects = raycaster.intersertObjects(placedItems, true);
+                const intersects = raycaster.intersectObjects(placedItems, true);
                 
                 if (intersects.length > 0) {
-                    selectedObject = intersects[0].object.parent;
-                    initialScale.copy(selectedObject.scale);
-                    interactionState = 'scaling';
+                    interactionState.selectedObject = intersects[0].object.parent;
+                    interactionState.initialTouchDistance = getTouchDistance(touch1, touch2);
+                    interactionState.initialScale.copy(interactionState.selectedObject.scale);
+                    
+                    // Determine if scaling or dragging based on touch orientation
+                    const touchAngle = Math.abs(Math.atan2(
+                        touch2.pageY - touch1.pageY,
+                        touch2.pageX - touch1.pageX
+                    ));
+                    
+                    if (touchAngle > Math.PI / 4 && touchAngle < (3 * Math.PI) / 4) {
+                        interactionState.mode = 'scaling';
+                    } else {
+                        interactionState.mode = 'dragging';
+                        interactionState.startPosition.copy(interactionState.selectedObject.position);
+                        updateDragPlane(camera, interactionState.selectedObject);
+                    }
                 }
             }
         };
@@ -171,32 +197,43 @@ document.addEventListener("DOMContentLoaded", () => {
         const onTouchMove = (event) => {
             event.preventDefault();
             
-            if (!selectedObject) return;
+            if (!interactionState.selectedObject) return;
 
-            if (interactionState === 'rotating' && event.touches.length === 1) {
-                const deltaX = event.touches[0].pageX - previousTouchX;
-                selectedObject.rotation.y += deltaX * 0.01;
-                previousTouchX = event.touches[0].pageX;
+            if (interactionState.mode === 'rotating' && event.touches.length === 1) {
+                const deltaX = event.touches[0].pageX - interactionState.previousTouchX;
+                interactionState.selectedObject.rotation.y += deltaX * 0.02;
+                interactionState.previousTouchX = event.touches[0].pageX;
             } 
-            else if (interactionState === 'scaling' && event.touches.length === 2) {
-                const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
-                const scaleFactor = currentDistance / initialPinchDistance;
+            else if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
                 
-                // Apply scaling relative to initial scale
-                selectedObject.scale.x = initialScale.x * scaleFactor;
-                selectedObject.scale.y = initialScale.y * scaleFactor;
-                selectedObject.scale.z = initialScale.z * scaleFactor;
-                
-                // Update previous distance for next frame
-                previousTouchDistance = currentDistance;
+                if (interactionState.mode === 'scaling') {
+                    const currentDistance = getTouchDistance(touch1, touch2);
+                    const scale = currentDistance / interactionState.initialTouchDistance;
+                    interactionState.selectedObject.scale.copy(interactionState.initialScale);
+                    interactionState.selectedObject.scale.multiplyScalar(scale);
+                } 
+                else if (interactionState.mode === 'dragging') {
+                    const midpoint = getTouchMidpoint(touch1, touch2);
+                    touches.x = (midpoint.x / window.innerWidth) * 2 - 1;
+                    touches.y = -(midpoint.y / window.innerHeight) * 2 + 1;
+                    
+                    raycaster.setFromCamera(touches, camera);
+                    const intersection = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(interactionState.dragPlane, intersection)) {
+                        interactionState.selectedObject.position.copy(intersection);
+                    }
+                }
             }
         };
 
         const onTouchEnd = (event) => {
             if (event.touches.length === 0) {
-                interactionState = null;
-                selectedObject = null;
+                interactionState.mode = null;
+                interactionState.selectedObject = null;
             }
+            interactionState.touchCount = event.touches.length;
         };
 
         // Add touch event listeners
@@ -205,18 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
 
         // Menu event handlers
-        document.addEventListener("click", (event) => {
-            const isClickInsideMenu = sidebarMenu?.contains(event.target);
-            const isClickOnMenuButton = menuButton?.contains(event.target);
-            const isMenuOpen = sidebarMenu?.classList.contains("open");
-            
-            if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
-                sidebarMenu.classList.remove("open");
-                closeButton.style.display = "none";
-                menuButton.style.display = "block";
-            }
-        });
-
         menuButton.addEventListener("click", (event) => {
             event.stopPropagation();
             sidebarMenu.classList.add("open");
@@ -274,16 +299,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 scene.add(clone);
                 placedItems.push(clone);
-                cancelModel();
+                
+                // Reset preview without closing sidebar
+                scene.remove(previewItem);
+                previewItem = null;
+                confirmButtons.style.display = "none";
             }
         };
 
         const cancelModel = () => {
-            confirmButtons.style.display = "none";
             if (previewItem) {
                 scene.remove(previewItem);
                 previewItem = null;
             }
+            confirmButtons.style.display = "none";
         };
 
         // Load models
@@ -347,7 +376,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             const rotation = new THREE.Quaternion();
                             const scale = new THREE.Vector3();
                             reticle.matrix.decompose(position, rotation, scale);
-                            
                             previewItem.position.copy(position);
                             previewItem.quaternion.copy(rotation);
                         }
