@@ -1,5 +1,4 @@
-
-            import { loadGLTF } from "../libs/loader.js";
+import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
@@ -52,7 +51,7 @@ const itemCategories = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Add Start AR button to DOM
+    // Create UI elements
     const startARButton = document.createElement('button');
     startARButton.id = 'start-ar-button';
     startARButton.textContent = 'Start AR Experience';
@@ -72,16 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     document.body.appendChild(startARButton);
 
-    // Hide other UI elements initially
-    const menuButton = document.getElementById("menu-button");
-    const closeButton = document.getElementById("close-button");
-    const sidebarMenu = document.getElementById("sidebar-menu");
-    const confirmButtons = document.getElementById("confirm-buttons");
+    // Get UI elements
+    const menuButton = document.getElementById("menu-button") || document.createElement('button');
+    const closeButton = document.getElementById("close-button") || document.createElement('button');
+    const sidebarMenu = document.getElementById("sidebar-menu") || document.createElement('div');
+    const confirmButtons = document.getElementById("confirm-buttons") || document.createElement('div');
     
-    if (menuButton) menuButton.style.display = "none";
-    if (closeButton) closeButton.style.display = "none";
-    if (sidebarMenu) sidebarMenu.style.display = "none";
-    if (confirmButtons) confirmButtons.style.display = "none";
+    // Hide UI elements initially
+    menuButton.style.display = "none";
+    closeButton.style.display = "none";
+    sidebarMenu.style.display = "none";
+    confirmButtons.style.display = "none";
 
     const initialize = async () => {
         // Scene and AR setup
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Interaction state
         let selectedObject = null;
-        let interactionState = 'none'; // 'none', 'rotating', 'scaling', 'dragging'
+        let interactionState = 'none';
         let initialTouchDistance = 0;
         let initialScale = new THREE.Vector3();
         let previousTouchX = 0;
@@ -128,7 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // Function to calculate touch midpoint
+        // Model Management
+        const loadedModels = new Map();
+        const placedItems = [];
+        let previewItem = null;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+
+        // Touch helper functions
         const getTouchMidpoint = (touch1, touch2) => {
             return new THREE.Vector2(
                 (touch1.pageX + touch2.pageX) / 2,
@@ -136,7 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         };
 
-        // Function to calculate touch distance
         const getTouchDistance = (touch1, touch2) => {
             const dx = touch1.pageX - touch2.pageX;
             const dy = touch1.pageY - touch2.pageY;
@@ -148,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             
             if (event.touches.length === 1) {
-                // Single touch for selection and rotation
                 touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
                 touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
                 
@@ -164,7 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     previousTouchX = event.touches[0].pageX;
                 }
             } else if (event.touches.length === 2) {
-                // Two finger touch for scaling or dragging
                 const touch1 = event.touches[0];
                 const touch2 = event.touches[1];
                 const midpoint = getTouchMidpoint(touch1, touch2);
@@ -181,13 +185,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         selectedObject = selectedObject.parent;
                     }
                     
-                    // Store initial values
                     initialTouchDistance = getTouchDistance(touch1, touch2);
                     initialTouchMidpoint.copy(midpoint);
                     initialScale.copy(selectedObject.scale);
                     initialObjectPosition.copy(selectedObject.position);
-                    
-                    // Start in a neutral state - will determine if scaling or dragging in touchmove
                     interactionState = 'none';
                 }
             }
@@ -209,13 +210,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const currentMidpoint = getTouchMidpoint(touch1, touch2);
                 const currentTouchDistance = getTouchDistance(touch1, touch2);
 
-                // If interaction state is still none, determine whether to scale or drag
                 if (interactionState === 'none') {
                     const distanceChange = Math.abs(currentTouchDistance - initialTouchDistance);
-                    const midpointChange = initialTouchMidpoint.distanceTo(new THREE.Vector2(currentMidpoint.x, currentMidpoint.y));
+                    const midpointChange = initialTouchMidpoint.distanceTo(
+                        new THREE.Vector2(currentMidpoint.x, currentMidpoint.y)
+                    );
                     
-                    // If distance changed more than midpoint, we're scaling
-                    // Otherwise, we're dragging
                     interactionState = distanceChange > midpointChange ? 'scaling' : 'dragging';
                 }
 
@@ -230,11 +230,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
                 else if (interactionState === 'dragging') {
-                    // Calculate the change in touch position
                     const deltaX = (currentMidpoint.x - initialTouchMidpoint.x) * 0.01;
                     const deltaY = (currentMidpoint.y - initialTouchMidpoint.y) * 0.01;
 
-                    // Update object position
                     selectedObject.position.x = initialObjectPosition.x + deltaX;
                     selectedObject.position.z = initialObjectPosition.z + deltaY;
                 }
@@ -247,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 interactionState = 'none';
             }
             else if (event.touches.length === 1) {
-                // If transitioning from 2 touches to 1 touch, reset to rotation mode
                 interactionState = 'rotating';
                 previousTouchX = event.touches[0].pageX;
             }
@@ -257,60 +254,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchstart', onTouchStart, false);
         renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
-
-        // Model Management
-        const loadedModels = new Map();
-        const placedItems = [];
-        let previewItem = null;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
-
-        // Start AR button click handler
-        startARButton.addEventListener('click', () => {
-            const arButton = ARButton.createButton(renderer, {
-                requiredFeatures: ["hit-test"],
-                optionalFeatures: ["dom-overlay"],
-                domOverlay: { root: document.body },
-                sessionInit: {
-                    optionalFeatures: ['dom-overlay'],
-                    domOverlay: { root: document.body }
-                }
-            });
-            document.body.appendChild(arButton);
-
-            renderer.domElement.style.display = 'block';
-            if (menuButton) menuButton.style.display = "block";
-            if (sidebarMenu) sidebarMenu.style.display = "block";
-
-            startARButton.remove();
-        });
-
-        // Menu event handlers
-        document.addEventListener("click", (event) => {
-            const isClickInsideMenu = sidebarMenu?.contains(event.target);
-            const isClickOnMenuButton = menuButton?.contains(event.target);
-            const isMenuOpen = sidebarMenu?.classList.contains("open");
-            
-            if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
-                sidebarMenu.classList.remove("open");
-                closeButton.style.display = "none";
-                menuButton.style.display = "block";
-            }
-        });
-
-        menuButton.addEventListener("click", (event) => {
-            event.stopPropagation();
-            sidebarMenu.classList.add("open");
-            menuButton.style.display = "none";
-            closeButton.style.display = "block";
-        });
-
-        closeButton.addEventListener("click", (event) => {
-            event.stopPropagation();
-            sidebarMenu.classList.remove("open");
-            closeButton.style.display = "none";
-            menuButton.style.display = "block";
-        });
 
         // Model placement functions
         const showModel = (item) => {
@@ -374,19 +317,70 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
                         });
                     }
-                
                 } catch (error) {
                     console.error(`Error loading model ${category}/${itemInfo.name}:`, error);
                 }
             }
         }
 
+        // Start AR button click handler
+        startARButton.addEventListener('click', () => {
+            const arButton = ARButton.createButton(renderer, {
+                requiredFeatures: ["hit-test"],
+                optionalFeatures: ["dom-overlay"],
+                domOverlay: { root: document.body },
+                sessionInit: {
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.body }
+                }
+            });
+            document.body.appendChild(arButton);
+
+            renderer.domElement.style.display = 'block';
+            if (menuButton) menuButton.style.display = "block";
+            if (sidebarMenu) sidebarMenu.style.display = "block";
+
+            startARButton.remove();
+        });
+
+        // Menu event handlers
+        document.addEventListener("click", (event) => {
+            const isClickInsideMenu = sidebarMenu?.contains(event.target);
+            const isClickOnMenuButton = menuButton?.contains(event.target);
+            const isMenuOpen = sidebarMenu?.classList.contains("open");
+            
+            if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
+                sidebarMenu.classList.remove("open");
+                closeButton.style.display = "none";
+                menuButton.style.display = "block";
+            }
+        });
+
+        if (menuButton) {
+            menuButton.addEventListener("click", (event) => {
+                event.stopPropagation();
+                sidebarMenu.classList.add("open");
+                menuButton.style.display = "none";
+                closeButton.style.display = "block";
+            });
+        }
+
+        if (closeButton) {
+            closeButton.addEventListener("click", (event) => {
+                event.stopPropagation();
+                sidebarMenu.classList.remove("open");
+                closeButton.style.display = "none";
+                menuButton.style.display = "block";
+            });
+        }
+
         // Button Event Listeners
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
-        placeButton.addEventListener("click", placeModel);
-        cancelButton.addEventListener("click", cancelModel);
+        if (placeButton) placeButton.addEventListener("click", placeModel);
+        if (cancelButton) cancelButton.addEventListener("click", cancelModel);
 
+                           
         // AR Session and Render Loop
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
