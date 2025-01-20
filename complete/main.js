@@ -1,8 +1,9 @@
-import { loadGLTF } from "../libs/loader.js";
+
+       import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions
+// Utility functions remain unchanged
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -32,6 +33,7 @@ const deepClone = (obj) => {
     return newObj;
 };
 
+// Item categories remain unchanged
 const itemCategories = {
     lamp: [
         { name: "lamp1", height: 0.3 },
@@ -50,6 +52,7 @@ const itemCategories = {
     ]
 };
 
+// Setup function remains unchanged
 const setupAR = async () => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
@@ -78,28 +81,116 @@ document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
         const { scene, camera, renderer } = await setupAR();
 
-        // Add lights
+        // Lights setup remains unchanged
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         scene.add(light);
         scene.add(directionalLight);
 
-        // Raycaster setup
+        // Modified touch interaction setup
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
         let selectedObject = null;
         let isRotating = false;
+        let isDragging = false;
         let isPinching = false;
         let initialPinchDistance = 0;
         let initialScale = 1;
         let previousTouchX = 0;
-        
-        // Variables for dragging
-        let isDragging = false;
-        let dragStartPosition = new THREE.Vector2();
-        const DRAG_THRESHOLD = 10; // pixels
 
-        // Controller setup for AR
+        // Modified touch handlers
+        const onTouchStart = (event) => {
+            event.preventDefault();
+            
+            if (event.touches.length === 1) {
+                // Single finger for rotation
+                touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
+                touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(touches, camera);
+                const intersects = raycaster.intersectObjects(placedItems, true);
+                
+                if (intersects.length > 0) {
+                    selectedObject = intersects[0].object.parent;
+                    isRotating = true;
+                    previousTouchX = event.touches[0].pageX;
+                }
+            } else if (event.touches.length === 2) {
+                // Two fingers for dragging or pinching
+                if (selectedObject) {
+                    isRotating = false;
+                    
+                    // Check if it's a pinch gesture
+                    const dx = event.touches[0].pageX - event.touches[1].pageX;
+                    const dy = event.touches[0].pageY - event.touches[1].pageY;
+                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialScale = selectedObject.scale.x;
+                    
+                    // Set dragging flag
+                    isDragging = true;
+                }
+            }
+        };
+
+        const onTouchMove = (event) => {
+            event.preventDefault();
+            
+            if (selectedObject) {
+                if (event.touches.length === 1 && isRotating) {
+                    // Single finger rotation (horizontal only)
+                    const deltaX = event.touches[0].pageX - previousTouchX;
+                    selectedObject.rotation.y += deltaX * 0.01;
+                    previousTouchX = event.touches[0].pageX;
+                } else if (event.touches.length === 2) {
+                    const dx = event.touches[0].pageX - event.touches[1].pageX;
+                    const dy = event.touches[0].pageY - event.touches[1].pageY;
+                    const pinchDistance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (Math.abs(pinchDistance - initialPinchDistance) > 10) {
+                        // Pinch gesture
+                        isPinching = true;
+                        isDragging = false;
+                        const scale = (pinchDistance / initialPinchDistance) * initialScale;
+                        selectedObject.scale.set(scale, scale, scale);
+                    } else if (isDragging) {
+                        // Two-finger drag
+                        const centerX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                        const centerY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+                        
+                        touches.x = (centerX / window.innerWidth) * 2 - 1;
+                        touches.y = -(centerY / window.innerHeight) * 2 + 1;
+                        
+                        raycaster.setFromCamera(touches, camera);
+                        const intersect = raycaster.intersectObject(reticle);
+                        
+                        if (intersect.length > 0) {
+                            const point = intersect[0].point;
+                            selectedObject.position.x = point.x;
+                            selectedObject.position.z = point.z;
+                        }
+                    }
+                }
+            }
+        };
+
+        const onTouchEnd = (event) => {
+            if (event.touches.length === 0) {
+                isRotating = false;
+                isDragging = false;
+                isPinching = false;
+                selectedObject = null;
+            } else if (event.touches.length === 1) {
+                isDragging = false;
+                isPinching = false;
+            }
+        };
+
+        // Add touch event listeners
+        renderer.domElement.addEventListener('touchstart', onTouchStart, false);
+        renderer.domElement.addEventListener('touchmove', onTouchMove, false);
+        renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+
+        // Rest of the code remains unchanged
         const controller = renderer.xr.getController(0);
         scene.add(controller);
 
@@ -112,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // UI Elements
+        // UI Elements setup remains unchanged
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -120,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const placeButton = document.querySelector("#place");
         const cancelButton = document.querySelector("#cancel");
 
-        // Initially hide confirm buttons
         confirmButtons.style.display = "none";
 
         // Model Management
@@ -130,6 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
+     
         // Updated Touch event handlers
         const onTouchStart = (event) => {
             event.preventDefault();
@@ -381,5 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-    initialize().catch(console.error);
+        // Initialize everything else
+        initialize().catch(console.error);
+    
 });
