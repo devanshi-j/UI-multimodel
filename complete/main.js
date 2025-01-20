@@ -50,17 +50,37 @@ const itemCategories = {
     ]
 };
 
+// Create and setup AR scene
+const setupAR = async () => {
+    // Scene and AR setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+
+    document.body.appendChild(renderer.domElement);
+
+    // Create AR button immediately
+    const arButton = ARButton.createButton(renderer, {
+        requiredFeatures: ["hit-test"],
+        optionalFeatures: ["dom-overlay"],
+        domOverlay: { root: document.body },
+        sessionInit: {
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.body }
+        }
+    });
+    document.body.appendChild(arButton);
+
+    return { scene, camera, renderer };
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Scene and AR setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-
-        document.body.appendChild(renderer.domElement);
+        // Initialize AR first
+        const { scene, camera, renderer } = await setupAR();
 
         // Add lights
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
@@ -113,7 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             
             if (event.touches.length === 1) {
-                // Single touch for selection or rotation
                 touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
                 touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
                 
@@ -126,7 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     previousTouchX = event.touches[0].pageX;
                 }
             } else if (event.touches.length === 2) {
-                // Two finger touch for scaling or dragging
                 const dx = event.touches[0].pageX - event.touches[1].pageX;
                 const dy = event.touches[0].pageY - event.touches[1].pageY;
                 initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
@@ -135,7 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     isPinching = true;
                     initialScale = selectedObject.scale.x;
                 } else {
-                    // Check if we're starting a drag
                     touches.x = (((event.touches[0].pageX + event.touches[1].pageX) / 2) / window.innerWidth) * 2 - 1;
                     touches.y = -(((event.touches[0].pageY + event.touches[1].pageY) / 2) / window.innerHeight) * 2 + 1;
                     
@@ -156,19 +173,16 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             
             if (isRotating && event.touches.length === 1) {
-                // Rotate object
                 const deltaX = event.touches[0].pageX - previousTouchX;
                 selectedObject.rotation.y += deltaX * 0.01;
                 previousTouchX = event.touches[0].pageX;
             } else if (isPinching && event.touches.length === 2) {
-                // Scale object
                 const dx = event.touches[0].pageX - event.touches[1].pageX;
                 const dy = event.touches[0].pageY - event.touches[1].pageY;
                 const pinchDistance = Math.sqrt(dx * dx + dy * dy);
                 const scale = (pinchDistance / initialPinchDistance) * initialScale;
                 selectedObject.scale.set(scale, scale, scale);
             } else if (isDragging && event.touches.length === 2) {
-                // Move object
                 const currentX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
                 const currentY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
                 
@@ -256,7 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const clone = deepClone(previewItem);
                 setOpacity(clone, 1.0);
                 
-                // Get the reticle's world position and rotation
                 const position = new THREE.Vector3();
                 const rotation = new THREE.Quaternion();
                 const scale = new THREE.Vector3();
@@ -312,18 +325,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Button Event Listeners
         placeButton.addEventListener("click", placeModel);
         cancelButton.addEventListener("click", cancelModel);
-
-        // Initialize AR
-        const arButton = ARButton.createButton(renderer, {
-            requiredFeatures: ["hit-test"],
-            optionalFeatures: ["dom-overlay"],
-            domOverlay: { root: document.body },
-            sessionInit: {
-                optionalFeatures: ['dom-overlay'],
-                domOverlay: { root: document.body }
-            }
-        });
-        document.body.appendChild(arButton);
 
         // AR Session and Render Loop
         renderer.setAnimationLoop((timestamp, frame) => {
