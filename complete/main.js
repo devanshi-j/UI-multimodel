@@ -2,7 +2,7 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
-// Utility functions
+// Utility functions remain the same
 const normalizeModel = (obj, height) => {
     const bbox = new THREE.Box3().setFromObject(obj);
     const size = bbox.getSize(new THREE.Vector3());
@@ -50,9 +50,8 @@ const itemCategories = {
     ]
 };
 
-// Create and setup AR scene
+// Create and setup AR scene (remains the same)
 const setupAR = async () => {
-    // Scene and AR setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -62,7 +61,6 @@ const setupAR = async () => {
 
     document.body.appendChild(renderer.domElement);
 
-    // Create AR button immediately
     const arButton = ARButton.createButton(renderer, {
         requiredFeatures: ["hit-test"],
         optionalFeatures: ["dom-overlay"],
@@ -79,7 +77,6 @@ const setupAR = async () => {
 
 document.addEventListener("DOMContentLoaded", () => {
     const initialize = async () => {
-        // Initialize AR first
         const { scene, camera, renderer } = await setupAR();
 
         // Add lights
@@ -92,13 +89,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
         let selectedObject = null;
-        let isDragging = false;
         let isRotating = false;
         let isPinching = false;
         let initialPinchDistance = 0;
         let initialScale = 1;
         let previousTouchX = 0;
-        let previousTouchY = 0;
+        
+        // New variables for long-press dragging
+        let longPressTimer = null;
+        let isDragging = false;
+        let dragStartPosition = new THREE.Vector2();
+        const LONG_PRESS_DURATION = 2500; // 2.5 seconds
 
         // Controller setup for AR
         const controller = renderer.xr.getController(0);
@@ -113,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reticle.matrixAutoUpdate = false;
         scene.add(reticle);
 
-        // UI Elements setup
+        // UI Elements setup (remains the same)
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
         const sidebarMenu = document.getElementById("sidebar-menu");
@@ -128,13 +129,14 @@ document.addEventListener("DOMContentLoaded", () => {
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
-        // Touch event handlers
+        // Updated Touch event handlers
         const onTouchStart = (event) => {
             event.preventDefault();
             
             if (event.touches.length === 1) {
                 touches.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
                 touches.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
+                dragStartPosition.set(event.touches[0].pageX, event.touches[0].pageY);
                 
                 raycaster.setFromCamera(touches, camera);
                 const intersects = raycaster.intersectObjects(placedItems, true);
@@ -143,6 +145,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     selectedObject = intersects[0].object.parent;
                     isRotating = true;
                     previousTouchX = event.touches[0].pageX;
+
+                    // Start long-press timer
+                    longPressTimer = setTimeout(() => {
+                        isRotating = false;
+                        isDragging = true;
+                        // Optional: Add visual feedback that dragging is enabled
+                    }, LONG_PRESS_DURATION);
                 }
             } else if (event.touches.length === 2) {
                 const dx = event.touches[0].pageX - event.touches[1].pageX;
@@ -152,19 +161,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (selectedObject) {
                     isPinching = true;
                     initialScale = selectedObject.scale.x;
-                } else {
-                    touches.x = (((event.touches[0].pageX + event.touches[1].pageX) / 2) / window.innerWidth) * 2 - 1;
-                    touches.y = -(((event.touches[0].pageY + event.touches[1].pageY) / 2) / window.innerHeight) * 2 + 1;
-                    
-                    raycaster.setFromCamera(touches, camera);
-                    const intersects = raycaster.intersectObjects(placedItems, true);
-                    
-                    if (intersects.length > 0) {
-                        selectedObject = intersects[0].object.parent;
-                        isDragging = true;
-                        previousTouchX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-                        previousTouchY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-                    }
+                }
+                
+                // Clear long-press timer if second finger touches
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
                 }
             }
         };
@@ -172,32 +174,49 @@ document.addEventListener("DOMContentLoaded", () => {
         const onTouchMove = (event) => {
             event.preventDefault();
             
+            // Clear long-press timer if movement is detected
+            if (longPressTimer && !isDragging) {
+                const moveX = Math.abs(event.touches[0].pageX - dragStartPosition.x);
+                const moveY = Math.abs(event.touches[0].pageY - dragStartPosition.y);
+                if (moveX > 5 || moveY > 5) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }
+            
             if (isRotating && event.touches.length === 1) {
                 const deltaX = event.touches[0].pageX - previousTouchX;
                 selectedObject.rotation.y += deltaX * 0.01;
                 previousTouchX = event.touches[0].pageX;
+            } else if (isDragging && event.touches.length === 1 && selectedObject) {
+                const touch = event.touches[0];
+                touches.x = (touch.pageX / window.innerWidth) * 2 - 1;
+                touches.y = -(touch.pageY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(touches, camera);
+                const intersect = raycaster.intersectObject(reticle);
+                
+                if (intersect.length > 0) {
+                    const point = intersect[0].point;
+                    selectedObject.position.x = point.x;
+                    selectedObject.position.z = point.z;
+                }
             } else if (isPinching && event.touches.length === 2) {
                 const dx = event.touches[0].pageX - event.touches[1].pageX;
                 const dy = event.touches[0].pageY - event.touches[1].pageY;
                 const pinchDistance = Math.sqrt(dx * dx + dy * dy);
                 const scale = (pinchDistance / initialPinchDistance) * initialScale;
                 selectedObject.scale.set(scale, scale, scale);
-            } else if (isDragging && event.touches.length === 2) {
-                const currentX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-                const currentY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-                
-                const deltaX = (currentX - previousTouchX) * 0.01;
-                const deltaY = (currentY - previousTouchY) * 0.01;
-                
-                selectedObject.position.x += deltaX;
-                selectedObject.position.z += deltaY;
-                
-                previousTouchX = currentX;
-                previousTouchY = currentY;
             }
         };
 
         const onTouchEnd = (event) => {
+            // Clear long-press timer
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            
             if (event.touches.length === 0) {
                 isRotating = false;
                 isPinching = false;
@@ -211,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
 
+        // Rest of the code remains the same
         // Menu event handlers
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = sidebarMenu?.contains(event.target);
