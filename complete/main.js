@@ -55,21 +55,46 @@ const setOpacityForSelected = (opacity) => {
 };
 
 const itemCategories = {
-    table: [
-        { name: "table1", height: 0.5 },
-        { name: "table2", height: 0.5 },
-        { name: "table3", height: 0.5 }
-    ],
     chair: [
-        { name: "chair1", height: 0.5 },
+        { name: "chair4", height: 0.5 },
         { name: "chair2", height: 0.5 },
-        { name: "chair3", height: 0.5 }
+        { name: "chair3", height: 0.5 },
+        { name: "chair2", height: 0.5 },
+        { name: "chair2", height: 0.5 }
     ],
-    shelf: [
-        { name: "shelf1", height: 0.5 },
-        { name: "shelf2", height: 0.5 },
-        { name: "shelf3", height: 0.5 }
-    ]
+    sofa: [
+        { name: "sofa3", height: 0.5 },
+        { name: "sofa2", height: 0.5 },
+        { name: "sofa3", height: 0.5 },
+        { name: "sofa2", height: 0.5 },
+        { name: "sofa2", height: 0.5 }
+    ],
+    table: [
+        { name: "table2", height: 0.5 },
+        { name: "table2", height: 0.5 },
+        { name: "table3", height: 0.5 },
+        { name: "table4", height: 0.5 },
+        { name: "table5", height: 0.5 }
+    ],
+
+    vase: [
+        { name: "vase1", height: 0.5 },
+        { name: "vase2", height: 0.5 },
+        { name: "vase3", height: 0.5 },
+        { name: "vase4", height: 0.5 },
+        { name: "vase5", height: 0.5 }
+        
+    ],
+
+    rug: [
+        { name: "rug1", height: 0.5 },
+        { name: "rug2", height: 0.5 },
+        { name: "rug3", height: 0.5 },
+        { name: "rug4", height: 0.5 },
+        { name: "rug5", height: 0.5 }
+        
+    ],
+    
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -203,7 +228,7 @@ const onTouchMove = (event) => {
             const scaleFactor = currentPinchDistance / previousPinchDistance;
             
             if (scaleFactor !== 1) {
-                const newScale = selectedObject.scale.x * scaleFactor;
+                const newScale = selectedObject.scale.xcd * scaleFactor;
                 if (newScale >= 0.5 && newScale <= 2) {
                     selectedObject.scale.setScalar(newScale);
                 }
@@ -425,8 +450,8 @@ const getTouchDistance = (touch1, touch2) => {
         cancelButton.addEventListener("click", cancelModel);
        deleteButton.addEventListener("click", deleteModel);
 
-        for (const category of ['table', 'chair', 'shelf']) {
-            for (let i = 1; i <= 3; i++) {
+        for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
+            for (let i = 1; i <= 5; i++) {
                 const itemName = `${category}${i}`;
                 try {
                     const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
