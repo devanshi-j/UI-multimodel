@@ -1430,6 +1430,7 @@ class GLTFMeshStandardSGMaterial extends MeshStandardMaterial {
 			}
 
 			shader.fragmentShader = shader.fragmentShader
+                                .replace('vUv = uv;', 'vUv = uv1;')
 				.replace( 'uniform float roughness;', 'uniform vec3 specular;' )
 				.replace( 'uniform float metalness;', 'uniform float glossiness;' )
 				.replace( '#include <roughnessmap_pars_fragment>', specularMapParsFragmentChunk )
