@@ -9,7 +9,7 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let isModelSelected = false;
 let selectedModels = [];
-
+//hi
 /*const selectModel = (model) => {
     if (!selectedModels.includes(model)) {
         selectedModels.push(model);
