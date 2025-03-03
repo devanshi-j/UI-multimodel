@@ -1429,17 +1429,43 @@ class GLTFMeshStandardSGMaterial extends MeshStandardMaterial {
 
 			}
 
-			shader.fragmentShader = shader.fragmentShader
-                                .replace('vUv = uv;', 'vUv = uv1;')
-				.replace( 'uniform float roughness;', 'uniform vec3 specular;' )
-				.replace( 'uniform float metalness;', 'uniform float glossiness;' )
-				.replace( '#include <roughnessmap_pars_fragment>', specularMapParsFragmentChunk )
-				.replace( '#include <metalnessmap_pars_fragment>', glossinessMapParsFragmentChunk )
-				.replace( '#include <roughnessmap_fragment>', specularMapFragmentChunk )
-				.replace( '#include <metalnessmap_fragment>', glossinessMapFragmentChunk )
-				.replace( '#include <lights_physical_fragment>', lightPhysicalFragmentChunk );
+			this.onBeforeCompile = function (shader) {
+    for (const uniformName in uniforms) {
+        shader.uniforms[uniformName] = uniforms[uniformName];
+    }
 
-		};
+    // Add vUv1 to the varying variables
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <uv_pars_vertex>',
+        `#include <uv_pars_vertex>
+         varying vec2 vUv1;`
+    );
+
+    // Assign UV1 to vUv1 in vertex shader
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <uv_vertex>',
+        `#include <uv_vertex>
+         vUv1 = uv1;`
+    );
+
+    // Use vUv1 in the fragment shader
+    shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <uv_pars_fragment>',
+        `#include <uv_pars_fragment>
+         varying vec2 vUv1;`
+    );
+
+    shader.fragmentShader = shader.fragmentShader
+        .replace(/vUv/g, 'vUv1') // Replace all vUv occurrences with vUv1
+        .replace('uniform float roughness;', 'uniform vec3 specular;')
+        .replace('uniform float metalness;', 'uniform float glossiness;')
+        .replace('#include <roughnessmap_pars_fragment>', specularMapParsFragmentChunk)
+        .replace('#include <metalnessmap_pars_fragment>', glossinessMapParsFragmentChunk)
+        .replace('#include <roughnessmap_fragment>', specularMapFragmentChunk)
+        .replace('#include <metalnessmap_fragment>', glossinessMapFragmentChunk)
+        .replace('#include <lights_physical_fragment>', lightPhysicalFragmentChunk);
+};
+
 
 		Object.defineProperties( this, {
 
