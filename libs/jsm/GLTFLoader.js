@@ -1421,15 +1421,7 @@ class GLTFMeshStandardSGMaterial extends MeshStandardMaterial {
 
 		this._extraUniforms = uniforms;
 
-		this.onBeforeCompile = function ( shader ) {
-
-			for ( const uniformName in uniforms ) {
-
-				shader.uniforms[ uniformName ] = uniforms[ uniformName ];
-
-			}
-
-			this.onBeforeCompile = function (shader) {
+		this.onBeforeCompile = function (shader) {
     for (const uniformName in uniforms) {
         shader.uniforms[uniformName] = uniforms[uniformName];
     }
@@ -1465,6 +1457,7 @@ class GLTFMeshStandardSGMaterial extends MeshStandardMaterial {
         .replace('#include <metalnessmap_fragment>', glossinessMapFragmentChunk)
         .replace('#include <lights_physical_fragment>', lightPhysicalFragmentChunk);
 };
+
 
 
 		Object.defineProperties( this, {
