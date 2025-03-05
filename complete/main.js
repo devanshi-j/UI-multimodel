@@ -451,31 +451,42 @@ const getTouchDistance = (touch1, touch2) => {
        deleteButton.addEventListener("click", deleteModel);
 
         for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
-            for (let i = 1; i <= 5; i++) {
-                const itemName = `${category}${i}`;
-                try {
-                    const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                    normalizeModel(model.scene, 0.5);
-                    const item = new THREE.Group();
-                    item.add(model.scene);
-                    loadedModels.set(`${category}-${itemName}`, item);
-                    const thumbnail = document.querySelector(`#${category}-${itemName}`);
-                    if (thumbnail) {
-                        thumbnail.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const model = loadedModels.get(`${category}-${itemName}`);
-                            if (model) {
-                                const modelClone = model.clone(true);
-                                showModel(modelClone);
-                            }
-                        });
+    for (let i = 1; i <= 5; i++) {
+        const itemName = `${category}${i}`;
+        const isGLB = (category === 'sofa' && [1, 2, 4].includes(i)) ||
+                      (category === 'rug' && i === 3) ||
+                      (category === 'vase' && [1, 4].includes(i)) ||
+                      (category === 'chair' && [3, 4].includes(i));
+
+        const filePath = isGLB 
+            ? `../assets/models/${category}/${itemName}/${itemName}.glb` 
+            : `../assets/models/${category}/${itemName}/scene.gltf`;
+
+        try {
+            const model = await loadGLTF(filePath); 
+            normalizeModel(model.scene, 0.5);
+            const item = new THREE.Group();
+            item.add(model.scene);
+            loadedModels.set(`${category}-${itemName}`, item);
+
+            const thumbnail = document.querySelector(`#${category}-${itemName}`);
+            if (thumbnail) {
+                thumbnail.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const model = loadedModels.get(`${category}-${itemName}`);
+                    if (model) {
+                        const modelClone = model.clone(true);
+                        showModel(modelClone);
                     }
-                } catch (error) {
-                    console.error(`Error loading model ${category}/${itemName}:`, error);
-                }
+                });
             }
+        } catch (error) {
+            console.error(`Error loading model ${category}/${itemName}:`, error);
         }
+    }
+}
+
        renderer.setAnimationLoop((timestamp, frame) => {
     if (frame) {
         const referenceSpace = renderer.xr.getReferenceSpace();
