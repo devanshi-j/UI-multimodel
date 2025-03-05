@@ -463,7 +463,7 @@ const getTouchDistance = (touch1, touch2) => {
             : `../assets/models/${category}/${itemName}/scene.gltf`;
 
         try {
-            console.log(filepath);
+            console.log(filePath);
             const model = await loadGLTF(filePath); 
             normalizeModel(model.scene, 0.5);
             const item = new THREE.Group();
