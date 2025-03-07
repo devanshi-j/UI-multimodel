@@ -270,7 +270,8 @@ const getTouchDistance = (touch1, touch2) => {
         
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
-        const sidebarMenu = document.getElementById("sidebar-menu");
+        //const bottomMenu = document.getElementById("bottom-menu");
+         const bottomMenu = document.getElementById("bottomMenu");
         const confirmButtons = document.getElementById("confirm-buttons");
         const placeButton = document.getElementById("place");
         const cancelButton = document.getElementById("cancel");
@@ -279,11 +280,11 @@ const getTouchDistance = (touch1, touch2) => {
         const statusMessage = document.getElementById("status-message");
 
         document.addEventListener("click", (event) => {
-            const isClickInsideMenu = sidebarMenu?.contains(event.target);
+            const isClickInsideMenu = bottomMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
-            const isMenuOpen = sidebarMenu?.classList.contains("open");
+            const isMenuOpen = bottomMenu?.classList.contains("open");
             if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
-                sidebarMenu.classList.remove("open");
+                bottomMenu.classList.remove("open");
                 closeButton.style.display = "none";
                 menuButton.style.display = "block";
                 reticle.visible = false;
@@ -292,14 +293,14 @@ const getTouchDistance = (touch1, touch2) => {
 
         menuButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            sidebarMenu.classList.add("open");
+            bottomMenu.classList.add("open");
             menuButton.style.display = "none";
             closeButton.style.display = "block";
         });
 
         closeButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            sidebarMenu.classList.remove("open");
+            bottomMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
             if (!isModelSelected) {
