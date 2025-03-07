@@ -450,43 +450,72 @@ const getTouchDistance = (touch1, touch2) => {
         cancelButton.addEventListener("click", cancelModel);
        deleteButton.addEventListener("click", deleteModel);
 
-        for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
+       for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
     for (let i = 1; i <= 5; i++) {
-        const itemName = `${category}${i}`;
-        const isGLB = (category === 'sofa' && [1, 2, 4].includes(i)) ||
-                      (category === 'rug' && i === 3) ||
-                      (category === 'vase' && [1, 4].includes(i)) ||
-                      (category === 'chair' && [3, 4].includes(i));
+        (async () => {
+            const itemName = `${category}${i}`;
+            const baseModelPath = `../assets/models/${category}/${itemName}`;
+            const glbPath = `${baseModelPath}/${itemName}.glb`;
+            const gltfPath = `${baseModelPath}/scene.gltf`;
 
-        const filePath = isGLB 
-            ? `../assets/models/${category}/${itemName}/${itemName}.glb` 
-            : `../assets/models/${category}/${itemName}/scene.gltf`;
+            try {
+                // Check if either GLB or GLTF file exists
+                let modelPath = await getExistingFile(glbPath, gltfPath);
+                if (!modelPath) {
+                    console.warn(`No model found for ${category}/${itemName}`);
+                    return;
+                }
 
-        try {
-            console.log(filePath);
-            const model = await loadGLTF(filePath); 
-            normalizeModel(model.scene, 0.5);
-            const item = new THREE.Group();
-            item.add(model.scene);
-            loadedModels.set(`${category}-${itemName}`, item);
+                console.log(`Loading model: ${modelPath}`);
+                const model = await loadGLTF(modelPath);
+                normalizeModel(model.scene, 0.5);
 
-            const thumbnail = document.querySelector(`#${category}-${itemName}`);
-            if (thumbnail) {
-                thumbnail.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const model = loadedModels.get(`${category}-${itemName}`);
-                    if (model) {
-                        const modelClone = model.clone(true);
-                        showModel(modelClone);
-                    }
-                });
+                const item = new THREE.Group();
+                item.add(model.scene);
+                loadedModels.set(`${category}-${itemName}`, item);
+
+                // Add click event to thumbnail
+                const thumbnail = document.querySelector(`#${category}-${itemName}`);
+                if (thumbnail) {
+                    thumbnail.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const model = loadedModels.get(`${category}-${itemName}`);
+                        if (model) {
+                            const modelClone = model.clone(true);
+                            showModel(modelClone);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(`Error loading model ${category}/${itemName}:`, error);
             }
-        } catch (error) {
-            console.error(`Error loading model ${category}/${itemName}:`, error);
-        }
+        })();
     }
 }
+
+// Function to check which file exists
+async function getExistingFile(glbPath, gltfPath) {
+    try {
+        if (await fileExists(glbPath)) return glbPath;
+        if (await fileExists(gltfPath)) return gltfPath;
+        return null;
+    } catch (error) {
+        console.error(`Error checking file existence:`, error);
+        return null;
+    }
+}
+
+// Function to check file existence using a HEAD request
+async function fileExists(url) {
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
 
        renderer.setAnimationLoop((timestamp, frame) => {
     if (frame) {
