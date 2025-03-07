@@ -453,39 +453,53 @@ const getTouchDistance = (touch1, touch2) => {
         for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
     for (let i = 1; i <= 5; i++) {
         const itemName = `${category}${i}`;
-        const isGLB = (category === 'sofa' && [1, 2, 4].includes(i)) ||
-                      (category === 'rug' && i === 3) ||
-                      (category === 'vase' && [1, 4].includes(i)) ||
-                      (category === 'chair' && [3, 4].includes(i));
+        const itemId = `${category}-${itemName}`;
+        
+        // Try to load the model (checking both file types)
+        loadModel(category, itemName, itemId);
+    }
+}
 
-        const filePath = isGLB 
-            ? `../assets/models/${category}/${itemName}/${itemName}.glb` 
-            : `../assets/models/${category}/${itemName}/scene.gltf`;
-
+async function loadModel(category, itemName, itemId) {
+    const baseModelPath = `../assets/models/${category}/${itemName}`;
+    const paths = [
+        `${baseModelPath}/scene.gltf`,
+        `${baseModelPath}/${itemName}.glb`
+    ];
+    
+    for (const path of paths) {
         try {
-            console.log(filePath);
-            const model = await loadGLTF(filePath); 
+            const model = await loadGLTF(path);
             normalizeModel(model.scene, 0.5);
+            
             const item = new THREE.Group();
             item.add(model.scene);
-            loadedModels.set(`${category}-${itemName}`, item);
-
-            const thumbnail = document.querySelector(`#${category}-${itemName}`);
+            loadedModels.set(itemId, item);
+            
+            // Add click event to thumbnail
+            const thumbnail = document.querySelector(`#${itemId}`);
             if (thumbnail) {
                 thumbnail.addEventListener("click", (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const model = loadedModels.get(`${category}-${itemName}`);
+                    const model = loadedModels.get(itemId);
                     if (model) {
                         const modelClone = model.clone(true);
                         showModel(modelClone);
                     }
                 });
             }
+            
+            // Model successfully loaded, no need to try the next path
+            return;
         } catch (error) {
-            console.error(`Error loading model ${category}/${itemName}:`, error);
+            // Continue to the next path if this one fails
+            // Only log if all paths fail (done outside this loop)
         }
     }
+    
+    // If we reached here, all paths failed
+    console.error(`Failed to load model ${category}/${itemName}`);
 }
 
        renderer.setAnimationLoop((timestamp, frame) => {
