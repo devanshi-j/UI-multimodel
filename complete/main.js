@@ -481,9 +481,16 @@ const getTouchDistance = (touch1, touch2) => {
                         e.preventDefault();
                         e.stopPropagation();
                         const model = loadedModels.get(`${category}-${itemName}`);
+
                         if (model) {
-                            const modelClone = model.clone(true);
-                            showModel(modelClone);
+                            try {
+                                const modelClone = model.clone(true);
+                                showModel(modelClone);
+                            } catch (cloneError) {
+                                console.error(`Error cloning model on click: ${category}/${itemName}`, cloneError);
+                            }
+                        } else {
+                            console.error(`Model not found when clicked: ${category}/${itemName}`);
                         }
                     });
                 }
@@ -515,7 +522,6 @@ async function fileExists(url) {
         return false;
     }
 }
-
 
        renderer.setAnimationLoop((timestamp, frame) => {
     if (frame) {
