@@ -450,56 +450,77 @@ const getTouchDistance = (touch1, touch2) => {
         cancelButton.addEventListener("click", cancelModel);
        deleteButton.addEventListener("click", deleteModel);
 
-        for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
+       for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
     for (let i = 1; i <= 5; i++) {
         const itemName = `${category}${i}`;
         const itemId = `${category}-${itemName}`;
+        const baseModelPath = `../assets/models/${category}/${itemName}`;
         
-        // Try to load the model (checking both file types)
-        loadModel(category, itemName, itemId);
-    }
-}
-
-async function loadModel(category, itemName, itemId) {
-    const baseModelPath = `../assets/models/${category}/${itemName}`;
-    const paths = [
-        `${baseModelPath}/scene.gltf`,
-        `${baseModelPath}/${itemName}.glb`
-    ];
-    
-    for (const path of paths) {
-        try {
-            const model = await loadGLTF(path);
-            normalizeModel(model.scene, 0.5);
-            
-            const item = new THREE.Group();
-            item.add(model.scene);
-            loadedModels.set(itemId, item);
-            
-            // Add click event to thumbnail
-            const thumbnail = document.querySelector(`#${itemId}`);
-            if (thumbnail) {
-                thumbnail.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const model = loadedModels.get(itemId);
-                    if (model) {
-                        const modelClone = model.clone(true);
-                        showModel(modelClone);
-                    }
-                });
+        // Try GLB format first, then GLTF
+        const glbPath = `${baseModelPath}/${itemName}.glb`;
+        const gltfPath = `${baseModelPath}/scene.gltf`;
+        
+        (async () => {
+            // First attempt - try GLB
+            try {
+                console.log(`Attempting to load: ${glbPath}`);
+                const model = await loadGLTF(glbPath);
+                normalizeModel(model.scene, 0.5);
+                
+                const item = new THREE.Group();
+                item.add(model.scene);
+                loadedModels.set(itemId, item);
+                
+                // Add click event to thumbnail
+                const thumbnail = document.querySelector(`#${itemId}`);
+                if (thumbnail) {
+                    thumbnail.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const model = loadedModels.get(itemId);
+                        if (model) {
+                            const modelClone = model.clone(true);
+                            showModel(modelClone);
+                        }
+                    });
+                }
+                console.log(`Successfully loaded GLB: ${itemId}`);
+                return;
+            } catch (glbError) {
+                // GLB failed, try GLTF next
+                console.log(`GLB load failed for ${itemId}, trying GLTF...`);
             }
             
-            // Model successfully loaded, no need to try the next path
-            return;
-        } catch (error) {
-            // Continue to the next path if this one fails
-            // Only log if all paths fail (done outside this loop)
-        }
+            // Second attempt - try GLTF
+            try {
+                console.log(`Attempting to load: ${gltfPath}`);
+                const model = await loadGLTF(gltfPath);
+                normalizeModel(model.scene, 0.5);
+                
+                const item = new THREE.Group();
+                item.add(model.scene);
+                loadedModels.set(itemId, item);
+                
+                // Add click event to thumbnail
+                const thumbnail = document.querySelector(`#${itemId}`);
+                if (thumbnail) {
+                    thumbnail.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const model = loadedModels.get(itemId);
+                        if (model) {
+                            const modelClone = model.clone(true);
+                            showModel(modelClone);
+                        }
+                    });
+                }
+                console.log(`Successfully loaded GLTF: ${itemId}`);
+                return;
+            } catch (gltfError) {
+                console.error(`Failed to load model ${category}/${itemName} - both formats failed`);
+            }
+        })();
     }
-    
-    // If we reached here, all paths failed
-    console.error(`Failed to load model ${category}/${itemName}`);
 }
 
        renderer.setAnimationLoop((timestamp, frame) => {
