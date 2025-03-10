@@ -502,27 +502,35 @@ const getTouchDistance = (touch1, touch2) => {
     }
 }
 
-// Function to check which file exists
 async function getExistingFile(glbPath, gltfPath) {
-    try {
-        if (await fileExists(glbPath)) return glbPath;
-        if (await fileExists(gltfPath)) return gltfPath;
-        return null;
-    } catch (error) {
-        console.error(`Error checking file existence:`, error);
-        return null;
+    console.log(`Checking GLB: ${glbPath}`);
+    if (await fileExists(glbPath)) {
+        console.log(`GLB found: ${glbPath}`);
+        return glbPath;
     }
+
+    console.log(`Checking GLTF: ${gltfPath}`);
+    if (await fileExists(gltfPath)) {
+        console.log(`GLTF found: ${gltfPath}`);
+        return gltfPath;
+    }
+
+    console.warn(`Neither GLB nor GLTF found.`);
+    return null;
 }
 
-// Function to check file existence using a HEAD request
+
 async function fileExists(url) {
     try {
         const response = await fetch(url, { method: 'HEAD' });
+        console.log(`File check response for ${url}: ${response.status}`);
         return response.ok;
-    } catch {
+    } catch (error) {
+        console.error(`Error checking file existence: ${url}`, error);
         return false;
     }
 }
+
 
        renderer.setAnimationLoop((timestamp, frame) => {
     if (frame) {
