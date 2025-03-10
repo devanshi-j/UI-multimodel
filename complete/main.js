@@ -270,8 +270,8 @@ const getTouchDistance = (touch1, touch2) => {
         
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
-        //const sidebarMenu = document.getElementById("sidebar-menu");
-        const sidebarMenu = document.getElementById("bottom-menu");
+        //const bottomMenu = document.getElementById("bottom-menu");
+         const bottomMenu = document.getElementById("bottomMenu");
         const confirmButtons = document.getElementById("confirm-buttons");
         const placeButton = document.getElementById("place");
         const cancelButton = document.getElementById("cancel");
@@ -280,11 +280,11 @@ const getTouchDistance = (touch1, touch2) => {
         const statusMessage = document.getElementById("status-message");
 
         document.addEventListener("click", (event) => {
-            const isClickInsideMenu = sidebarMenu?.contains(event.target);
+            const isClickInsideMenu = bottomMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
-            const isMenuOpen = sidebarMenu?.classList.contains("open");
+            const isMenuOpen = bottomMenu?.classList.contains("open");
             if (!isClickInsideMenu && !isClickOnMenuButton && isMenuOpen) {
-                sidebarMenu.classList.remove("open");
+                bottomMenu.classList.remove("open");
                 closeButton.style.display = "none";
                 menuButton.style.display = "block";
                 reticle.visible = false;
@@ -293,14 +293,14 @@ const getTouchDistance = (touch1, touch2) => {
 
         menuButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            sidebarMenu.classList.add("open");
+            bottomMenu.classList.add("open");
             menuButton.style.display = "none";
             closeButton.style.display = "block";
         });
 
         closeButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            sidebarMenu.classList.remove("open");
+            bottomMenu.classList.remove("open");
             closeButton.style.display = "none";
             menuButton.style.display = "block";
             if (!isModelSelected) {
@@ -451,43 +451,86 @@ const getTouchDistance = (touch1, touch2) => {
         cancelButton.addEventListener("click", cancelModel);
        deleteButton.addEventListener("click", deleteModel);
 
-        for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
+       for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
     for (let i = 1; i <= 5; i++) {
-        const itemName = `${category}${i}`;
-        const isGLB = (category === 'sofa' && [1, 2, 4].includes(i)) ||
-                      (category === 'rug' && i === 3) ||
-                      (category === 'vase' && [1, 4].includes(i)) ||
-                      (category === 'chair' && [3, 4].includes(i));
+        (async () => {
+            const itemName = `${category}${i}`;
+            const baseModelPath = `../assets/models/${category}/${itemName}`;
+            const glbPath = `${baseModelPath}/${itemName}.glb`;
+            const gltfPath = `${baseModelPath}/scene.gltf`;
 
-        const filePath = isGLB 
-            ? `../assets/models/${category}/${itemName}/${itemName}.glb` 
-            : `../assets/models/${category}/${itemName}/scene.gltf`;
+            try {
+                // Check if either GLB or GLTF file exists
+                let modelPath = await getExistingFile(glbPath, gltfPath);
+                if (!modelPath) {
+                    console.warn(`No model found for ${category}/${itemName}`);
+                    return;
+                }
 
-        try {
-            console.log(filePath);
-            const model = await loadGLTF(filePath); 
-            normalizeModel(model.scene, 0.5);
-            const item = new THREE.Group();
-            item.add(model.scene);
-            loadedModels.set(`${category}-${itemName}`, item);
+                console.log(`Loading model: ${modelPath}`);
+                const model = await loadGLTF(modelPath);
+                normalizeModel(model.scene, 0.5);
 
-            const thumbnail = document.querySelector(`#${category}-${itemName}`);
-            if (thumbnail) {
-                thumbnail.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const model = loadedModels.get(`${category}-${itemName}`);
-                    if (model) {
-                        const modelClone = model.clone(true);
-                        showModel(modelClone);
-                    }
-                });
+                const item = new THREE.Group();
+                item.add(model.scene);
+                loadedModels.set(`${category}-${itemName}`, item);
+
+                // Add click event to thumbnail
+                const thumbnail = document.querySelector(`#${category}-${itemName}`);
+                if (thumbnail) {
+                    thumbnail.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const model = loadedModels.get(`${category}-${itemName}`);
+
+                        if (model) {
+                            try {
+                                const modelClone = model.clone(true);
+                                showModel(modelClone);
+                            } catch (cloneError) {
+                                console.error(`Error cloning model on click: ${category}/${itemName}`, cloneError);
+                            }
+                        } else {
+                            console.error(`Model not found when clicked: ${category}/${itemName}`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(`Error loading model ${category}/${itemName}:`, error);
             }
-        } catch (error) {
-            console.error(`Error loading model ${category}/${itemName}:`, error);
-        }
+        })();
     }
 }
+
+async function getExistingFile(glbPath, gltfPath) {
+    console.log(`Checking GLB: ${glbPath}`);
+    if (await fileExists(glbPath)) {
+        console.log(`GLB found: ${glbPath}`);
+        return glbPath;
+    }
+
+    console.log(`Checking GLTF: ${gltfPath}`);
+    if (await fileExists(gltfPath)) {
+        console.log(`GLTF found: ${gltfPath}`);
+        return gltfPath;
+    }
+
+    console.warn(`Neither GLB nor GLTF found.`);
+    return null;
+}
+
+
+async function fileExists(url) {
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        console.log(`File check response for ${url}: ${response.status}`);
+        return response.ok;
+    } catch (error) {
+        console.error(`Error checking file existence: ${url}`, error);
+        return false;
+    }
+}
+
 
        renderer.setAnimationLoop((timestamp, frame) => {
     if (frame) {
