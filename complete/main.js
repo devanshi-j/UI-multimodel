@@ -270,7 +270,8 @@ const getTouchDistance = (touch1, touch2) => {
         
         const menuButton = document.getElementById("menu-button");
         const closeButton = document.getElementById("close-button");
-        const sidebarMenu = document.getElementById("sidebar-menu");
+        //const sidebarMenu = document.getElementById("sidebar-menu");
+        const sidebarMenu = document.getElementById("bottom-menu");
         const confirmButtons = document.getElementById("confirm-buttons");
         const placeButton = document.getElementById("place");
         const cancelButton = document.getElementById("cancel");
