@@ -404,7 +404,37 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-        for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
+         // Load models
+        for (const category in itemCategories) {
+            for (const itemInfo of itemCategories[category]) {
+                try {
+                    const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
+                    normalizeModel(model.scene, itemInfo.height);
+
+                    const item = new THREE.Group();
+                    item.add(model.scene);
+                    
+                    loadedModels.set(`${category}-${itemInfo.name}`, item);
+
+                    const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
+                    if (thumbnail) {
+                        thumbnail.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const model = loadedModels.get(`${category}-${itemInfo.name}`);
+                            if (model) {
+                                const modelClone = deepClone(model);
+                                showModel(modelClone);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error loading model ${category}/${itemInfo.name}:`, error);
+                }
+            }
+        }
+
+        /*for (const category of ['chair', 'table', 'sofa', 'vase', 'rug']) {
             for (let i = 1; i <= 5; i++) {
                 (async () => {
                     const itemName = `${category}${i}`;
@@ -481,7 +511,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error(`Error checking file existence: ${url}`, error);
                 return false;
             }
-        }
+        }*/
 
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
