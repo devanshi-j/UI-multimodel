@@ -10,18 +10,6 @@ export const loadGLTF = (path) => {
       resolve(gltf);
     });
   });
-}import {GLTFLoader} from "../libs/jsm/GLTFLoader.js";
-import * as THREE from "../libs/three123/three.module.js";
-
-//const THREE = window.MINDAR.IMAGE? window.MINDAR.IMAGE.THREE: window.MINDAR.FACE.THREE;
-
-export const loadGLTF = (path) => {
-  return new Promise((resolve, reject) => {
-    const loader = new GLTFLoader();
-    loader.load(path, (gltf) => {
-      resolve(gltf);
-    });
-  });
 }
 
 export const loadAudio = (path) => {
