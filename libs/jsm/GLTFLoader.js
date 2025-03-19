@@ -1440,8 +1440,6 @@ class GLTFMeshStandardSGMaterial extends MeshStandardMaterial {
 
 		};
 
-
-
 		Object.defineProperties( this, {
 
 			specular: {
