@@ -404,32 +404,30 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-         // Load models
-        for (const category in itemCategories) {
-            for (const itemInfo of itemCategories[category]) {
+       
+                    for (const category of ['table', 'chair', 'shelf']) {
+            for (let i = 1; i <= 3; i++) {
+                const itemName = `${category}${i}`;
                 try {
-                    const model = await loadGLTF(`../assets/models/${category}/${itemInfo.name}/scene.gltf`);
-                    normalizeModel(model.scene, itemInfo.height);
-
+                    const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+                    normalizeModel(model.scene, 0.5);
                     const item = new THREE.Group();
                     item.add(model.scene);
-                    
-                    loadedModels.set(`${category}-${itemInfo.name}`, item);
-
-                    const thumbnail = document.querySelector(`#${category}-${itemInfo.name}`);
+                    loadedModels.set(`${category}-${itemName}`, item);
+                    const thumbnail = document.querySelector(`#${category}-${itemName}`);
                     if (thumbnail) {
                         thumbnail.addEventListener("click", (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            const model = loadedModels.get(`${category}-${itemInfo.name}`);
+                            const model = loadedModels.get(`${category}-${itemName}`);
                             if (model) {
-                                const modelClone = deepClone(model);
+                                const modelClone = model.clone(true);
                                 showModel(modelClone);
                             }
                         });
                     }
                 } catch (error) {
-                    console.error(`Error loading model ${category}/${itemInfo.name}:`, error);
+                    console.error(`Error loading model ${category}/${itemName}:`, error);
                 }
             }
         }
