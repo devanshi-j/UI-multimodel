@@ -405,8 +405,8 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteButton.addEventListener("click", deleteModel);
 
        
-                    for (const category of ['table', 'chair', 'shelf']) {
-            for (let i = 1; i <= 3; i++) {
+                    for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
+            for (let i = 1; i <= 5; i++) {
                 const itemName = `${category}${i}`;
                 try {
                     const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
