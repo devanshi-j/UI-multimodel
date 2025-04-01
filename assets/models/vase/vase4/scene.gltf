@@ -15,7 +15,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Sphere"
+			"name":"Sphere.001"
 		}
 	],
 	"materials":[
@@ -48,7 +48,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Sphere",
+			"name":"Sphere.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -110,10 +110,10 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":1884,
+			"count":2108,
 			"max":[
 				1.0923079252243042,
-				1.4895325899124146,
+				1.495734453201294,
 				1.0923075675964355
 			],
 			"min":[
@@ -126,151 +126,151 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":1884,
+			"count":2108,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":1884,
+			"count":2108,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5126,
-			"count":1884,
+			"count":2108,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":4,
 			"componentType":5126,
-			"count":1884,
+			"count":2108,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":5,
 			"componentType":5123,
-			"count":8442,
+			"count":9201,
 			"type":"SCALAR"
 		},
 		{
 			"bufferView":6,
 			"componentType":5126,
-			"count":1251,
+			"count":6,
 			"max":[
-				0.5311151146888733,
-				2.874377965927124,
-				0.58003169298172
+				0.5069587230682373,
+				1.4093618392944336,
+				0.029034672304987907
 			],
 			"min":[
-				-0.6300802826881409,
-				0.9893315434455872,
-				-0.4745965301990509
+				0.31108206510543823,
+				1.1330764293670654,
+				-0.01016541663557291
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":7,
 			"componentType":5126,
-			"count":1251,
+			"count":6,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":8,
 			"componentType":5126,
-			"count":1251,
+			"count":6,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":9,
 			"componentType":5126,
-			"count":1251,
+			"count":6,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":10,
 			"componentType":5126,
-			"count":1251,
+			"count":6,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":11,
 			"componentType":5123,
-			"count":2433,
+			"count":6,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":22608,
+			"byteLength":25296,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":22608,
-			"byteOffset":22608,
+			"byteLength":25296,
+			"byteOffset":25296,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":15072,
-			"byteOffset":45216,
+			"byteLength":16864,
+			"byteOffset":50592,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":15072,
-			"byteOffset":60288,
+			"byteLength":16864,
+			"byteOffset":67456,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":15072,
-			"byteOffset":75360,
+			"byteLength":16864,
+			"byteOffset":84320,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":16884,
-			"byteOffset":90432,
+			"byteLength":18402,
+			"byteOffset":101184,
 			"target":34963
 		},
 		{
 			"buffer":0,
-			"byteLength":15012,
-			"byteOffset":107316,
+			"byteLength":72,
+			"byteOffset":119588,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":15012,
-			"byteOffset":122328,
+			"byteLength":72,
+			"byteOffset":119660,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":10008,
-			"byteOffset":137340,
+			"byteLength":48,
+			"byteOffset":119732,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":10008,
-			"byteOffset":147348,
+			"byteLength":48,
+			"byteOffset":119780,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":10008,
-			"byteOffset":157356,
+			"byteLength":48,
+			"byteOffset":119828,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":4866,
-			"byteOffset":167364,
+			"byteLength":12,
+			"byteOffset":119876,
 			"target":34963
 		}
 	],
@@ -282,7 +282,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":172232,
+			"byteLength":119888,
 			"uri":"scene.bin"
 		}
 	]

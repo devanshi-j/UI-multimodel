@@ -8,23 +8,14 @@
 		{
 			"name":"Scene",
 			"nodes":[
-				0,
-				1,
-				2
+				0
 			]
 		}
 	],
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Plane"
-		},
-		{
-			"mesh":1,
-			"name":"Plane.001"
-		},
-		{
-			"name":"Mesh"
+			"name":"Mesh.001"
 		}
 	],
 	"materials":[
@@ -47,7 +38,8 @@
 			"name":"Material.002",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":0
+					"index":0,
+					"texCoord":1
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -56,7 +48,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Plane",
+			"name":"Mesh.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -67,19 +59,15 @@
 					},
 					"indices":4,
 					"material":0
-				}
-			]
-		},
-		{
-			"name":"Plane.001",
-			"primitives":[
+				},
 				{
 					"attributes":{
 						"POSITION":5,
 						"NORMAL":6,
-						"TEXCOORD_0":7
+						"TEXCOORD_0":7,
+						"TEXCOORD_1":8
 					},
-					"indices":8,
+					"indices":9,
 					"material":1
 				}
 			]
@@ -169,6 +157,12 @@
 		},
 		{
 			"bufferView":8,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":9,
 			"componentType":5123,
 			"count":6,
 			"type":"SCALAR"
@@ -225,8 +219,14 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":12,
+			"byteLength":32,
 			"byteOffset":816,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":12,
+			"byteOffset":848,
 			"target":34963
 		}
 	],
@@ -238,7 +238,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":828,
+			"byteLength":860,
 			"uri":"scene.bin"
 		}
 	]
