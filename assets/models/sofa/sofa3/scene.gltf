@@ -8,8 +8,7 @@
 		{
 			"name":"Scene",
 			"nodes":[
-				0,
-				1
+				0
 			]
 		}
 	],
@@ -17,10 +16,6 @@
 		{
 			"mesh":0,
 			"name":"Cylinder"
-		},
-		{
-			"mesh":1,
-			"name":"Cylinder.001"
 		}
 	],
 	"materials":[
@@ -69,12 +64,7 @@
 					},
 					"indices":4,
 					"material":0
-				}
-			]
-		},
-		{
-			"name":"Cylinder.001",
-			"primitives":[
+				},
 				{
 					"attributes":{
 						"POSITION":5,
