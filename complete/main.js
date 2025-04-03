@@ -213,20 +213,20 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (isScaling) {
             const currentPinchDistance = getTouchDistance(touch1, touch2);
             
-            // Calculate scale factor based on the ratio of current to previous pinch distance
-            const scaleFactor = currentPinchDistance / previousPinchDistance;
-            
-            // Apply scaling only if the factor is different from 1 (meaning the pinch changed)
-            if (scaleFactor !== 1 && scaleFactor > 0) {
-                // Get current scale
-                const currentScale = selectedObject.scale.x;
+            // Only proceed if we have a valid previous distance
+            if (previousPinchDistance > 0) {
+                // Calculate scale factor as the ratio between current and previous distance
+                const scaleFactor = currentPinchDistance / previousPinchDistance;
                 
-                // Calculate new scale value (apply the factor to current scale)
-                const newScale = currentScale * scaleFactor;
+                // Apply scaling with a dampening factor to make it less sensitive
+                const dampedScaleFactor = 1.0 + (scaleFactor - 1.0) * 0.5;
+                
+                // Apply the scale adjustment to the current scale
+                const newScale = selectedObject.scale.x * dampedScaleFactor;
                 
                 // Apply scaling with limits to prevent too small or too large objects
-                if (newScale >= 0.5 && newScale <= 2) {
-                    selectedObject.scale.setScalar(newScale);
+                if (newScale >= 0.2 && newScale <= 3.0) {
+                    selectedObject.scale.set(newScale, newScale, newScale);
                 }
             }
             
