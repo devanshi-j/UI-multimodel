@@ -418,7 +418,7 @@ self.addEventListener('fetch', event => {
     })
   );
 });
-];
+
 
 // Install event - only cache the HTML, JS and core files
 self.addEventListener('install', event => {
