@@ -378,12 +378,17 @@ self.addEventListener('install', event => {
   );
   
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('[Service Worker] Caching core files');
-      return cache.addAll(CORE_FILES);
+    caches.open(CACHE_NAME).then(async cache => {
+      for (let asset of FILES_TO_CACHE) {
+        try {
+          await cache.add(asset);
+          console.log(`[Service Worker] Cached: ${asset}`);
+        } catch (err) {
+          console.error(`[Service Worker] Failed to cache: ${asset}`, err);
+        }
+      }
     })
   );
-});
 
 // Fetch event - cache textures when they're requested
 self.addEventListener('fetch', event => {
