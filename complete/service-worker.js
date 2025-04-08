@@ -1,6 +1,12 @@
 const CACHE_NAME = 'ar-model-cache-v1';
 const FILES_TO_CACHE = [
-  '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_BaseColor.jpg',
+'../complete/index.html',
+'../complete/main.js',
+'../libs/jsm/ARButton.js',
+'../libs/jsm/GLTFLoader.js',
+'../libs/three123/three.module.js',
+'../libs/loader.js',
+'../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_BaseColor.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Cavity.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Gloss.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Normal.jpg',
