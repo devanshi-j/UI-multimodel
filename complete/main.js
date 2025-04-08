@@ -3,6 +3,25 @@ import { loadGLTF } from "../libs/loader.js";
 import * as THREE from "../libs/three123/three.module.js";
 import { ARButton } from "../libs/jsm/ARButton.js";
 
+
+function initServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('../complete/service-worker.js')
+        .then(registration => {
+          console.log('[SW] Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('[SW] Service Worker registration failed:', error);
+        });
+    });
+  } else {
+    console.warn('[SW] Service Workers are not supported in this browser.');
+  }
+}
+
+initServiceWorker();
+
 const loadedModels = new Map();
 let placedItems = [];
 let previewItem = null;
@@ -10,6 +29,9 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 let isModelSelected = false;
 let selectedModels = [];
+
+
+
 
 const selectModel = (model) => {
     selectedModels = [model]; // Reset and add only the current model
