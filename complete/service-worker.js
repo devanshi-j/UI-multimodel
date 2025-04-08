@@ -6,7 +6,7 @@ const FILES_TO_CACHE = [
 '../libs/jsm/GLTFLoader.js',
 '../libs/three123/three.module.js',
 '../libs/loader.js',
-'/assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_BaseColor.jpg',
+'../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_BaseColor.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Cavity.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Gloss.jpg',
 '../assets/models/chair/chair1/Furniture_Fabric_sjfvbctc_1K_Normal.jpg',
