@@ -362,17 +362,22 @@ const FILES_TO_CACHE = [
 
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   console.log('[Service Worker] Install');
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching assets');
-      return cache.addAll(FILES_TO_CACHE);
+    caches.open(CACHE_NAME).then(async cache => {
+      for (let asset of ASSETS_TO_CACHE) {
+        try {
+          await cache.add(asset);
+          console.log(`[Service Worker] Cached: ${asset}`);
+        } catch (err) {
+          console.error(`[Service Worker] Failed to cache: ${asset}`, err);
+        }
+      }
     })
   );
-  self.skipWaiting();
 });
-
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activate');
   event.waitUntil(
