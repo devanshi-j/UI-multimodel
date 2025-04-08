@@ -1,6 +1,8 @@
 const CACHE_NAME = 'ar-model-cache-v1';
 const FILES_TO_CACHE = [
   '../complete/index.html',
+  '../complete/main.js',
+ '../complete/index.html',
 '../complete/main.js',
 '../libs/jsm/ARButton.js',
 '../libs/jsm/GLTFLoader.js',
@@ -418,6 +420,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Check if this is a request we should handle
+  if (!event.request.url.startsWith('http')) {
+    // Skip non-HTTP/HTTPS requests (like chrome-extension://)
+    console.log('[Service Worker] Ignoring non-HTTP request:', event.request.url);
+    return;
+  }
+  
   // First try to get from cache
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
@@ -439,8 +448,13 @@ self.addEventListener('fetch', event => {
         
         // Cache the fetched response
         caches.open(CACHE_NAME).then(cache => {
-          console.log('[Service Worker] Caching on demand:', event.request.url);
-          cache.put(event.request, responseToCache);
+          // Only cache HTTP/HTTPS requests
+          if (event.request.url.startsWith('http')) {
+            console.log('[Service Worker] Caching on demand:', event.request.url);
+            cache.put(event.request, responseToCache);
+          } else {
+            console.log('[Service Worker] Skipping caching for non-HTTP URL:', event.request.url);
+          }
         }).catch(err => {
           console.error('[Service Worker] Error caching on demand:', event.request.url, err);
         });
@@ -449,7 +463,7 @@ self.addEventListener('fetch', event => {
       }).catch(error => {
         console.error('[Service Worker] Fetch failed:', event.request.url, error);
         
-        // If it's an image, return a fallback
+        // If it's an image, you could return a fallback
         if (event.request.url.match(/\.(jpg|jpeg|png|gif)$/i)) {
           console.log('[Service Worker] Returning placeholder for:', event.request.url);
           // You could return a placeholder image here if needed
