@@ -364,29 +364,38 @@ const FILES_TO_CACHE = [
 
 ];
 
-// Install event - only cache the HTML, JS and core files
+let successCount = 0;
+let failCount = 0;
+let failedFiles = [];
+
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Install');
-  
-  // Get just the core files (not the textures)
-  const CORE_FILES = FILES_TO_CACHE.filter(file => 
-    file.endsWith('.html') || 
-    file.endsWith('.js') || 
-    file.includes('/libs/')
-  );
-  
+  console.log('[Service Worker] Install started');
+
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
+      console.log('[Service Worker] Cache opened, beginning to cache files...');
+      
+      // Process files sequentially to have clearer logs
       for (let asset of FILES_TO_CACHE) {
         try {
           await cache.add(asset);
-          console.log(`[Service Worker] Cached: ${asset}`);
+          successCount++;
+          console.log(`[Service Worker] ✅ Successfully cached (${successCount}/${FILES_TO_CACHE.length}): ${asset}`);
         } catch (err) {
-          console.error(`[Service Worker] Failed to cache: ${asset}`, err);
+          failCount++;
+          failedFiles.push(asset);
+          console.error(`[Service Worker] ❌ Failed to cache (${failCount}/${FILES_TO_CACHE.length}): ${asset}`, err);
         }
+      }
+      
+      // Log summary
+      console.log(`[Service Worker] Caching complete: ${successCount} succeeded, ${failCount} failed`);
+      if (failCount > 0) {
+        console.log('[Service Worker] Failed files:', failedFiles);
       }
     })
   );
+});
 
 // Fetch event - cache textures when they're requested
 self.addEventListener('fetch', event => {
