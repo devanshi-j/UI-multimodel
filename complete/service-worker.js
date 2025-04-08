@@ -1,6 +1,10 @@
+// Keep your cache name and files list
 const CACHE_NAME = 'ar-model-cache-v1';
 const FILES_TO_CACHE = [
-'../complete/index.html',
+  // Keep your cache name and files list
+const CACHE_NAME = 'ar-model-cache-v1';
+const FILES_TO_CACHE = [
+  '../complete/index.html',
 '../complete/main.js',
 '../libs/jsm/ARButton.js',
 '../libs/jsm/GLTFLoader.js',
@@ -362,7 +366,108 @@ const FILES_TO_CACHE = [
 
 ];
 
+// Install event - only cache the HTML, JS and core files
 self.addEventListener('install', event => {
+  console.log('[Service Worker] Install');
+  
+  // Get just the core files (not the textures)
+  const CORE_FILES = FILES_TO_CACHE.filter(file => 
+    file.endsWith('.html') || 
+    file.endsWith('.js') || 
+    file.includes('/libs/')
+  );
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[Service Worker] Caching core files');
+      return cache.addAll(CORE_FILES);
+    })
+  );
+});
+
+// Fetch event - cache textures when they're requested
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse; // Return cached item
+      }
+      
+      return fetch(event.request).then(response => {
+        // Skip caching if the response wasn't ok
+        if (!response || response.status !== 200) {
+          return response;
+        }
+        
+        // Clone the response
+        const responseToCache = response.clone();
+        
+        // Add to cache
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+        });
+        
+        return response;
+      }).catch(error => {
+        console.error('[Service Worker] Fetch failed:', error);
+        // You could return a fallback response here if needed
+      });
+    })
+  );
+});
+];
+
+// Install event - only cache the HTML, JS and core files
+self.addEventListener('install', event => {
+  console.log('[Service Worker] Install');
+  
+  // Get just the core files (not the textures)
+  const CORE_FILES = FILES_TO_CACHE.filter(file => 
+    file.endsWith('.html') || 
+    file.endsWith('.js') || 
+    file.includes('/libs/')
+  );
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[Service Worker] Caching core files');
+      return cache.addAll(CORE_FILES);
+    })
+  );
+});
+
+// Fetch event - cache textures when they're requested
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse; // Return cached item
+      }
+      
+      return fetch(event.request).then(response => {
+        // Skip caching if the response wasn't ok
+        if (!response || response.status !== 200) {
+          return response;
+        }
+        
+        // Clone the response
+        const responseToCache = response.clone();
+        
+        // Add to cache
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+        });
+        
+        return response;
+      }).catch(error => {
+        console.error('[Service Worker] Fetch failed:', error);
+        // You could return a fallback response here if needed
+      });
+    })
+  );
+});
+
+/*self.addEventListener('install', event => {
   console.log('[Service Worker] Install');
 
   event.waitUntil(
@@ -402,4 +507,4 @@ self.addEventListener('fetch', (event) => {
         return response || fetch(event.request);
       })
   );
-});
+});*/
