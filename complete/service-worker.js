@@ -1,6 +1,4 @@
-// Keep your cache name and files list
-const CACHE_NAME = 'ar-model-cache-v1';
-const FILES_TO_CACHE = [
+
   // Keep your cache name and files list
 const CACHE_NAME = 'ar-model-cache-v1';
 const FILES_TO_CACHE = [
