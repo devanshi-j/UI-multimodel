@@ -367,7 +367,7 @@ self.addEventListener('install', event => {
 
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      for (let asset of ASSETS_TO_CACHE) {
+      for (let asset of FILES_TO_CACHE) {
         try {
           await cache.add(asset);
           console.log(`[Service Worker] Cached: ${asset}`);
