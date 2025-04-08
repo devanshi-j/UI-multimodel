@@ -1,5 +1,3 @@
-
-  // Keep your cache name and files list
 const CACHE_NAME = 'ar-model-cache-v1';
 const FILES_TO_CACHE = [
   '../complete/index.html',
@@ -364,159 +362,99 @@ const FILES_TO_CACHE = [
 
 ];
 
-let successCount = 0;
-let failCount = 0;
-let failedFiles = [];
+// Separate HTML/JS files from asset files
+const CORE_FILES = FILES_TO_CACHE.filter(file => 
+  file.endsWith('.html') || 
+  file.endsWith('.js') ||
+  file.includes('libs/')
+);
 
-self.addEventListener('install', event => {
-  console.log('[Service Worker] Install started');
+const ASSET_FILES = FILES_TO_CACHE.filter(file => 
+  !CORE_FILES.includes(file)
+);
 
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      console.log('[Service Worker] Cache opened, beginning to cache files...');
-      
-      // Process files sequentially to have clearer logs
-      for (let asset of FILES_TO_CACHE) {
-        try {
-          await cache.add(asset);
-          successCount++;
-          console.log(`[Service Worker] ✅ Successfully cached (${successCount}/${FILES_TO_CACHE.length}): ${asset}`);
-        } catch (err) {
-          failCount++;
-          failedFiles.push(asset);
-          console.error(`[Service Worker] ❌ Failed to cache (${failCount}/${FILES_TO_CACHE.length}): ${asset}`, err);
-        }
-      }
-      
-      // Log summary
-      console.log(`[Service Worker] Caching complete: ${successCount} succeeded, ${failCount} failed`);
-      if (failCount > 0) {
-        console.log('[Service Worker] Failed files:', failedFiles);
-      }
-    })
-  );
-});
-
-// Fetch event - cache textures when they're requested
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse; // Return cached item
-      }
-      
-      return fetch(event.request).then(response => {
-        // Skip caching if the response wasn't ok
-        if (!response || response.status !== 200) {
-          return response;
-        }
-        
-        // Clone the response
-        const responseToCache = response.clone();
-        
-        // Add to cache
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseToCache);
-        });
-        
-        return response;
-      }).catch(error => {
-        console.error('[Service Worker] Fetch failed:', error);
-        // You could return a fallback response here if needed
-      });
-    })
-  );
-});
-
-
-// Install event - only cache the HTML, JS and core files
 self.addEventListener('install', event => {
   console.log('[Service Worker] Install');
   
-  // Get just the core files (not the textures)
-  const CORE_FILES = FILES_TO_CACHE.filter(file => 
-    file.endsWith('.html') || 
-    file.endsWith('.js') || 
-    file.includes('/libs/')
-  );
-  
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('[Service Worker] Caching core files');
-      return cache.addAll(CORE_FILES);
-    })
-  );
-});
-
-// Fetch event - cache textures when they're requested
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse; // Return cached item
-      }
-      
-      return fetch(event.request).then(response => {
-        // Skip caching if the response wasn't ok
-        if (!response || response.status !== 200) {
-          return response;
-        }
-        
-        // Clone the response
-        const responseToCache = response.clone();
-        
-        // Add to cache
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseToCache);
-        });
-        
-        return response;
-      }).catch(error => {
-        console.error('[Service Worker] Fetch failed:', error);
-        // You could return a fallback response here if needed
-      });
-    })
-  );
-});
-
-/*self.addEventListener('install', event => {
-  console.log('[Service Worker] Install');
-
+  // Only try to cache core files during installation
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      for (let asset of FILES_TO_CACHE) {
-        try {
-          await cache.add(asset);
-          console.log(`[Service Worker] Cached: ${asset}`);
-        } catch (err) {
-          console.error(`[Service Worker] Failed to cache: ${asset}`, err);
-        }
+      console.log('[Service Worker] Pre-caching core files');
+      try {
+        await cache.addAll(CORE_FILES);
+        console.log('[Service Worker] Core files cached successfully');
+      } catch (err) {
+        console.error('[Service Worker] Failed to cache core files', err);
       }
+      
+      // Don't attempt to pre-cache assets that might cause CORS issues
+      console.log('[Service Worker] Asset files will be cached on demand');
     })
   );
+  
+  // Activate right away
+  self.skipWaiting();
 });
-self.addEventListener('activate', (event) => {
+
+self.addEventListener('activate', event => {
   console.log('[Service Worker] Activate');
+  
+  // Clean up old caches
   event.waitUntil(
-    caches.keys().then((keyList) =>
-      Promise.all(
-        keyList.map((key) => {
+    caches.keys().then(keyList => {
+      return Promise.all(
+        keyList.map(key => {
           if (key !== CACHE_NAME) {
             console.log('[Service Worker] Removing old cache', key);
             return caches.delete(key);
           }
         })
-      )
-    )
+      );
+    })
   );
+  
+  // Take control immediately
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
+  // First try to get from cache
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        console.log('[Service Worker] Serving from cache:', event.request.url);
+        return cachedResponse;
+      }
+      
+      // If not in cache, get from network
+      return fetch(event.request).then(response => {
+        // Don't cache non-successful responses
+        if (!response || response.status !== 200) {
+          console.log('[Service Worker] Non-cacheable response:', event.request.url);
+          return response;
+        }
+        
+        // Clone the response
+        const responseToCache = response.clone();
+        
+        // Cache the fetched response
+        caches.open(CACHE_NAME).then(cache => {
+          console.log('[Service Worker] Caching on demand:', event.request.url);
+          cache.put(event.request, responseToCache);
+        }).catch(err => {
+          console.error('[Service Worker] Error caching on demand:', event.request.url, err);
+        });
+        
+        return response;
+      }).catch(error => {
+        console.error('[Service Worker] Fetch failed:', event.request.url, error);
+        
+        // If it's an image, return a fallback
+        if (event.request.url.match(/\.(jpg|jpeg|png|gif)$/i)) {
+          console.log('[Service Worker] Returning placeholder for:', event.request.url);
+          // You could return a placeholder image here if needed
+        }
+      });
+    })
   );
-});*/
+});
