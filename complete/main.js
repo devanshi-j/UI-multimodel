@@ -99,11 +99,11 @@ const itemCategories = {
     { name: "vase5", height: 0.5, width: 0.3 }
   ],
   rug: [
-    { name: "rug1", height: 0.2, width: 0.5 },
-    { name: "rug2", height: 0.2, width: 0.5 },
-    { name: "rug3", height: 0.2, width: 1.0 },
-    { name: "rug4", height: 0.2, width: 1.0 },
-    { name: "rug5", height: 0.2, width: 1.0 }
+    { name: "rug1", height: 0.2, width: 0.1 },  
+    { name: "rug2", height: 0.2, width: 0.1 },  
+    { name: "rug3", height: 0.2, width: 0.1 },  
+    { name: "rug4", height: 0.2, width: 0.1 },  
+    { name: "rug5", height: 0.2, width: 0.1 }   
   ]
 };
 
