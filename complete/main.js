@@ -78,8 +78,8 @@ const itemCategories = {
     { name: "table5", height: 0.5, width: 0.6 }
   ],
   chair: [
-    { name: "chair4", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 },
+    { name: "chair4", height: 0.5, width: 2.5 },
+    { name: "chair2", height: 0.5, width: 2.5 },
     { name: "chair3", height: 0.5, width: 0.5 },
     { name: "chair2", height: 0.5, width: 0.5 },
     { name: "chair2", height: 0.5, width: 0.5 }
