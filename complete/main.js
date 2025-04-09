@@ -69,41 +69,42 @@ const setOpacityForSelected = (opacity) => {
 };
 
 const itemCategories = {
-    table: [
-        { name: "table2", height: 0.5 },
-        { name: "table2", height: 0.5 },
-        { name: "table3", height: 0.5 },
-        { name: "table4", height: 0.5 },
-        { name: "table5", height: 0.5 }
-    ],
-    chair: [
-        { name: "chair4", height: 0.5 },
-        { name: "chair2", height: 0.5 },
-        { name: "chair3", height: 0.5 },
-        { name: "chair2", height: 0.5 },
-        { name: "chair2", height: 0.5 }
-    ],
-    sofa: [
-        { name: "sofa3", height: 1.5 },
-        { name: "sofa2", height: 1.5 },
-        { name: "sofa3", height: 1.5 },
-        { name: "sofa2", height: 1.5 },
-        { name: "sofa2", height: 1.5 }
-    ],
-    vase: [
-        { name: "vase1", height: 0.5 },
-        { name: "vase2", height: 0.5 },
-        { name: "vase3", height: 0.5 },
-        { name: "vase4", height: 0.5 },
-        { name: "vase5", height: 0.5 }
-    ],
-    rug: [
-        { name: "rug1", height: 0.2 },
-        { name: "rug2", height: 0.2 },
-        { name: "rug3", height: 0.2},
-        { name: "rug4", height: 0.2 },
-        { name: "rug5", height: 0.2 }
-    ],
+   const assets = {
+  table: [
+    { name: "table2", height: 0.5, width: 0.6 },
+    { name: "table2", height: 0.5, width: 0.6 },
+    { name: "table3", height: 0.5, width: 0.6 },
+    { name: "table4", height: 0.5, width: 0.6 },
+    { name: "table5", height: 0.5, width: 0.6 }
+  ],
+  chair: [
+    { name: "chair4", height: 0.5, width: 0.5 },
+    { name: "chair2", height: 0.5, width: 0.5 },
+    { name: "chair3", height: 0.5, width: 0.5 },
+    { name: "chair2", height: 0.5, width: 0.5 },
+    { name: "chair2", height: 0.5, width: 0.5 }
+  ],
+  sofa: [
+    { name: "sofa3", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 },
+    { name: "sofa3", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 }
+  ],
+  vase: [
+    { name: "vase1", height: 0.5, width: 0.3 },
+    { name: "vase2", height: 0.5, width: 0.25 },
+    { name: "vase3", height: 0.5, width: 0.2 },
+    { name: "vase4", height: 0.5, width: 0.35 },
+    { name: "vase5", height: 0.5, width: 0.3 }
+  ],
+  rug: [
+    { name: "rug1", height: 0.2, width: 1.0 },
+    { name: "rug2", height: 0.2, width: 1.0 },
+    { name: "rug3", height: 0.2, width: 1.0 },
+    { name: "rug4", height: 0.2, width: 1.0 },
+    { name: "rug5", height: 0.2, width: 1.0 }
+  ]
 };
 
 document.addEventListener("DOMContentLoaded", () => {
