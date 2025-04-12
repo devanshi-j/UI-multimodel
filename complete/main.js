@@ -400,173 +400,88 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Icon submenus
-    const icons = document.querySelectorAll(".icon");
-    icons.forEach((icon) => {
-      icon.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const clickedSubmenu = icon.querySelector(".submenu");
-        document.querySelectorAll('.submenu').forEach(submenu => {
-          if (submenu !== clickedSubmenu) {
-            submenu.classList.remove('open');
-          }
-        });
-        clickedSubmenu.classList.toggle("open");
-      });
-    });
-
-    // Model management functions
-    const showModel = (item) => {
-      if (previewItem) {
-        scene.remove(previewItem);
-      }
-
-      selectModel(item);
-      console.log("showModel() called. Selected models:", selectedModels);
-
-      previewItem = item;
-      scene.add(previewItem);
-
-      setOpacityForSelected(0.5);
-
-      confirmButtons.style.display = "flex";
-      isModelSelected = true;
-    };
-
-    const deleteModel = () => {
-      if (selectedObject) {
-        scene.remove(selectedObject);
-        placedItems = placedItems.filter(item => item !== selectedObject);
-        selectedObject = null;
-        deleteButton.style.display = "none";
-      }
-    };
-
-    const placeModel = () => {
-      console.log("placeModel() called. Current selectedModels:", selectedModels);
-      console.log("Preview item:", previewItem);
-      console.log("Reticle visible:", reticle.visible);
-
-      if (!previewItem) {
-        console.warn("No preview item available");
-        return;
-      }
-
-      if (!reticle.visible) {
-        console.warn("Reticle is not visible - waiting for surface");
-        surfaceIndicator.textContent = "Please point at a surface";
-        return;
-      }
-
-      // Create a clone of the preview item
-      const placedModel = previewItem.clone();
-
-      // Get reticle position & rotation
-      const position = new THREE.Vector3();
-      const rotation = new THREE.Quaternion();
-      const scale = new THREE.Vector3();
-      reticle.matrix.decompose(position, rotation, scale);
-
-      // Set the position and rotation of the placed model
-      placedModel.position.copy(position);
-      placedModel.quaternion.copy(rotation);
-
-      // Make it fully opaque
-      placedModel.traverse((child) => {
-        if (child.isMesh) {
-          child.material = child.material.clone();
-          child.material.transparent = false;
-          child.material.opacity = 1.0;
+   // Submenu functionality fix
+const icons = document.querySelectorAll(".icon");
+icons.forEach((icon) => {
+  icon.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const clickedSubmenu = icon.querySelector(".submenu");
+    
+    // Make sure the submenu exists before attempting to toggle
+    if (clickedSubmenu) {
+      // Close other submenus
+      document.querySelectorAll('.submenu').forEach(submenu => {
+        if (submenu !== clickedSubmenu) {
+          submenu.classList.remove('open');
         }
       });
-
-      // Add to scene and placed items array
-      scene.add(placedModel);
-      placedItems.push(placedModel);
-
-      // Reset states
-      scene.remove(previewItem);
-      previewItem = null;
-      selectedModels = [];
-      isModelSelected = false;
-      reticle.visible = false;
-      confirmButtons.style.display = "none";
-      deleteButton.style.display = "none";
-      surfaceIndicator.textContent = "";
-
-      console.log("Model placed successfully");
-    };
-
-    const cancelModel = () => {
-      if (previewItem) {
-        scene.remove(previewItem);
-        previewItem = null;
-      }
-      isModelSelected = false;
-      reticle.visible = false;
-      confirmButtons.style.display = "none";
-    };
-
-    // Button events
-    placeButton.addEventListener("click", placeModel);
-    cancelButton.addEventListener("click", cancelModel);
-    deleteButton.addEventListener("click", deleteModel);
-
-
-    
-
- 
-  // Create a reference to the original loadGLTF function
-const originalLoadGLTF = loadGLTF;
-
-// Define the loadGLTFWithProgress function
-const loadGLTFWithProgress = async (url) => {
-  return new Promise((resolve, reject) => {
-    // Show loading bar
-    showLoadingBar();
-    updateLoadingProgress(20);
-    
-    // Load the model
-    originalLoadGLTF(url)
-      .then(result => {
-        // Update progress to completion
-        updateLoadingProgress(100);
-        
-        // Hide loading bar
-        hideLoadingBar();
-        
-        resolve(result);
-      })
-      .catch(error => {
-        // Hide loading bar on error
-        hideLoadingBar();
-        reject(error);
-      });
+      
+      // Toggle the clicked submenu
+      clickedSubmenu.classList.toggle("open");
+    }
   });
+});
+
+// Fix for loading bar (should hide by default and only show when loading models)
+const showLoadingBar = () => {
+  const loadingContainer = document.getElementById('loading-container');
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  
+  if (!loadingContainer || !loadingBarFill) {
+    console.error("Loading elements not found in the DOM");
+    return;
+  }
+  
+  loadingContainer.style.display = 'block';
+  loadingBarFill.style.width = '0%';
+  
+  // Start with animation to show some progress
+  setTimeout(() => {
+    loadingBarFill.style.width = '30%';
+  }, 100);
 };
 
+// Function to update loading bar progress
+const updateLoadingProgress = (percent) => {
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  if (!loadingBarFill) {
+    console.error("Loading bar fill element not found");
+    return;
+  }
+  loadingBarFill.style.width = `${percent}%`;
+};
 
+// Function to hide loading bar
+const hideLoadingBar = () => {
+  const loadingContainer = document.getElementById('loading-container');
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  
+  if (!loadingContainer || !loadingBarFill) {
+    console.error("Loading elements not found in the DOM");
+    return;
+  }
+  
+  // Complete the loading animation
+  loadingBarFill.style.width = '100%';
+  
+  // Hide after a short delay to show the completed bar
+  setTimeout(() => {
+    loadingContainer.style.display = 'none';
+  }, 300);
+};
 
-// Replace the main model loading loop with this updated version
+// Modified model loading loop to control loading bar visibility
 for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
   for (let i = 1; i <= 5; i++) {
     const itemName = `${category}${i}`;
     try {
-      // Show initial loading progress
-      showLoadingBar();
-      updateLoadingProgress(20);
-      
-      //const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-      const model = await loadGLTFWithProgress(`../assets/models/${category}/${itemName}/scene.gltf`);
-      updateLoadingProgress(80);
+      // Use the loadGLTF without showing the loading bar for initial loads
+      const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
       
       normalizeModel(model.scene, 0.5);
       const item = new THREE.Group();
       item.add(model.scene);
       loadedModels.set(`${category}-${itemName}`, item);
-      
-      // Hide loading bar after successful load
-      hideLoadingBar();
       
       const thumbnail = document.querySelector(`#${category}-${itemName}`);
       if (thumbnail) {
@@ -574,7 +489,7 @@ for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
           e.preventDefault();
           e.stopPropagation();
           
-          // Show loading bar when thumbnail is clicked
+          // Show loading bar only when thumbnail is clicked
           showLoadingBar();
           
           const model = loadedModels.get(`${category}-${itemName}`);
@@ -603,10 +518,17 @@ for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
       }
     } catch (error) {
       console.error(`Error loading model ${category}/${itemName}:`, error);
-      hideLoadingBar();
     }
   }
 }
+
+// Make sure the loading bar is hidden initially when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+  const loadingContainer = document.getElementById('loading-container');
+  if (loadingContainer) {
+    loadingContainer.style.display = 'none';
+  }
+});
     // Animation loop
     renderer.setAnimationLoop((timestamp, frame) => {
       if (frame) {
