@@ -95,24 +95,7 @@
     display: none;
 }
 
-      /* #submenu-container {
-            position: fixed;
-            bottom: 80px;
-            left: 0;
-            width: 100%;
-            height: 40vh;
-            background-color: rgba(255, 255, 255, 0.5);
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-        }
-
-        #submenu-container.open {
-            display: flex;
-        } */
+      
         
         .category-item {
             flex: 0 0 auto;
@@ -281,7 +264,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .loading {
+        /*.loading {
             position: relative;
             opacity: 0.5;
         }
@@ -298,7 +281,7 @@
             border-top-color: transparent;
             border-radius: 50%;
             animation: loading 0.8s linear infinite;
-        }
+        }*/
 
         @keyframes loading {
             to {
@@ -350,44 +333,45 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-       #loadingContainer {
+       /* Updated CSS for loading bar with transparent background */
+.loading-container {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px;
-  padding: 16px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  display: none;
   z-index: 1000;
-  text-align: center;
-  font-family: 'Arial', sans-serif;
+  display: none;
+  width: 280px;
+  pointer-events: none; /* Allows interactions with AR elements behind */
 }
 
-#loadingText {
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #333;
-}
-
-#loadingBarWrapper {
+.loading-bar-wrapper {
   width: 100%;
-  height: 10px;
-  background-color: #eee;
-  border-radius: 5px;
-  overflow: hidden;
 }
 
-#loadingBar {
+.loading-bar-text {
+  color: white;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 16px;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8); /* Text shadow for better visibility against any background */
+  font-weight: bold;
+}
+
+.loading-bar-progress {
+  height: 12px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.loading-bar-fill {
   height: 100%;
   width: 0%;
-  background-color: #007bff;
-  transition: width 0.2s ease;
+  background-color: rgba(76, 175, 80, 0.9); /* Semi-transparent green */
+  transition: width 0.3s ease;
 }
-
 
     </style>
 </head>
@@ -430,10 +414,13 @@
     </div>
 
 
-    <div id="loadingContainer">
-  <div id="loadingText">Loading model...</div>
-  <div id="loadingBarWrapper">
-    <div id="loadingBar"></div>
+    <!-- Add this inside your HTML body, outside any existing elements -->
+<div id="loading-container" class="loading-container">
+  <div class="loading-bar-wrapper">
+    <div class="loading-bar-text">Loading model...</div>
+    <div class="loading-bar-progress">
+      <div class="loading-bar-fill"></div>
+    </div>
   </div>
 </div>
 
