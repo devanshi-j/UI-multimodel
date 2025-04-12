@@ -68,8 +68,8 @@ const setOpacityForSelected = (opacity) => {
     });
 };
 
-const itemCategories = {
-   const assets = {
+// Fixed assets declaration - separating it from itemCategories
+const assets = {
   table: [
     { name: "table2", height: 0.5, width: 0.6 },
     { name: "table2", height: 0.5, width: 0.6 },
