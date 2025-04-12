@@ -309,25 +309,26 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-     #loading-indicator {
-        position: fixed;
-        bottom: 60%;
-        left: 10%;
-        width: 80%;
-        height: 6px;
-        background-color: rgba(0, 0, 0, 0.3);
-        border-radius: 3px;
-        z-index: 1000;
-        display: none;
-    }
-
-    #loading-progress {
-        height: 100%;
-        width: 0%;
-        background-color: #4CAF50;
-        border-radius: 3px;
-        transition: width 0.1s ease-in-out;
-    }
+      #loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            z-index: 1000;
+            display: block; /* Changed from 'none' to make it visible */
+        }
+        
+        #loading-progress {
+            height: 100%;
+            width: 30%; /* Added a width to make it visible */
+            background-color: #4CAF50;
+            border-radius: 3px;
+            transition: width 0.1s ease-in-out;
+        }
     </style>
 </head>
 <body>
