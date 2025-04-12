@@ -334,6 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButton = document.getElementById("delete-button");
     const surfaceIndicator = document.getElementById("surface-indicator");
     const statusMessage = document.getElementById("status-message");
+    const loadingContainer = document.getElementById("loadingContainer");
+    const loadingBar = document.getElementById("loadingBar");
 
     // Menu interaction
     document.addEventListener("click", (event) => {
@@ -477,47 +479,88 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelButton.addEventListener("click", cancelModel);
     deleteButton.addEventListener("click", deleteModel);
 
-    // Load models for each category
-    for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
-      for (let i = 1; i <= 5; i++) {
-        const itemName = `${category}${i}`;
-        try {
-          const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-          
-          // Find the corresponding item info in assets
-          const categoryAssets = assets[category];
-          const itemInfo = categoryAssets.find(item => item.name === itemName);
-          
-          if (itemInfo) {
-            // Apply scaling based on item specifications
-            applyModelScaling(model.scene, itemInfo);
-          } else {
-            // Fallback if item not found in assets
-            console.warn(`No item info found for ${itemName}, using defaults`);
-            applyModelScaling(model.scene, { height: 0.5, width: 0.5 });
-          }
-          
-          const item = new THREE.Group();
-          item.add(model.scene);
-          loadedModels.set(`${category}-${itemName}`, item);
-          
-          const thumbnail = document.querySelector(`#${category}-${itemName}`);
-          if (thumbnail) {
-            thumbnail.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const model = loadedModels.get(`${category}-${itemName}`);
-              if (model) {
-                const modelClone = model.clone(true);
-                showModel(modelClone);
-              }
-            });
-          }
-        } catch (error) {
-          console.error(`Error loading model ${category}/${itemName}:`, error);
+
+    const loadGLTFWithProgress = (url, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => resolve(gltf),
+      (xhr) => {
+        if (onProgress && xhr.lengthComputable) {
+          const percent = (xhr.loaded / xhr.total) * 100;
+          onProgress(percent);
         }
+      },
+      (error) => reject(error)
+    );
+  });
+};
+    
+    // Load models for each category
+for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
+  for (let i = 1; i <= 5; i++) {
+    const itemName = `${category}${i}`;
+    try {
+      // Show loading bar initially
+      loadingContainer.style.display = "block";
+      loadingBar.style.width = "0%";
+
+      const model = await loadGLTFWithProgress(
+        `../assets/models/${category}/${itemName}/scene.gltf`,
+        (progress) => {
+          loadingBar.style.width = `${progress}%`;
+        }
+      );
+
+      // Hide loading bar after load
+      loadingContainer.style.display = "none";
+
+      // Find the corresponding item info in assets
+      const categoryAssets = assets[category];
+      const itemInfo = categoryAssets.find(item => item.name === itemName);
+      
+      if (itemInfo) {
+        applyModelScaling(model.scene, itemInfo);
+      } else {
+        console.warn(`No item info found for ${itemName}, using defaults`);
+        applyModelScaling(model.scene, { height: 0.5, width: 0.5 });
       }
+
+      const item = new THREE.Group();
+      item.add(model.scene);
+      loadedModels.set(`${category}-${itemName}`, item);
+
+      const thumbnail = document.querySelector(`#${category}-${itemName}`);
+      if (thumbnail) {
+        thumbnail.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const model = loadedModels.get(`${category}-${itemName}`);
+          if (model) {
+            const modelClone = model.clone(true);
+
+            // Show loading bar during rendering delay (if any)
+            loadingContainer.style.display = "block";
+            loadingBar.style.width = "100%";
+
+            // Wait 1 frame to simulate async delay (optional, can be removed)
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            showModel(modelClone);
+
+            // Hide loading bar once added to scene
+            loadingContainer.style.display = "none";
+          }
+        });
+      }
+    } catch (error) {
+      console.error(`Error loading model ${category}/${itemName}:`, error);
+      loadingContainer.style.display = "none"; // Fail-safe
     }
+  }
+}
 
     // Animation loop
     renderer.setAnimationLoop((timestamp, frame) => {
