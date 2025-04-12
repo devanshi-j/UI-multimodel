@@ -61,6 +61,39 @@ const assets = {
   ]
 };
 
+// Function to show loading bar
+const showLoadingBar = () => {
+  const loadingContainer = document.getElementById('loading-container');
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  
+  loadingContainer.style.display = 'block';
+  loadingBarFill.style.width = '0%';
+  
+  // Start with animation to show some progress
+  setTimeout(() => {
+    loadingBarFill.style.width = '30%';
+  }, 100);
+};
+
+// Function to update loading bar progress
+const updateLoadingProgress = (percent) => {
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  loadingBarFill.style.width = `${percent}%`;
+};
+
+// Function to hide loading bar
+const hideLoadingBar = () => {
+  const loadingContainer = document.getElementById('loading-container');
+  const loadingBarFill = document.querySelector('.loading-bar-fill');
+  
+  // Complete the loading animation
+  loadingBarFill.style.width = '100%';
+  
+  // Hide after a short delay to show the completed bar
+  setTimeout(() => {
+    loadingContainer.style.display = 'none';
+  }, 300);
+};
 // Global variables
 const loadedModels = new Map();
 let placedItems = [];
@@ -480,100 +513,100 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteButton.addEventListener("click", deleteModel);
 
 
-    const loadGLTFWithProgress = (url, onProgress) => {
+    
+
+ 
+  // Create a reference to the original loadGLTF function
+const originalLoadGLTF = loadGLTF;
+
+// Define the loadGLTFWithProgress function
+const loadGLTFWithProgress = async (url) => {
   return new Promise((resolve, reject) => {
-    const loader = new THREE.GLTFLoader();
-    loader.load(
-      url,
-      (gltf) => resolve(gltf),
-      (xhr) => {
-        if (onProgress && xhr.lengthComputable) {
-          const percent = (xhr.loaded / xhr.total) * 100;
-          onProgress(percent);
-        }
-      },
-      (error) => reject(error)
-    );
+    // Show loading bar
+    showLoadingBar();
+    updateLoadingProgress(20);
+    
+    // Load the model
+    originalLoadGLTF(url)
+      .then(result => {
+        // Update progress to completion
+        updateLoadingProgress(100);
+        
+        // Hide loading bar
+        hideLoadingBar();
+        
+        resolve(result);
+      })
+      .catch(error => {
+        // Hide loading bar on error
+        hideLoadingBar();
+        reject(error);
+      });
   });
 };
 
-  function showLoadingBar() {
-  loadingContainer.style.display = "block";
-  loadingBar.style.width = "0%";
-}
 
-function updateLoadingBar(progress) {
-  loadingBar.style.width = `${progress}%`;
-}
 
-function hideLoadingBar() {
-  loadingContainer.style.display = "none";
-}
-    // Load models for each category
+// Replace the main model loading loop with this updated version
 for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
   for (let i = 1; i <= 5; i++) {
     const itemName = `${category}${i}`;
     try {
-      // Show loading bar initially
-      loadingContainer.style.display = "block";
-      loadingBar.style.width = "0%";
-
-      const model = await loadGLTFWithProgress(
-        `../assets/models/${category}/${itemName}/scene.gltf`,
-         (progress) => {
-          updateLoadingBar(progress);
-          }
-      );
-
-      // Hide loading bar after load
-      loadingContainer.style.display = "none";
-
-      // Find the corresponding item info in assets
-      const categoryAssets = assets[category];
-      const itemInfo = categoryAssets.find(item => item.name === itemName);
+      // Show initial loading progress
+      showLoadingBar();
+      updateLoadingProgress(20);
       
-      if (itemInfo) {
-        applyModelScaling(model.scene, itemInfo);
-      } else {
-        console.warn(`No item info found for ${itemName}, using defaults`);
-        applyModelScaling(model.scene, { height: 0.5, width: 0.5 });
-      }
-
+      //const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+      const model = await loadGLTFWithProgress(`../assets/models/${category}/${itemName}/scene.gltf`);
+      updateLoadingProgress(80);
+      
+      normalizeModel(model.scene, 0.5);
       const item = new THREE.Group();
       item.add(model.scene);
       loadedModels.set(`${category}-${itemName}`, item);
-
+      
+      // Hide loading bar after successful load
+      hideLoadingBar();
+      
       const thumbnail = document.querySelector(`#${category}-${itemName}`);
       if (thumbnail) {
-        thumbnail.addEventListener("click", async (e) => {
+        thumbnail.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-
+          
+          // Show loading bar when thumbnail is clicked
+          showLoadingBar();
+          
           const model = loadedModels.get(`${category}-${itemName}`);
           if (model) {
-            const modelClone = model.clone(true);
-
-            // Show loading bar during rendering delay (if any)
-            loadingContainer.style.display = "block";
-            loadingBar.style.width = "100%";
-
-            // Wait 1 frame to simulate async delay (optional, can be removed)
-            await new Promise(resolve => setTimeout(resolve, 50));
-
-            showModel(modelClone);
-
-            // Hide loading bar once added to scene
-            loadingContainer.style.display = "none";
+            // Simulate loading process
+            setTimeout(() => {
+              updateLoadingProgress(50);
+              
+              setTimeout(() => {
+                try {
+                  updateLoadingProgress(90);
+                  const modelClone = model.clone(true);
+                  showModel(modelClone);
+                  hideLoadingBar();
+                } catch (error) {
+                  console.error(`Error cloning model: ${category}/${itemName}`, error);
+                  hideLoadingBar();
+                }
+              }, 100);
+            }, 100);
+          } else {
+            console.error(`Model not found: ${category}-${itemName}`);
+            hideLoadingBar();
           }
         });
       }
     } catch (error) {
       console.error(`Error loading model ${category}/${itemName}:`, error);
-      loadingContainer.style.display = "none"; // Fail-safe
+      hideLoadingBar();
     }
   }
 }
-
     // Animation loop
     renderer.setAnimationLoop((timestamp, frame) => {
       if (frame) {
