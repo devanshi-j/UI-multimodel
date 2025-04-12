@@ -361,6 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const menuButton = document.getElementById("menu-button");
     const closeButton = document.getElementById("close-button");
     const bottomMenu = document.getElementById("bottomMenu");
+    const icons = document.querySelectorAll(".icon");
     const confirmButtons = document.getElementById("confirm-buttons");
     const placeButton = document.getElementById("place");
     const cancelButton = document.getElementById("cancel");
@@ -401,31 +402,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 // Fix for submenu functionality
-const icons = document.querySelectorAll(".icon");
+
+
 icons.forEach((icon) => {
   icon.addEventListener("click", (event) => {
     event.stopPropagation();
-    const clickedSubmenu = icon.querySelector(".submenu");
-    
-    // Add console logs to debug
-    console.log("Icon clicked", icon);
-    console.log("Clicked submenu element:", clickedSubmenu);
-    
-    // Make sure the submenu exists before attempting to toggle
-    if (clickedSubmenu) {
-      // Close other submenus
-      document.querySelectorAll('.submenu').forEach(submenu => {
-        if (submenu !== clickedSubmenu) {
-          submenu.classList.remove('open');
-        }
-      });
-      
-      // Toggle the clicked submenu
-      clickedSubmenu.classList.toggle("open");
-      console.log("Submenu toggled, open status:", clickedSubmenu.classList.contains('open'));
+    let clickedSubmenu = icon.querySelector(".submenu");
+
+    if (!clickedSubmenu) {
+      console.warn("No submenu found inside icon:", icon);
+      return;
     }
+
+    // Close all other submenus
+    document.querySelectorAll(".submenu.open").forEach((submenu) => {
+      if (submenu !== clickedSubmenu) {
+        submenu.classList.remove("open");
+      }
+    });
+
+    // Toggle this one
+    clickedSubmenu.classList.toggle("open");
+    console.log("Toggled submenu:", clickedSubmenu, "Open:", clickedSubmenu.classList.contains("open"));
   });
 });
+
+// Optional: Close submenus if you click outside
+document.addEventListener("click", () => {
+  document.querySelectorAll(".submenu.open").forEach((submenu) => {
+    submenu.classList.remove("open");
+  });
+});
+
 
 // Fix for loading bar visibility - make sure it's hidden by default
 document.addEventListener("DOMContentLoaded", () => {
