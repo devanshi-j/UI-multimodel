@@ -333,46 +333,25 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-       /* Updated CSS for loading bar with transparent background */
-.loading-container {
+     #loading-indicator {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 15%;
+  left: 10%;
+  width: 80%;
+  height: 6px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
   z-index: 1000;
   display: none;
-  width: 280px;
-  pointer-events: none; /* Allows interactions with AR elements behind */
 }
 
-.loading-bar-wrapper {
-  width: 100%;
-}
-
-.loading-bar-text {
-  color: white;
-  margin-bottom: 10px;
-  text-align: center;
-  font-size: 16px;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8); /* Text shadow for better visibility against any background */
-  font-weight: bold;
-}
-
-.loading-bar-progress {
-  height: 12px;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.loading-bar-fill {
+#loading-progress {
   height: 100%;
   width: 0%;
-  background-color: rgba(76, 175, 80, 0.9); /* Semi-transparent green */
-  transition: width 0.3s ease;
+  background-color: #4CAF50;
+  border-radius: 3px;
+  transition: width 0.1s ease-in-out;
 }
-
     </style>
 </head>
 <body>
@@ -415,15 +394,9 @@
 
 
     <!-- Add this inside your HTML body, outside any existing elements -->
-<div id="loading-container" class="loading-container">
-  <div class="loading-bar-wrapper">
-    <div class="loading-bar-text">Loading model...</div>
-    <div class="loading-bar-progress">
-      <div class="loading-bar-fill"></div>
-    </div>
-  </div>
+<div id="loading-indicator">
+  <div id="loading-progress"></div>
 </div>
-
 
     <div id="submenu-container">
         <button id="close-button">&times;</button>
