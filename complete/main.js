@@ -496,7 +496,19 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   });
 };
-    
+
+  function showLoadingBar() {
+  loadingContainer.style.display = "block";
+  loadingBar.style.width = "0%";
+}
+
+function updateLoadingBar(progress) {
+  loadingBar.style.width = `${progress}%`;
+}
+
+function hideLoadingBar() {
+  loadingContainer.style.display = "none";
+}
     // Load models for each category
 for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
   for (let i = 1; i <= 5; i++) {
@@ -508,9 +520,9 @@ for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
 
       const model = await loadGLTFWithProgress(
         `../assets/models/${category}/${itemName}/scene.gltf`,
-        (progress) => {
-          loadingBar.style.width = `${progress}%`;
-        }
+         (progress) => {
+          updateLoadingBar(progress);
+          }
       );
 
       // Hide loading bar after load
