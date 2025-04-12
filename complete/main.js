@@ -400,12 +400,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-   // Submenu functionality fix
+// Fix for submenu functionality
 const icons = document.querySelectorAll(".icon");
 icons.forEach((icon) => {
   icon.addEventListener("click", (event) => {
     event.stopPropagation();
     const clickedSubmenu = icon.querySelector(".submenu");
+    
+    // Add console logs to debug
+    console.log("Icon clicked", icon);
+    console.log("Clicked submenu element:", clickedSubmenu);
     
     // Make sure the submenu exists before attempting to toggle
     if (clickedSubmenu) {
@@ -418,11 +422,27 @@ icons.forEach((icon) => {
       
       // Toggle the clicked submenu
       clickedSubmenu.classList.toggle("open");
+      console.log("Submenu toggled, open status:", clickedSubmenu.classList.contains('open'));
     }
   });
 });
 
-// Fix for loading bar (should hide by default and only show when loading models)
+// Fix for loading bar visibility - make sure it's hidden by default
+document.addEventListener("DOMContentLoaded", () => {
+  // This will run after all other DOMContentLoaded handlers
+  setTimeout(() => {
+    const loadingContainer = document.getElementById('loading-container');
+    if (loadingContainer) {
+      loadingContainer.style.display = 'none';
+      console.log("Loading container hidden on page load");
+    } else {
+      console.error("Loading container element not found");
+    }
+  }, 0);
+});
+
+// Ensure your original loadGLTFWithProgress function isn't showing 
+// the loading bar during initial load - add this check
 const showLoadingBar = () => {
   const loadingContainer = document.getElementById('loading-container');
   const loadingBarFill = document.querySelector('.loading-bar-fill');
@@ -432,6 +452,7 @@ const showLoadingBar = () => {
     return;
   }
   
+  console.log("Showing loading bar");
   loadingContainer.style.display = 'block';
   loadingBarFill.style.width = '0%';
   
@@ -441,17 +462,7 @@ const showLoadingBar = () => {
   }, 100);
 };
 
-// Function to update loading bar progress
-const updateLoadingProgress = (percent) => {
-  const loadingBarFill = document.querySelector('.loading-bar-fill');
-  if (!loadingBarFill) {
-    console.error("Loading bar fill element not found");
-    return;
-  }
-  loadingBarFill.style.width = `${percent}%`;
-};
-
-// Function to hide loading bar
+// Make sure loading bar is hidden properly when complete
 const hideLoadingBar = () => {
   const loadingContainer = document.getElementById('loading-container');
   const loadingBarFill = document.querySelector('.loading-bar-fill');
@@ -463,13 +474,14 @@ const hideLoadingBar = () => {
   
   // Complete the loading animation
   loadingBarFill.style.width = '100%';
+  console.log("Loading complete, hiding bar soon");
   
   // Hide after a short delay to show the completed bar
   setTimeout(() => {
     loadingContainer.style.display = 'none';
+    console.log("Loading bar hidden");
   }, 300);
 };
-
 // Modified model loading loop to control loading bar visibility
 for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
   for (let i = 1; i <= 5; i++) {
