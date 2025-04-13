@@ -319,7 +319,7 @@
             background-color: rgba(0, 0, 0, 0.3);
             border-radius: 3px;
             z-index: 1000;
-            display: block; /* Changed from 'none' to make it visible */
+            display: none; /* Changed from 'none' to make it visible */
         }
         
         #loading-progress {
@@ -459,8 +459,6 @@
             const cancelButton = document.getElementById("cancel");
             const submenuContainer = document.getElementById("submenu-container");
             const categoryItems = document.querySelectorAll(".category-item");
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const progressBar = document.getElementById('loading-progress');
 
             let isMenuExpanded = false;
 
