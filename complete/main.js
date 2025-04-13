@@ -317,6 +317,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const deleteButton = document.getElementById("delete-button");
         const surfaceIndicator = document.getElementById("surface-indicator");
         const statusMessage = document.getElementById("status-message");
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const progressBar = document.getElementById('loading-progress');
 
         document.addEventListener("click", (event) => {
             const isClickInsideMenu = bottomMenu?.contains(event.target);
