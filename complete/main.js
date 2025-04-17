@@ -35,15 +35,6 @@ const selectModel = (model) => {
     console.log("Updated selectedModels:", selectedModels);
 };
 
-const normalizeModel = (obj, height) => {
-    const bbox = new THREE.Box3().setFromObject(obj);
-    const size = bbox.getSize(new THREE.Vector3());
-    obj.scale.multiplyScalar(height / size.y);
-    const bbox2 = new THREE.Box3().setFromObject(obj);
-    const center = bbox2.getCenter(new THREE.Vector3());
-    obj.position.set(-center.x, -center.y, -center.z);
-};
-
 const setOpacityForSelected = (opacity) => {
     console.log(`setOpacityForSelected(${opacity}) called. Selected models:`, selectedModels);
 
@@ -357,17 +348,42 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        const showModel = (item, callback) => {
+        const showModel = (item, modelData) => {
             // If there's a preview item, remove it first
             if (previewItem) {
                 scene.remove(previewItem);
             }
 
-            // Select the model (or do any other necessary processing)
+            // Apply the height and width from modelData
+            if (modelData && modelData.height && modelData.width) {
+                // Find the bounding box to get original dimensions
+                const bbox = new THREE.Box3().setFromObject(item);
+                const size = bbox.getSize(new THREE.Vector3());
+                
+                // Set the model's height based on the specified height
+                const scaleY = modelData.height / size.y;
+                
+                // Apply scaling
+                item.scale.set(
+                    modelData.width / size.x, 
+                    scaleY,
+                    scaleY  // Using scaleY for z-axis to maintain proportions
+                );
+                
+                // Center the model
+                const centeredBbox = new THREE.Box3().setFromObject(item);
+                const center = centeredBbox.getCenter(new THREE.Vector3());
+                item.position.set(-center.x, -center.y, -center.z);
+                
+                // Store the model data in the item for later use
+                item.userData.modelData = modelData;
+            }
+
+            // Select the model
             selectModel(item);
             console.log("showModel() called. Selected models:", selectedModels);
 
-            // Now, load and add the model
+            // Add the model to the scene
             previewItem = item;
             scene.add(previewItem);
 
@@ -375,34 +391,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (scene.children.includes(previewItem)) {
                 console.log('Model successfully added to the scene');
                 
-                // Optionally, set the opacity of the model
+                // Set opacity of the model
                 setOpacityForSelected(0.5);
 
-                // Show confirmation buttons after model has been added
+                // Show confirmation buttons
                 confirmButtons.style.display = "flex";
                 isModelSelected = true;
-
-                // If we have texture loading or other async processes,
-                // we would wait for them here before calling the callback
-                
-                // For THREE.js models with textures, we might do something like:
-                if (previewItem.userData.loadingTextures) {
-                    // If we have a way to track texture loading
-                    const checkTexturesLoaded = () => {
-                        if (previewItem.userData.texturesLoaded) {
-                            if (callback) callback();
-                        } else {
-                            setTimeout(checkTexturesLoaded, 100);
-                        }
-                    };
-                    checkTexturesLoaded();
-                } else {
-                    // If no special loading needed, just call the callback
-                    if (callback) callback();
-                }
             } else {
                 console.log('Failed to add model to scene');
-                if (callback) callback(); // Still call callback even on failure
             }
         };
 
@@ -484,16 +480,25 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-        // Modified model loading code with loading indicator
-        for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
-            for (let i = 1; i <= 5; i++) {
-                const itemName = `${category}${i}`;
+        // Modified model loading code with direct use of dimensions
+        for (const category in assets) {
+            for (let i = 0; i < assets[category].length; i++) {
+                const assetData = assets[category][i];
+                const itemName = assetData.name;
+                
                 try {
                     const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                    normalizeModel(model.scene, 0.5);
+                    
+                    // Set up a group to hold the model - don't normalize here
                     const item = new THREE.Group();
                     item.add(model.scene);
-                    loadedModels.set(`${category}-${itemName}`, item);
+                    
+                    // Store both the model and its dimensions
+                    loadedModels.set(`${category}-${itemName}`, {
+                        model: item,
+                        data: assetData
+                    });
+                    
                     const thumbnail = document.querySelector(`#${category}-${itemName}`);
                     if (thumbnail) {
                         thumbnail.addEventListener("click", async (e) => {
@@ -504,16 +509,16 @@ document.addEventListener("DOMContentLoaded", () => {
                             showLoading();
                             updateLoadingProgress(0);
                             
-                            // Get the model
-                            const model = loadedModels.get(`${category}-${itemName}`);
-                            if (!model) {
+                            // Get the model and its data
+                            const modelInfo = loadedModels.get(`${category}-${itemName}`);
+                            if (!modelInfo) {
                                 hideLoading();
                                 console.error(`Model not found: ${category}-${itemName}`);
                                 return;
                             }
                             
                             // Create clone of the model
-                            const modelClone = model.clone(true);
+                            const modelClone = modelInfo.model.clone(true);
                             
                             // Start with progress at 10% to show activity
                             updateLoadingProgress(10);
@@ -527,17 +532,17 @@ document.addEventListener("DOMContentLoaded", () => {
                                 updateLoadingProgress(progress);
                             }, 50);
                             
-                            // Call showModel with a callback to know when it's complete
-                            showModel(modelClone, () => {
-                                // Clear the loading interval when model is fully loaded
-                                clearInterval(loadingInterval);
-                                // Set progress to 100%
-                                updateLoadingProgress(100);
-                                // Short delay at 100% for visibility
-                                setTimeout(() => {
-                                    hideLoading();
-                                }, 200);
-                            });
+                            // Call showModel with the model and its data
+                            showModel(modelClone, modelInfo.data);
+                            
+                            // Set progress to 100% when done
+                            clearInterval(loadingInterval);
+                            updateLoadingProgress(100);
+                            
+                            // Short delay at 100% for visibility
+                            setTimeout(() => {
+                                hideLoading();
+                            }, 200);
                         });
                     }
                 } catch (error) {
