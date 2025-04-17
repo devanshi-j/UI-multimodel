@@ -58,10 +58,10 @@ const setOpacityForSelected = (opacity) => {
 // Fixed assets declaration - separating it from itemCategories
 const assets = {
   table: [
-    { name: "table2", height: 0.5, width: 0.6 },
-    { name: "table2", height: 0.5, width: 0.6 },
-    { name: "table3", height: 0.5, width: 0.6 },
-    { name: "table4", height: 0.5, width: 0.6 },
+    { name: "table2", height: 0.4, width: 1.0 },
+    { name: "table2", height: 0.4, width: 1.0 },
+    { name: "table3", height: 0.4, width: 1.0 },
+    { name: "table4", height: 0.4, width: 1.0 },
     { name: "table5", height: 0.5, width: 0.6 }
   ],
   chair: [
