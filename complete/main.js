@@ -65,18 +65,18 @@ const assets = {
     { name: "table5", height: 0.5, width: 0.6 }
   ],
   chair: [
-    { name: "chair4", height: 0.5, width: 2.5 },
-    { name: "chair2", height: 0.5, width: 2.5 },
-    { name: "chair3", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 }
+    { name: "chair4", height: 2.0, width: 0.8 },
+    { name: "chair2", height: 2.0, width: 0.8 },
+    { name: "chair3", height: 2.0, width: 0.8 },
+    { name: "chair2", height: 2.0, width: 0.8 },
+    { name: "chair2", height: 2.0, width: 0.58 }
   ],
   sofa: [
-    { name: "sofa3", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 },
-    { name: "sofa3", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 }
+    { name: "sofa3", height: 0.7, width: 2.0 },
+    { name: "sofa2", height: 0.7, width: 2.0 },
+    { name: "sofa3", height: 0.7, width: 2.0 },
+    { name: "sofa2", height: 0.7, width: 2.0 },
+    { name: "sofa2", height: 0.7, width: 2.0 }
   ],
   vase: [
     { name: "vase1", height: 0.5, width: 0.3 },
@@ -86,11 +86,11 @@ const assets = {
     { name: "vase5", height: 0.5, width: 0.3 }
   ],
   rug: [
-    { name: "rug1", height: 0.2, width: 0.1 },  
-    { name: "rug2", height: 0.2, width: 0.1 },  
-    { name: "rug3", height: 0.2, width: 0.1 },  
-    { name: "rug4", height: 0.2, width: 0.1 },  
-    { name: "rug5", height: 0.2, width: 0.1 }   
+    { name: "rug1", height: 0.2, width: 0.8 },  
+    { name: "rug2", height: 0.2, width: 0.8 },  
+    { name: "rug3", height: 0.2, width: 0.8 },  
+    { name: "rug4", height: 0.2, width: 0.8 },  
+    { name: "rug5", height: 0.2, width: 0.8 }   
   ]
 };
 
