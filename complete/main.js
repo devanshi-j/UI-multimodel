@@ -348,208 +348,235 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        const showModel = (item, modelData) => {
-            // If there's a preview item, remove it first
-            if (previewItem) {
-                scene.remove(previewItem);
-            }
+       const showModel = (item, modelData, callback) => {
+    // If there's a preview item, remove it first
+    if (previewItem) {
+        scene.remove(previewItem);
+    }
 
-            // Apply the height and width from modelData
-            if (modelData && modelData.height && modelData.width) {
-                // Find the bounding box to get original dimensions
-                const bbox = new THREE.Box3().setFromObject(item);
-                const size = bbox.getSize(new THREE.Vector3());
-                
-                // Set the model's height based on the specified height
-                const scaleY = modelData.height / size.y;
-                
-                // Apply scaling
-                item.scale.set(
-                    modelData.width / size.x, 
-                    scaleY,
-                    scaleY  // Using scaleY for z-axis to maintain proportions
-                );
-                
-                // Center the model
-                const centeredBbox = new THREE.Box3().setFromObject(item);
-                const center = centeredBbox.getCenter(new THREE.Vector3());
-                item.position.set(-center.x, -center.y, -center.z);
-                
-                // Store the model data in the item for later use
-                item.userData.modelData = modelData;
-            }
+    // Apply the height and width from modelData
+    if (modelData && modelData.height && modelData.width) {
+        // Find the bounding box to get original dimensions
+        const bbox = new THREE.Box3().setFromObject(item);
+        const size = bbox.getSize(new THREE.Vector3());
+        
+        // Set the model's height based on the specified height
+        const scaleY = modelData.height / size.y;
+        
+        // Apply scaling
+        item.scale.set(
+            modelData.width / size.x, 
+            scaleY,
+            scaleY  // Using scaleY for z-axis to maintain proportions
+        );
+        
+        // Center the model
+        const centeredBbox = new THREE.Box3().setFromObject(item);
+        const center = centeredBbox.getCenter(new THREE.Vector3());
+        item.position.set(-center.x, -center.y, -center.z);
+        
+        // Store the model data in the item for later use
+        item.userData.modelData = modelData;
+    }
 
-            // Select the model
-            selectModel(item);
-            console.log("showModel() called. Selected models:", selectedModels);
+    // Select the model
+    selectModel(item);
+    console.log("showModel() called. Selected models:", selectedModels);
 
-            // Add the model to the scene
-            previewItem = item;
-            scene.add(previewItem);
+    // Add the model to the scene
+    previewItem = item;
+    scene.add(previewItem);
 
-            // Check if the model is added to the scene
-            if (scene.children.includes(previewItem)) {
-                console.log('Model successfully added to the scene');
-                
-                // Set opacity of the model
-                setOpacityForSelected(0.5);
+    // Check if the model is added to the scene
+    if (scene.children.includes(previewItem)) {
+        console.log('Model successfully added to the scene');
+        
+        // Set opacity of the model
+        setOpacityForSelected(0.5);
 
-                // Show confirmation buttons
-                confirmButtons.style.display = "flex";
-                isModelSelected = true;
-            } else {
-                console.log('Failed to add model to scene');
-            }
-        };
+        // Show confirmation buttons
+        confirmButtons.style.display = "flex";
+        isModelSelected = true;
 
-        const deleteModel = () => {
-            if (selectedObject) {
-                scene.remove(selectedObject);
-                placedItems = placedItems.filter(item => item !== selectedObject);
-                selectedObject = null;
-                deleteButton.style.display = "none";
-            }
-        };
-
-        const placeModel = () => {
-            console.log("placeModel() called. Current selectedModels:", selectedModels);
-            console.log("Preview item:", previewItem);
-            console.log("Reticle visible:", reticle.visible);
-
-            if (!previewItem) {
-                console.warn("No preview item available");
-                return;
-            }
-
-            if (!reticle.visible) {
-                console.warn("Reticle is not visible - waiting for surface");
-                surfaceIndicator.textContent = "Please point at a surface";
-                return;
-            }
-
-            // Create a clone of the preview item
-            const placedModel = previewItem.clone();
-
-            // Get reticle position & rotation
-            const position = new THREE.Vector3();
-            const rotation = new THREE.Quaternion();
-            const scale = new THREE.Vector3();
-            reticle.matrix.decompose(position, rotation, scale);
-
-            // Set the position and rotation of the placed model
-            placedModel.position.copy(position);
-            placedModel.quaternion.copy(rotation);
-
-            // Make it fully opaque
-            placedModel.traverse((child) => {
-                if (child.isMesh) {
-                    child.material = child.material.clone();
-                    child.material.transparent = false;
-                    child.material.opacity = 1.0;
+        // If we have texture loading or other async processes,
+        // we would wait for them here before calling the callback
+        
+        // For THREE.js models with textures, we might do something like:
+        if (previewItem.userData.loadingTextures) {
+            // If we have a way to track texture loading
+            const checkTexturesLoaded = () => {
+                if (previewItem.userData.texturesLoaded) {
+                    if (callback) callback();
+                } else {
+                    setTimeout(checkTexturesLoaded, 100);
                 }
+            };
+            checkTexturesLoaded();
+        } else {
+            // If no special loading needed, just call the callback
+            if (callback) callback();
+        }
+    } else {
+        console.log('Failed to add model to scene');
+        if (callback) callback(); // Still call callback even on failure
+    }
+};
+
+const deleteModel = () => {
+    if (selectedObject) {
+        scene.remove(selectedObject);
+        placedItems = placedItems.filter(item => item !== selectedObject);
+        selectedObject = null;
+        deleteButton.style.display = "none";
+    }
+};
+
+const placeModel = () => {
+    console.log("placeModel() called. Current selectedModels:", selectedModels);
+    console.log("Preview item:", previewItem);
+    console.log("Reticle visible:", reticle.visible);
+
+    if (!previewItem) {
+        console.warn("No preview item available");
+        return;
+    }
+
+    if (!reticle.visible) {
+        console.warn("Reticle is not visible - waiting for surface");
+        surfaceIndicator.textContent = "Please point at a surface";
+        return;
+    }
+
+    // Create a clone of the preview item
+    const placedModel = previewItem.clone();
+
+    // Get reticle position & rotation
+    const position = new THREE.Vector3();
+    const rotation = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    reticle.matrix.decompose(position, rotation, scale);
+
+    // Set the position and rotation of the placed model
+    placedModel.position.copy(position);
+    placedModel.quaternion.copy(rotation);
+
+    // Make it fully opaque
+    placedModel.traverse((child) => {
+        if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.transparent = false;
+            child.material.opacity = 1.0;
+        }
+    });
+
+    // Add to scene and placed items array
+    scene.add(placedModel);
+    placedItems.push(placedModel);
+
+    // Reset states
+    scene.remove(previewItem);
+    previewItem = null;
+    selectedModels = [];
+    isModelSelected = false;
+    reticle.visible = false;
+    confirmButtons.style.display = "none";
+    deleteButton.style.display = "none";
+    surfaceIndicator.textContent = "";
+
+    console.log("Model placed successfully");
+};
+
+const cancelModel = () => {
+    if (previewItem) {
+        scene.remove(previewItem);
+        previewItem = null;
+    }
+    isModelSelected = false;
+    reticle.visible = false;
+    confirmButtons.style.display = "none";
+};
+
+placeButton.addEventListener("click", placeModel);
+cancelButton.addEventListener("click", cancelModel);
+deleteButton.addEventListener("click", deleteModel);
+
+// Modified model loading code with loading indicator and model data
+for (const category in assets) {
+    for (let i = 0; i < assets[category].length; i++) {
+        const assetData = assets[category][i];
+        const itemName = assetData.name;
+        
+        try {
+            const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+            
+            // Set up a group to hold the model - don't normalize here
+            const item = new THREE.Group();
+            item.add(model.scene);
+            
+            // Store both the model and its dimensions
+            loadedModels.set(`${category}-${itemName}`, {
+                model: item,
+                data: assetData
             });
-
-            // Add to scene and placed items array
-            scene.add(placedModel);
-            placedItems.push(placedModel);
-
-            // Reset states
-            scene.remove(previewItem);
-            previewItem = null;
-            selectedModels = [];
-            isModelSelected = false;
-            reticle.visible = false;
-            confirmButtons.style.display = "none";
-            deleteButton.style.display = "none";
-            surfaceIndicator.textContent = "";
-
-            console.log("Model placed successfully");
-        };
-
-        const cancelModel = () => {
-            if (previewItem) {
-                scene.remove(previewItem);
-                previewItem = null;
-            }
-            isModelSelected = false;
-            reticle.visible = false;
-            confirmButtons.style.display = "none";
-        };
-
-        placeButton.addEventListener("click", placeModel);
-        cancelButton.addEventListener("click", cancelModel);
-        deleteButton.addEventListener("click", deleteModel);
-
-        // Modified model loading code with direct use of dimensions
-        for (const category in assets) {
-            for (let i = 0; i < assets[category].length; i++) {
-                const assetData = assets[category][i];
-                const itemName = assetData.name;
-                
-                try {
-                    const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                    
-                    // Set up a group to hold the model - don't normalize here
-                    const item = new THREE.Group();
-                    item.add(model.scene);
-                    
-                    // Store both the model and its dimensions
-                    loadedModels.set(`${category}-${itemName}`, {
-                        model: item,
-                        data: assetData
-                    });
-                    
-                    const thumbnail = document.querySelector(`#${category}-${itemName}`);
-                    if (thumbnail) {
-                        thumbnail.addEventListener("click", async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // Show loading indicator
-                            showLoading();
-                            updateLoadingProgress(0);
-                            
-                            // Get the model and its data
-                            const modelInfo = loadedModels.get(`${category}-${itemName}`);
-                            if (!modelInfo) {
-                                hideLoading();
-                                console.error(`Model not found: ${category}-${itemName}`);
-                                return;
-                            }
-                            
-                            // Create clone of the model
-                            const modelClone = modelInfo.model.clone(true);
-                            
-                            // Start with progress at 10% to show activity
-                            updateLoadingProgress(10);
-                            
-                            // Start the loading animation - this will go to 90% max
-                            let progress = 10;
-                            const loadingInterval = setInterval(() => {
-                                // Increase progress, but cap at 90% until model is actually ready
-                                progress += 2;
-                                if (progress > 90) progress = 90;
-                                updateLoadingProgress(progress);
-                            }, 50);
-                            
-                            // Call showModel with the model and its data
-                            showModel(modelClone, modelInfo.data);
-                            
-                            // Set progress to 100% when done
+            
+            const thumbnail = document.querySelector(`#${category}-${itemName}`);
+            if (thumbnail) {
+                // Use a function to create a closure for this specific model
+                // This prevents the issue where multiple models load together
+                const setupClickHandler = (modelKey, modelData) => {
+                    thumbnail.addEventListener("click", async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Show loading indicator
+                        showLoading();
+                        updateLoadingProgress(0);
+                        
+                        // Get the model and its data
+                        const modelInfo = loadedModels.get(modelKey);
+                        if (!modelInfo) {
+                            hideLoading();
+                            console.error(`Model not found: ${modelKey}`);
+                            return;
+                        }
+                        
+                        // Create clone of the model
+                        const modelClone = modelInfo.model.clone(true);
+                        
+                        // Start with progress at 10% to show activity
+                        updateLoadingProgress(10);
+                        
+                        // Start the loading animation - this will go to 90% max
+                        let progress = 10;
+                        const loadingInterval = setInterval(() => {
+                            // Increase progress, but cap at 90% until model is actually ready
+                            progress += 2;
+                            if (progress > 90) progress = 90;
+                            updateLoadingProgress(progress);
+                        }, 50);
+                        
+                        // Call showModel with the model's data and a callback
+                        showModel(modelClone, modelInfo.data, () => {
+                            // Clear the loading interval when model is fully loaded
                             clearInterval(loadingInterval);
+                            // Set progress to 100%
                             updateLoadingProgress(100);
-                            
                             // Short delay at 100% for visibility
                             setTimeout(() => {
                                 hideLoading();
                             }, 200);
                         });
-                    }
-                } catch (error) {
-                    console.error(`Error loading model ${category}/${itemName}:`, error);
-                }
+                    });
+                };
+                
+                // Set up the event listener with proper closure
+                setupClickHandler(`${category}-${itemName}`, assetData);
             }
+        } catch (error) {
+            console.error(`Error loading model ${category}/${itemName}:`, error);
         }
+    }
+}
 
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
