@@ -65,42 +65,42 @@ const setOpacityForSelected = (opacity) => {
     });
 };
 
-// Fixed assets declaration with proper default scaling
+// Fixed assets declaration - separating it from itemCategories
 const assets = {
   table: [
-    { name: "table2", height: 0.5, width: 0.6, scale: 1.0 },
-    { name: "table2", height: 0.5, width: 0.6, scale: 1.0 },
-    { name: "table3", height: 0.5, width: 0.6, scale: 1.0 },
-    { name: "table4", height: 0.5, width: 0.6, scale: 1.0 },
-    { name: "table5", height: 0.5, width: 0.6, scale: 1.0 }
+    { name: "table2", height: 0.5, width: 0.6 },
+    { name: "table2", height: 0.5, width: 0.6 },
+    { name: "table3", height: 0.5, width: 0.6 },
+    { name: "table4", height: 0.5, width: 0.6 },
+    { name: "table5", height: 0.5, width: 0.6 }
   ],
   chair: [
-    { name: "chair4", height: 0.5, width: 2.5, scale: 0.8 },
-    { name: "chair2", height: 0.5, width: 2.5, scale: 0.8 },
-    { name: "chair3", height: 0.5, width: 0.5, scale: 0.8 },
-    { name: "chair2", height: 0.5, width: 0.5, scale: 0.8 },
-    { name: "chair2", height: 0.5, width: 0.5, scale: 0.8 }
+    { name: "chair4", height: 0.5, width: 2.5 },
+    { name: "chair2", height: 0.5, width: 2.5 },
+    { name: "chair3", height: 0.5, width: 0.5 },
+    { name: "chair2", height: 0.5, width: 0.5 },
+    { name: "chair2", height: 0.5, width: 0.5 }
   ],
   sofa: [
-    { name: "sofa3", height: 1.5, width: 1.0, scale: 1.2 },
-    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 },
-    { name: "sofa3", height: 1.5, width: 1.0, scale: 1.2 },
-    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 },
-    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 }
+    { name: "sofa3", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 },
+    { name: "sofa3", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 },
+    { name: "sofa2", height: 1.5, width: 1.0 }
   ],
   vase: [
-    { name: "vase1", height: 0.5, width: 0.3, scale: 0.5 },
-    { name: "vase2", height: 0.5, width: 0.25, scale: 0.5 },
-    { name: "vase3", height: 0.5, width: 0.2, scale: 0.5 },
-    { name: "vase4", height: 0.5, width: 0.35, scale: 0.5 },
-    { name: "vase5", height: 0.5, width: 0.3, scale: 0.5 }
+    { name: "vase1", height: 0.5, width: 0.3 },
+    { name: "vase2", height: 0.5, width: 0.25 },
+    { name: "vase3", height: 0.5, width: 0.2 },
+    { name: "vase4", height: 0.5, width: 0.35 },
+    { name: "vase5", height: 0.5, width: 0.3 }
   ],
   rug: [
-    { name: "rug1", height: 0.2, width: 0.1, scale: 1.5 },  
-    { name: "rug2", height: 0.2, width: 0.1, scale: 1.5 },  
-    { name: "rug3", height: 0.2, width: 0.1, scale: 1.5 },  
-    { name: "rug4", height: 0.2, width: 0.1, scale: 1.5 },  
-    { name: "rug5", height: 0.2, width: 0.1, scale: 1.5 }   
+    { name: "rug1", height: 0.2, width: 0.1 },  
+    { name: "rug2", height: 0.2, width: 0.1 },  
+    { name: "rug3", height: 0.2, width: 0.1 },  
+    { name: "rug4", height: 0.2, width: 0.1 },  
+    { name: "rug5", height: 0.2, width: 0.1 }   
   ]
 };
 
@@ -358,43 +358,39 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Modified showModel function - no need for cloning
-        const showModel = (item, data, callback) => {
-            // If there's a preview item, remove it first
-            if (previewItem) {
-                scene.remove(previewItem);
-            }
+       // Modified showModel function - no need for cloning
+const showModel = (item, data, callback) => {
+    // If there's a preview item, remove it first
+    if (previewItem) {
+        scene.remove(previewItem);
+    }
 
-            // Create a new group to hold the model
-            previewItem = new THREE.Group();
-            
-            // Add the original model to this group
-            previewItem.add(item.clone());
-            
-            // Apply default scale if available in data
-            if (data && data.scale) {
-                previewItem.scale.set(data.scale, data.scale, data.scale);
-            }
-            
-            // Normalize if needed (based on data)
-            if (data && data.height) {
-                normalizeModel(previewItem, data.height);
-            }
-            
-            // Add to scene
-            scene.add(previewItem);
-            
-            // Select the model
-            selectModel(previewItem);
-            
-            // Set opacity and show confirmation buttons
-            setOpacityForSelected(0.5);
-            confirmButtons.style.display = "flex";
-            isModelSelected = true;
-            
-            // Call callback
-            if (callback) callback();
-        };
+    // Create a new group to hold the model
+    previewItem = new THREE.Group();
+    
+    // Add the original model to this group
+    previewItem.add(item.clone());
+    
+    // Normalize if needed (based on data)
+    if (data && data.height) {
+        normalizeModel(previewItem, data.height);
+    }
+    
+    // Add to scene
+    scene.add(previewItem);
+    
+    // Select the model
+    selectModel(previewItem);
+    
+    // Set opacity and show confirmation buttons
+    setOpacityForSelected(0.5);
+    confirmButtons.style.display = "flex";
+    isModelSelected = true;
+    
+    // Call callback
+    if (callback) callback();
+}
+
       
         const deleteModel = () => {
             if (selectedObject) {
@@ -474,138 +470,118 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-        // Preload all models in the background and create thumbnails
-        for (const category in assets) {
-            // Create category submenu if it doesn't exist
-            let submenu = document.querySelector(`.submenu[data-category="${category}"]`);
-            if (!submenu) {
-                submenu = document.createElement('div');
-                submenu.className = 'submenu';
-                submenu.setAttribute('data-category', category);
+       
+
+// Create a Map to track loading status of each model
+const modelLoadStatus = new Map();
+
+// Preload all models in the background
+for (const category in assets) {
+    for (let i = 0; i < assets[category].length; i++) {
+        const assetData = assets[category][i];
+        const itemName = assetData.name;
+        const modelKey = `${category}-${itemName}`;
+        
+        // Mark this model as "loading"
+        modelLoadStatus.set(modelKey, {
+            status: 'loading',
+            promise: null
+        });
+        
+        // Create a loading promise
+        const loadPromise = (async () => {
+            try {
+                const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
                 
-                // Find the corresponding icon and append submenu
-                const icon = document.querySelector(`.icon[data-category="${category}"]`);
-                if (icon) {
-                    icon.appendChild(submenu);
-                } else {
-                    console.warn(`Icon for category ${category} not found`);
-                }
-            }
-            
-            for (let i = 0; i < assets[category].length; i++) {
-                const assetData = assets[category][i];
-                const itemName = assetData.name;
-                const modelKey = `${category}-${itemName}`;
+                // Set up a group to hold the model
+                const item = new THREE.Group();
+                item.add(model.scene);
                 
-                // Create thumbnail element
-                const thumbnail = document.createElement('div');
-                thumbnail.className = 'model-thumbnail';
-                thumbnail.innerHTML = `<img src="../assets/models/${category}/${itemName}/thumbnail.jpg" alt="${itemName}">`;
+                // Store the loaded model
+                loadedModels.set(modelKey, {
+                    model: item,
+                    data: assetData
+                });
                 
-                // Add thumbnail to submenu
-                submenu.appendChild(thumbnail);
-                
-                // Mark this model as "loading"
+                // Update status to "loaded"
                 modelLoadStatus.set(modelKey, {
-                    status: 'loading',
+                    status: 'loaded',
                     promise: null
                 });
                 
-                // Create a loading promise
-                const loadPromise = (async () => {
-                    try {
-                        const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                        
-                        // Set up a group to hold the model
-                        const item = new THREE.Group();
-                        item.add(model.scene);
-                        
-                        // Store the loaded model
-                        loadedModels.set(modelKey, {
-                            model: item,
-                            data: assetData
-                        });
-                        
-                        // Update status to "loaded"
-                        modelLoadStatus.set(modelKey, {
-                            status: 'loaded',
-                            promise: null
-                        });
-                        
-                        return true;
-                    } catch (error) {
-                        console.error(`Error loading model ${category}/${itemName}:`, error);
-                        modelLoadStatus.set(modelKey, {
-                            status: 'error',
-                            promise: null
-                        });
-                        return false;
-                    }
-                })();
-                
-                // Store the promise
-                modelLoadStatus.get(modelKey).promise = loadPromise;
-                
-                // Fixed thumbnail click handler
-                thumbnail.addEventListener("click", async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const currentStatus = modelLoadStatus.get(modelKey);
-                    
-                    // Show loading indicator
-                    showLoading();
-                    updateLoadingProgress(10);
-                    
-                    // Start loading animation
-                    let progress = 10;
-                    const loadingInterval = setInterval(() => {
-                        progress += 2;
-                        if (progress > 90) progress = 90;
-                        updateLoadingProgress(progress);
-                    }, 50);
-                    
-                    try {
-                        // Wait for the model to finish loading if it's in progress
-                        if (currentStatus.status === 'loading' && currentStatus.promise) {
-                            await currentStatus.promise;
-                        } 
-                        // If there was an error, try loading again
-                        else if (currentStatus.status === 'error') {
-                            const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                            const item = new THREE.Group();
-                            item.add(model.scene);
-                            
-                            loadedModels.set(modelKey, {
-                                model: item,
-                                data: assetData
-                            });
-                            
-                            modelLoadStatus.set(modelKey, {
-                                status: 'loaded',
-                                promise: null
-                            });
-                        }
-                        
-                        // Get the model info
-                        const modelInfo = loadedModels.get(modelKey);
-                        
-                        // Show the model with proper data
-                        showModel(modelInfo.model, modelInfo.data, () => {
-                            clearInterval(loadingInterval);
-                            updateLoadingProgress(100);
-                            setTimeout(() => {
-                                hideLoading();
-                            }, 200);
-                        });
-                    } catch (error) {
-                        console.error(`Error showing model ${modelKey}:`, error);
-                        clearInterval(loadingInterval);
-                        hideLoading();
-                    }
+                return true;
+            } catch (error) {
+                console.error(`Error loading model ${category}/${itemName}:`, error);
+                modelLoadStatus.set(modelKey, {
+                    status: 'error',
+                    promise: null
                 });
+                return false;
             }
+        })();
+        
+        // Store the promise
+        modelLoadStatus.get(modelKey).promise = loadPromise;
+        
+        // Fixed thumbnail click handler
+thumbnail.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const currentStatus = modelLoadStatus.get(modelKey);
+    
+    // Show loading indicator
+    showLoading();
+    updateLoadingProgress(10);
+    
+    // Start loading animation
+    let progress = 10;
+    const loadingInterval = setInterval(() => {
+        progress += 2;
+        if (progress > 90) progress = 90;
+        updateLoadingProgress(progress);
+    }, 50);
+    
+    try {
+        // Wait for the model to finish loading if it's in progress
+        if (currentStatus.status === 'loading' && currentStatus.promise) {
+            await currentStatus.promise;
+        } 
+        // If there was an error, try loading again
+        else if (currentStatus.status === 'error') {
+            const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+            const item = new THREE.Group();
+            item.add(model.scene);
+            
+            loadedModels.set(modelKey, {
+                model: item,
+                data: assetData
+            });
+            
+            modelLoadStatus.set(modelKey, {
+                status: 'loaded',
+                promise: null
+            });
         }
+        
+        // Get the model info
+        const modelInfo = loadedModels.get(modelKey);
+        
+        // Show the model with proper data
+        showModel(modelInfo.model, modelInfo.data, () => {
+            clearInterval(loadingInterval);
+            updateLoadingProgress(100);
+            setTimeout(() => {
+                hideLoading();
+            }, 200);
+        });
+    } catch (error) {
+        console.error(`Error showing model ${modelKey}:`, error);
+        clearInterval(loadingInterval);
+        hideLoading();
+    }
+});
+
       
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
