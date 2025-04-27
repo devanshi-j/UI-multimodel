@@ -21,7 +21,7 @@ function initServiceWorker() {
 
 initServiceWorker();
 
-
+const loadedModels = new Map();
 const modelLoadStatus = new Map();
 let placedItems = [];
 let previewItem = null;
