@@ -275,7 +275,7 @@
             padding: 10px 20px;
             border-radius: 20px;
             font-size: 14px;
-            display: none;
+            display: block;
         }
 
         #status-message {
@@ -319,12 +319,12 @@
             background-color: rgba(0, 0, 0, 0.3);
             border-radius: 3px;
             z-index: 1000;
-            display: none; /* Changed from 'none' to make it visible */
+            display: none;
         }
         
         #loading-progress {
             height: 100%;
-            width: 30%; /* Added a width to make it visible */
+            width: 0%;
             background-color: #4CAF50;
             border-radius: 3px;
             transition: width 0.1s ease-in-out;
@@ -374,11 +374,11 @@
     <!-- Table submenu -->
     <div class="submenu-content" id="table-submenu">
         <div class="submenu-row">
-            <img class="item-image" data-category="table" data-name="table1" src="../assets/models/table/table1/thumbnail.jpg" alt="Table 1">
-            <img class="item-image" data-category="table" data-name="table2" src="../assets/models/table/table2/thumbnail.jpg" alt="Table 2">
-            <img class="item-image" data-category="table" data-name="table3" src="../assets/models/table/table3/thumbnail.jpg" alt="Table 3">
-            <img class="item-image" data-category="table" data-name="table4" src="../assets/models/table/table4/thumbnail.jpg" alt="Table 4">
-            <img class="item-image" data-category="table" data-name="table5" src="../assets/models/table/table5/thumbnail.jpg" alt="Table 5">
+            <img class="item-image thumbnail" data-model-key="table-table1" data-category="table" data-name="table1" src="../assets/models/table/table1/thumbnail.jpg" alt="Table 1">
+            <img class="item-image thumbnail" data-model-key="table-table2" data-category="table" data-name="table2" src="../assets/models/table/table2/thumbnail.jpg" alt="Table 2">
+            <img class="item-image thumbnail" data-model-key="table-table3" data-category="table" data-name="table3" src="../assets/models/table/table3/thumbnail.jpg" alt="Table 3">
+            <img class="item-image thumbnail" data-model-key="table-table4" data-category="table" data-name="table4" src="../assets/models/table/table4/thumbnail.jpg" alt="Table 4">
+            <img class="item-image thumbnail" data-model-key="table-table5" data-category="table" data-name="table5" src="../assets/models/table/table5/thumbnail.jpg" alt="Table 5">
             <img class="item-image" data-category="table" src="../assets/models/table/table2/thumbnail.jpg" alt="Table 2">
             <img class="item-image" data-category="table" src="../assets/models/table/table3/thumbnail.jpg" alt="Table 3">
             <img class="item-image" data-category="table" src="../assets/models/table/table4/thumbnail.jpg" alt="Table 4">
@@ -389,11 +389,11 @@
     <!-- Chair submenu -->
     <div class="submenu-content" id="chair-submenu">
         <div class="submenu-row">
-            <img class="item-image" data-category="chair" data-name="chair1" src="../assets/models/chair/chair1/thumbnail.jpg" alt="Chair 1">
-            <img class="item-image" data-category="chair" data-name="chair2" src="../assets/models/chair/chair2/thumbnail.jpg" alt="Chair 2">
-            <img class="item-image" data-category="chair" data-name="chair3" src="../assets/models/chair/chair3/thumbnail.jpg" alt="Chair 3">
-            <img class="item-image" data-category="chair" data-name="chair4" src="../assets/models/chair/chair4/thumbnail.jpg" alt="Chair 4">
-            <img class="item-image" data-category="chair" data-name="chair5" src="../assets/models/chair/chair5/thumbnail.jpg" alt="Chair 5">
+            <img class="item-image thumbnail" data-model-key="chair-chair1" data-category="chair" data-name="chair1" src="../assets/models/chair/chair1/thumbnail.jpg" alt="Chair 1">
+            <img class="item-image thumbnail" data-model-key="chair-chair2" data-category="chair" data-name="chair2" src="../assets/models/chair/chair2/thumbnail.jpg" alt="Chair 2">
+            <img class="item-image thumbnail" data-model-key="chair-chair3" data-category="chair" data-name="chair3" src="../assets/models/chair/chair3/thumbnail.jpg" alt="Chair 3">
+            <img class="item-image thumbnail" data-model-key="chair-chair4" data-category="chair" data-name="chair4" src="../assets/models/chair/chair4/thumbnail.jpg" alt="Chair 4">
+            <img class="item-image thumbnail" data-model-key="chair-chair5" data-category="chair" data-name="chair5" src="../assets/models/chair/chair5/thumbnail.jpg" alt="Chair 5">
             <img class="item-image" data-category="chair" src="../assets/models/chair/chair2/thumbnail.jpg" alt="Chair 2">
             <img class="item-image" data-category="chair" src="../assets/models/chair/chair3/thumbnail.jpg" alt="Chair 3">
             <img class="item-image" data-category="chair" src="../assets/models/chair/chair4/thumbnail.jpg" alt="Chair 4">
@@ -404,11 +404,11 @@
     <!-- Sofa submenu -->
     <div class="submenu-content" id="sofa-submenu">
         <div class="submenu-row">
-            <img class="item-image" data-category="sofa" data-name="sofa1" src="../assets/models/sofa/sofa1/thumbnail.jpg" alt="Sofa 1">
-            <img class="item-image" data-category="sofa" data-name="sofa2" src="../assets/models/sofa/sofa2/thumbnail.jpg" alt="Sofa 2">
-            <img class="item-image" data-category="sofa" data-name="sofa3" src="../assets/models/sofa/sofa3/thumbnail.jpg" alt="Sofa 3">
-            <img class="item-image" data-category="sofa" data-name="sofa4" src="../assets/models/sofa/sofa4/thumbnail.jpg" alt="Sofa 4">
-            <img class="item-image" data-category="sofa" data-name="sofa5" src="../assets/models/sofa/sofa5/thumbnail.jpg" alt="Sofa 5">
+            <img class="item-image thumbnail" data-model-key="sofa-sofa1" data-category="sofa" data-name="sofa1" src="../assets/models/sofa/sofa1/thumbnail.jpg" alt="Sofa 1">
+            <img class="item-image thumbnail" data-model-key="sofa-sofa2" data-category="sofa" data-name="sofa2" src="../assets/models/sofa/sofa2/thumbnail.jpg" alt="Sofa 2">
+            <img class="item-image thumbnail" data-model-key="sofa-sofa3" data-category="sofa" data-name="sofa3" src="../assets/models/sofa/sofa3/thumbnail.jpg" alt="Sofa 3">
+            <img class="item-image thumbnail" data-model-key="sofa-sofa4" data-category="sofa" data-name="sofa4" src="../assets/models/sofa/sofa4/thumbnail.jpg" alt="Sofa 4">
+            <img class="item-image thumbnail" data-model-key="sofa-sofa5" data-category="sofa" data-name="sofa5" src="../assets/models/sofa/sofa5/thumbnail.jpg" alt="Sofa 5">
             <img class="item-image" data-category="sofa" src="../assets/models/sofa/sofa2/thumbnail.jpg" alt="Sofa 2">
             <img class="item-image" data-category="sofa" src="../assets/models/sofa/sofa3/thumbnail.jpg" alt="Sofa 3">
             <img class="item-image" data-category="sofa" src="../assets/models/sofa/sofa4/thumbnail.jpg" alt="Sofa 4">
@@ -419,11 +419,11 @@
     <!-- Vase submenu -->
     <div class="submenu-content" id="vase-submenu">
         <div class="submenu-row">
-            <img class="item-image" data-category="vase" data-name="vase1" src="../assets/models/vase/vase1/thumbnail.jpg" alt="Vase 1">
-            <img class="item-image" data-category="vase" data-name="vase2" src="../assets/models/vase/vase2/thumbnail.jpg" alt="Vase 2">
-            <img class="item-image" data-category="vase" data-name="vase3" src="../assets/models/vase/vase3/thumbnail.jpg" alt="Vase 3">
-            <img class="item-image" data-category="vase" data-name="vase4" src="../assets/models/vase/vase4/thumbnail.jpg" alt="Vase 4">
-            <img class="item-image" data-category="vase" data-name="vase5" src="../assets/models/vase/vase5/thumbnail.jpg" alt="Vase 5">
+            <img class="item-image thumbnail" data-model-key="vase-vase1" data-category="vase" data-name="vase1" src="../assets/models/vase/vase1/thumbnail.jpg" alt="Vase 1">
+            <img class="item-image thumbnail" data-model-key="vase-vase2" data-category="vase" data-name="vase2" src="../assets/models/vase/vase2/thumbnail.jpg" alt="Vase 2">
+            <img class="item-image thumbnail" data-model-key="vase-vase3" data-category="vase" data-name="vase3" src="../assets/models/vase/vase3/thumbnail.jpg" alt="Vase 3">
+            <img class="item-image thumbnail" data-model-key="vase-vase4" data-category="vase" data-name="vase4" src="../assets/models/vase/vase4/thumbnail.jpg" alt="Vase 4">
+            <img class="item-image thumbnail" data-model-key="vase-vase5" data-category="vase" data-name="vase5" src="../assets/models/vase/vase5/thumbnail.jpg" alt="Vase 5">
             <img class="item-image" data-category="vase" src="../assets/models/vase/vase2/thumbnail.jpg" alt="Vase 2">
             <img class="item-image" data-category="vase" src="../assets/models/vase/vase3/thumbnail.jpg" alt="Vase 3">
             <img class="item-image" data-category="vase" src="../assets/models/vase/vase4/thumbnail.jpg" alt="Vase 4">
@@ -434,15 +434,15 @@
     <!-- Rug submenu -->
     <div class="submenu-content" id="rug-submenu">
         <div class="submenu-row">
-            <img class="item-image" data-category="rug" data-name="rug1" src="../assets/models/rug/rug1/thumbnail.jpg" alt="Rug 1">
-            <img class="item-image" data-category="rug" data-name="rug2" src="../assets/models/rug/rug2/thumbnail.jpg" alt="Rug 2">
-            <img class="item-image" data-category="rug" data-name="rug3" src="../assets/models/rug/rug3/thumbnail.jpg" alt="Rug 3">
-            <img class="item-image" data-category="rug" data-name="rug4" src="../assets/models/rug/rug4/thumbnail.jpg" alt="Rug 4">
-            <img class="item-image" data-category="rug" data-name="rug5" src="../assets/models/rug/rug5/thumbnail.jpg" alt="Rug 5">
-            <img class="item-image" data-category="rug"  src="../assets/models/rug/rug2/thumbnail.jpg" alt="Rug 2">
-            <img class="item-image" data-category="rug"  src="../assets/models/rug/rug3/thumbnail.jpg" alt="Rug 3">
-            <img class="item-image" data-category="rug"  src="../assets/models/rug/rug4/thumbnail.jpg" alt="Rug 4">
-            <img class="item-image" data-category="rug"  src="../assets/models/rug/rug5/thumbnail.jpg" alt="Rug 5">
+            <img class="item-image thumbnail" data-model-key="rug-rug1" data-category="rug" data-name="rug1" src="../assets/models/rug/rug1/thumbnail.jpg" alt="Rug 1">
+            <img class="item-image thumbnail" data-model-key="rug-rug2" data-category="rug" data-name="rug2" src="../assets/models/rug/rug2/thumbnail.jpg" alt="Rug 2">
+            <img class="item-image thumbnail" data-model-key="rug-rug3" data-category="rug" data-name="rug3" src="../assets/models/rug/rug3/thumbnail.jpg" alt="Rug 3">
+            <img class="item-image thumbnail" data-model-key="rug-rug4" data-category="rug" data-name="rug4" src="../assets/models/rug/rug4/thumbnail.jpg" alt="Rug 4">
+            <img class="item-image thumbnail" data-model-key="rug-rug5" data-category="rug" data-name="rug5" src="../assets/models/rug/rug5/thumbnail.jpg" alt="Rug 5">
+            <img class="item-image" data-category="rug" src="../assets/models/rug/rug2/thumbnail.jpg" alt="Rug 2">
+            <img class="item-image" data-category="rug" src="../assets/models/rug/rug3/thumbnail.jpg" alt="Rug 3">
+            <img class="item-image" data-category="rug" src="../assets/models/rug/rug4/thumbnail.jpg" alt="Rug 4">
+            <img class="item-image" data-category="rug" src="../assets/models/rug/rug5/thumbnail.jpg" alt="Rug 5">
         </div>
     </div>
 
