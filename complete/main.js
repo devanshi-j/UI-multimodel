@@ -21,81 +21,90 @@ function initServiceWorker() {
 
 initServiceWorker();
 
-// Fixed assets declaration - separating it from itemCategories
+const loadedModels = new Map();
+const modelLoadStatus = new Map();
+let placedItems = [];
+let previewItem = null;
+let hitTestSource = null;
+let hitTestSourceRequested = false;
+let isModelSelected = false;
+let selectedModels = [];
+
+const selectModel = (model) => {
+    selectedModels = [model]; // Reset and add only the current model
+    console.log("Model selected:", model);
+    console.log("Updated selectedModels:", selectedModels);
+};
+
+const normalizeModel = (obj, height) => {
+    const bbox = new THREE.Box3().setFromObject(obj);
+    const size = bbox.getSize(new THREE.Vector3());
+    obj.scale.multiplyScalar(height / size.y);
+    const bbox2 = new THREE.Box3().setFromObject(obj);
+    const center = bbox2.getCenter(new THREE.Vector3());
+    obj.position.set(-center.x, -center.y, -center.z);
+};
+
+const setOpacityForSelected = (opacity) => {
+    console.log(`setOpacityForSelected(${opacity}) called. Selected models:`, selectedModels);
+
+    if (selectedModels.length === 0) {
+        console.warn("setOpacityForSelected() - No models in selectedModels array!");
+        return;
+    }
+
+    selectedModels.forEach((model) => {
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.material = child.material.clone();
+                child.material.transparent = true;
+                child.material.format = THREE.RGBAFormat;
+                child.material.opacity = opacity;
+            }
+        });
+    });
+};
+
+// Fixed assets declaration with proper default scaling
 const assets = {
   table: [
-    { name: "table2", height: 0.5, width: 0.6 },
-    { name: "table2", height: 0.5, width: 0.6 },
-    { name: "table3", height: 0.5, width: 0.6 },
-    { name: "table4", height: 0.5, width: 0.6 },
-    { name: "table5", height: 0.5, width: 0.6 }
+    { name: "table2", height: 0.5, width: 0.6, scale: 1.0 },
+    { name: "table2", height: 0.5, width: 0.6, scale: 1.0 },
+    { name: "table3", height: 0.5, width: 0.6, scale: 1.0 },
+    { name: "table4", height: 0.5, width: 0.6, scale: 1.0 },
+    { name: "table5", height: 0.5, width: 0.6, scale: 1.0 }
   ],
   chair: [
-    { name: "chair4", height: 0.5, width: 2.5 },
-    { name: "chair2", height: 0.5, width: 2.5 },
-    { name: "chair3", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 }
+    { name: "chair4", height: 0.5, width: 2.5, scale: 0.8 },
+    { name: "chair2", height: 0.5, width: 2.5, scale: 0.8 },
+    { name: "chair3", height: 0.5, width: 0.5, scale: 0.8 },
+    { name: "chair2", height: 0.5, width: 0.5, scale: 0.8 },
+    { name: "chair2", height: 0.5, width: 0.5, scale: 0.8 }
   ],
   sofa: [
-    { name: "sofa3", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 },
-    { name: "sofa3", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 }
+    { name: "sofa3", height: 1.5, width: 1.0, scale: 1.2 },
+    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 },
+    { name: "sofa3", height: 1.5, width: 1.0, scale: 1.2 },
+    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 },
+    { name: "sofa2", height: 1.5, width: 1.0, scale: 1.2 }
   ],
   vase: [
-    { name: "vase1", height: 0.5, width: 0.3 },
-    { name: "vase2", height: 0.5, width: 0.25 },
-    { name: "vase3", height: 0.5, width: 0.2 },
-    { name: "vase4", height: 0.5, width: 0.35 },
-    { name: "vase5", height: 0.5, width: 0.3 }
+    { name: "vase1", height: 0.5, width: 0.3, scale: 0.5 },
+    { name: "vase2", height: 0.5, width: 0.25, scale: 0.5 },
+    { name: "vase3", height: 0.5, width: 0.2, scale: 0.5 },
+    { name: "vase4", height: 0.5, width: 0.35, scale: 0.5 },
+    { name: "vase5", height: 0.5, width: 0.3, scale: 0.5 }
   ],
   rug: [
-    { name: "rug1", height: 0.2, width: 0.1 },  
-    { name: "rug2", height: 0.2, width: 0.1 },  
-    { name: "rug3", height: 0.2, width: 0.1 },  
-    { name: "rug4", height: 0.2, width: 0.1 },  
-    { name: "rug5", height: 0.2, width: 0.1 }   
+    { name: "rug1", height: 0.2, width: 0.1, scale: 1.5 },  
+    { name: "rug2", height: 0.2, width: 0.1, scale: 1.5 },  
+    { name: "rug3", height: 0.2, width: 0.1, scale: 1.5 },  
+    { name: "rug4", height: 0.2, width: 0.1, scale: 1.5 },  
+    { name: "rug5", height: 0.2, width: 0.1, scale: 1.5 }   
   ]
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    const loadedModels = new Map();
-    const modelLoadStatus = new Map();
-    let placedItems = [];
-    let previewItem = null;
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
-    let isModelSelected = false;
-    let selectedModels = [];
-
-    const selectModel = (model) => {
-        selectedModels = [model]; // Reset and add only the current model
-        console.log("Model selected:", model);
-        console.log("Updated selectedModels:", selectedModels);
-    };
-
-    const setOpacityForSelected = (opacity) => {
-        console.log(`setOpacityForSelected(${opacity}) called. Selected models:`, selectedModels);
-
-        if (selectedModels.length === 0) {
-            console.warn("setOpacityForSelected() - No models in selectedModels array!");
-            return;
-        }
-
-        selectedModels.forEach((model) => {
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.material = child.material.clone();
-                    child.material.transparent = true;
-                    child.material.format = THREE.RGBAFormat;
-                    child.material.opacity = opacity;
-                }
-            });
-        });
-    };
-
     const initialize = async () => {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
@@ -104,12 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
-        
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         scene.add(light);
         scene.add(directionalLight);
-        
         const arButton = ARButton.createButton(renderer, {
             requiredFeatures: ["hit-test"],
             optionalFeatures: ["dom-overlay"],
@@ -120,15 +127,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         document.body.appendChild(arButton);
-        
         renderer.xr.addEventListener("sessionstart", () => {
             console.log("AR session started");
         });
-        
         renderer.xr.addEventListener("sessionend", () => {
             console.log("AR session ended");
         });
-        
         const raycaster = new THREE.Raycaster();
         const touches = new THREE.Vector2();
         let selectedObject = null;
@@ -138,10 +142,8 @@ document.addEventListener("DOMContentLoaded", () => {
         let previousTouchX = 0;
         let previousTouchY = 0;
         let previousPinchDistance = 0;
-        
         const controller = renderer.xr.getController(0);
         scene.add(controller);
-        
         const reticle = new THREE.Mesh(
             new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -356,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Modified showModel function - using asset data for scaling directly
+        // Modified showModel function - no need for cloning
         const showModel = (item, data, callback) => {
             // If there's a preview item, remove it first
             if (previewItem) {
@@ -369,9 +371,14 @@ document.addEventListener("DOMContentLoaded", () => {
             // Add the original model to this group
             previewItem.add(item.clone());
             
-            // Apply scale based on asset data
+            // Apply default scale if available in data
+            if (data && data.scale) {
+                previewItem.scale.set(data.scale, data.scale, data.scale);
+            }
+            
+            // Normalize if needed (based on data)
             if (data && data.height) {
-                previewItem.scale.set(data.height, data.height, data.height);
+                normalizeModel(previewItem, data.height);
             }
             
             // Add to scene
@@ -388,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Call callback
             if (callback) callback();
         };
-
+      
         const deleteModel = () => {
             if (selectedObject) {
                 scene.remove(selectedObject);
@@ -467,12 +474,36 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-        // Preload all models in the background
+        // Preload all models in the background and create thumbnails
         for (const category in assets) {
+            // Create category submenu if it doesn't exist
+            let submenu = document.querySelector(`.submenu[data-category="${category}"]`);
+            if (!submenu) {
+                submenu = document.createElement('div');
+                submenu.className = 'submenu';
+                submenu.setAttribute('data-category', category);
+                
+                // Find the corresponding icon and append submenu
+                const icon = document.querySelector(`.icon[data-category="${category}"]`);
+                if (icon) {
+                    icon.appendChild(submenu);
+                } else {
+                    console.warn(`Icon for category ${category} not found`);
+                }
+            }
+            
             for (let i = 0; i < assets[category].length; i++) {
                 const assetData = assets[category][i];
                 const itemName = assetData.name;
                 const modelKey = `${category}-${itemName}`;
+                
+                // Create thumbnail element
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'model-thumbnail';
+                thumbnail.innerHTML = `<img src="../assets/models/${category}/${itemName}/thumbnail.jpg" alt="${itemName}">`;
+                
+                // Add thumbnail to submenu
+                submenu.appendChild(thumbnail);
                 
                 // Mark this model as "loading"
                 modelLoadStatus.set(modelKey, {
@@ -515,81 +546,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Store the promise
                 modelLoadStatus.get(modelKey).promise = loadPromise;
                 
-                // Create thumbnail element and add click handler
-                const submenu = document.querySelector(`.submenu[data-category="${category}"]`);
-                if (submenu) {
-                    const thumbnail = document.createElement("div");
-                    thumbnail.className = "thumbnail";
-                    thumbnail.dataset.model = modelKey;
-                    thumbnail.innerHTML = `<img src="../assets/models/${category}/${itemName}/thumbnail.jpg" alt="${itemName}">`;
-                    submenu.appendChild(thumbnail);
+                // Fixed thumbnail click handler
+                thumbnail.addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    // Add click handler to the thumbnail
-                    thumbnail.addEventListener("click", async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const modelKey = e.currentTarget.dataset.model;
-                        const currentStatus = modelLoadStatus.get(modelKey);
-                        
-                        // Show loading indicator
-                        showLoading();
-                        updateLoadingProgress(10);
-                        
-                        // Start loading animation
-                        let progress = 10;
-                        const loadingInterval = setInterval(() => {
-                            progress += 2;
-                            if (progress > 90) progress = 90;
-                            updateLoadingProgress(progress);
-                        }, 50);
-                        
-                        try {
-                            // Wait for the model to finish loading if it's in progress
-                            if (currentStatus.status === 'loading' && currentStatus.promise) {
-                                await currentStatus.promise;
-                            } 
-                            // If there was an error, try loading again
-                            else if (currentStatus.status === 'error') {
-                                const [category, name] = modelKey.split('-');
-                                const model = await loadGLTF(`../assets/models/${category}/${name}/scene.gltf`);
-                                const item = new THREE.Group();
-                                item.add(model.scene);
-                                
-                                const assetData = assets[category].find(asset => asset.name === name);
-                                
-                                loadedModels.set(modelKey, {
-                                    model: item,
-                                    data: assetData
-                                });
-                                
-                                modelLoadStatus.set(modelKey, {
-                                    status: 'loaded',
-                                    promise: null
-                                });
-                            }
+                    const currentStatus = modelLoadStatus.get(modelKey);
+                    
+                    // Show loading indicator
+                    showLoading();
+                    updateLoadingProgress(10);
+                    
+                    // Start loading animation
+                    let progress = 10;
+                    const loadingInterval = setInterval(() => {
+                        progress += 2;
+                        if (progress > 90) progress = 90;
+                        updateLoadingProgress(progress);
+                    }, 50);
+                    
+                    try {
+                        // Wait for the model to finish loading if it's in progress
+                        if (currentStatus.status === 'loading' && currentStatus.promise) {
+                            await currentStatus.promise;
+                        } 
+                        // If there was an error, try loading again
+                        else if (currentStatus.status === 'error') {
+                            const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+                            const item = new THREE.Group();
+                            item.add(model.scene);
                             
-                            // Get the model info
-                            const modelInfo = loadedModels.get(modelKey);
-                            
-                            // Show the model with proper data
-                            showModel(modelInfo.model, modelInfo.data, () => {
-                                clearInterval(loadingInterval);
-                                updateLoadingProgress(100);
-                                setTimeout(() => {
-                                    hideLoading();
-                                }, 200);
+                            loadedModels.set(modelKey, {
+                                model: item,
+                                data: assetData
                             });
-                        } catch (error) {
-                            console.error(`Error showing model ${modelKey}:`, error);
-                            clearInterval(loadingInterval);
-                            hideLoading();
+                            
+                            modelLoadStatus.set(modelKey, {
+                                status: 'loaded',
+                                promise: null
+                            });
                         }
-                    });
-                }
+                        
+                        // Get the model info
+                        const modelInfo = loadedModels.get(modelKey);
+                        
+                        // Show the model with proper data
+                        showModel(modelInfo.model, modelInfo.data, () => {
+                            clearInterval(loadingInterval);
+                            updateLoadingProgress(100);
+                            setTimeout(() => {
+                                hideLoading();
+                            }, 200);
+                        });
+                    } catch (error) {
+                        console.error(`Error showing model ${modelKey}:`, error);
+                        clearInterval(loadingInterval);
+                        hideLoading();
+                    }
+                });
             }
         }
-
+      
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
                 const referenceSpace = renderer.xr.getReferenceSpace();
@@ -636,7 +653,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             renderer.render(scene, camera);
         });
-        
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
