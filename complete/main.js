@@ -305,9 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.domElement.addEventListener('touchmove', onTouchMove, false);
         renderer.domElement.addEventListener('touchend', onTouchEnd, false);
 
-        const menuButton = document.getElementById("menu-button");
-        const closeButton = document.getElementById("close-button");
-        const bottomMenu = document.getElementById("bottomMenu");
+        //const menuButton = document.getElementById("menu-button");
+        //const closeButton = document.getElementById("close-button");
+        //const bottomMenu = document.getElementById("bottomMenu");
         const confirmButtons = document.getElementById("confirm-buttons");
         const placeButton = document.getElementById("place");
         const cancelButton = document.getElementById("cancel");
@@ -315,7 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const surfaceIndicator = document.getElementById("surface-indicator");
         const statusMessage = document.getElementById("status-message");
 
-        document.addEventListener("click", (event) => {
+        /*document.addEventListener("click", (event) => {
             const isClickInsideMenu = bottomMenu?.contains(event.target);
             const isClickOnMenuButton = menuButton?.contains(event.target);
             const isMenuOpen = bottomMenu?.classList.contains("open");
@@ -356,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 clickedSubmenu.classList.toggle("open");
             });
-        });
+        });*/
 
        // Modified showModel function - no need for cloning
 const showModel = (item, data, callback) => {
