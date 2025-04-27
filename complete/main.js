@@ -64,25 +64,25 @@ const setOpacityForSelected = (opacity) => {
 // Fixed assets declaration - separating it from itemCategories
 const assets = {
   table: [
-    { name: "table2", height: 0.5, width: 0.6 },
+    { name: "table1", height: 0.5, width: 0.6 },
     { name: "table2", height: 0.5, width: 0.6 },
     { name: "table3", height: 0.5, width: 0.6 },
     { name: "table4", height: 0.5, width: 0.6 },
     { name: "table5", height: 0.5, width: 0.6 }
   ],
   chair: [
-    { name: "chair4", height: 0.5, width: 2.5 },
+    { name: "chair1", height: 0.5, width: 2.5 },
     { name: "chair2", height: 0.5, width: 2.5 },
     { name: "chair3", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 },
-    { name: "chair2", height: 0.5, width: 0.5 }
+    { name: "chair4", height: 0.5, width: 0.5 },
+    { name: "chair5", height: 0.5, width: 0.5 }
   ],
   sofa: [
-    { name: "sofa3", height: 1.5, width: 1.0 },
+    { name: "sofa1", height: 1.5, width: 1.0 },
     { name: "sofa2", height: 1.5, width: 1.0 },
     { name: "sofa3", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 },
-    { name: "sofa2", height: 1.5, width: 1.0 }
+    { name: "sofa4", height: 1.5, width: 1.0 },
+    { name: "sofa5", height: 1.5, width: 1.0 }
   ],
   vase: [
     { name: "vase1", height: 0.5, width: 0.3 },
