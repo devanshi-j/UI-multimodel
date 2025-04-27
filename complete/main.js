@@ -21,7 +21,8 @@ function initServiceWorker() {
 
 initServiceWorker();
 
-const loadedModels = new Map();
+
+const modelLoadStatus = new Map();
 let placedItems = [];
 let previewItem = null;
 let hitTestSource = null;
@@ -484,68 +485,128 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButton.addEventListener("click", cancelModel);
         deleteButton.addEventListener("click", deleteModel);
 
-        // Modified model loading code with loading indicator
-        for (const category of ['table', 'chair', 'sofa', 'vase', 'rug']) {
-            for (let i = 1; i <= 5; i++) {
-                const itemName = `${category}${i}`;
+       
+// Preload all models in the background
+for (const category in assets) {
+    for (let i = 0; i < assets[category].length; i++) {
+        const assetData = assets[category][i];
+        const itemName = assetData.name;
+        const modelKey = `${category}-${itemName}`;
+        
+        // Mark this model as "loading"
+        modelLoadStatus.set(modelKey, {
+            status: 'loading',
+            promise: null
+        });
+        
+        // Create a loading promise
+        const loadPromise = (async () => {
+            try {
+                const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+                
+                // Set up a group to hold the model
+                const item = new THREE.Group();
+                item.add(model.scene);
+                
+                // Store the loaded model
+                loadedModels.set(modelKey, {
+                    model: item,
+                    data: assetData
+                });
+                
+                // Update status to "loaded"
+                modelLoadStatus.set(modelKey, {
+                    status: 'loaded',
+                    promise: null
+                });
+                
+                return true;
+            } catch (error) {
+                console.error(`Error loading model ${category}/${itemName}:`, error);
+                modelLoadStatus.set(modelKey, {
+                    status: 'error',
+                    promise: null
+                });
+                return false;
+            }
+        })();
+        
+        // Store the promise
+        modelLoadStatus.get(modelKey).promise = loadPromise;
+        
+        // Set up click handlers for thumbnails
+        const thumbnail = document.querySelector(`#${modelKey}`);
+        if (thumbnail) {
+            thumbnail.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const currentStatus = modelLoadStatus.get(modelKey);
+                
+                // If the model is already loaded, show it immediately
+                if (currentStatus.status === 'loaded') {
+                    const modelInfo = loadedModels.get(modelKey);
+                    const modelClone = modelInfo.model.clone(true);
+                    showModel(modelClone, modelInfo.data, null);
+                    return;
+                }
+                
+                // Show loading indicator
+                showLoading();
+                updateLoadingProgress(10);
+                
+                // Start loading animation
+                let progress = 10;
+                const loadingInterval = setInterval(() => {
+                    progress += 2;
+                    if (progress > 90) progress = 90;
+                    updateLoadingProgress(progress);
+                }, 50);
+                
                 try {
-                    const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
-                    normalizeModel(model.scene, 0.5);
-                    const item = new THREE.Group();
-                    item.add(model.scene);
-                    loadedModels.set(`${category}-${itemName}`, item);
-                    const thumbnail = document.querySelector(`#${category}-${itemName}`);
-                    if (thumbnail) {
-                        thumbnail.addEventListener("click", async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // Show loading indicator
-                            showLoading();
-                            updateLoadingProgress(0);
-                            
-                            // Get the model
-                            const model = loadedModels.get(`${category}-${itemName}`);
-                            if (!model) {
-                                hideLoading();
-                                console.error(`Model not found: ${category}-${itemName}`);
-                                return;
-                            }
-                            
-                            // Create clone of the model
-                            const modelClone = model.clone(true);
-                            
-                            // Start with progress at 10% to show activity
-                            updateLoadingProgress(10);
-                            
-                            // Start the loading animation - this will go to 90% max
-                            let progress = 10;
-                            const loadingInterval = setInterval(() => {
-                                // Increase progress, but cap at 90% until model is actually ready
-                                progress += 2;
-                                if (progress > 90) progress = 90;
-                                updateLoadingProgress(progress);
-                            }, 50);
-                            
-                            // Call showModel with a callback to know when it's complete
-                            showModel(modelClone, () => {
-                                // Clear the loading interval when model is fully loaded
-                                clearInterval(loadingInterval);
-                                // Set progress to 100%
-                                updateLoadingProgress(100);
-                                // Short delay at 100% for visibility
-                                setTimeout(() => {
-                                    hideLoading();
-                                }, 200);
-                            });
+                    // Wait for the model to finish loading if it's in progress
+                    if (currentStatus.status === 'loading' && currentStatus.promise) {
+                        await currentStatus.promise;
+                    } 
+                    // If there was an error, try loading again
+                    else if (currentStatus.status === 'error') {
+                        const model = await loadGLTF(`../assets/models/${category}/${itemName}/scene.gltf`);
+                        const item = new THREE.Group();
+                        item.add(model.scene);
+                        
+                        loadedModels.set(modelKey, {
+                            model: item,
+                            data: assetData
+                        });
+                        
+                        modelLoadStatus.set(modelKey, {
+                            status: 'loaded',
+                            promise: null
                         });
                     }
+                    
+                    // Get the now-loaded model
+                    const modelInfo = loadedModels.get(modelKey);
+                    const modelClone = modelInfo.model.clone(true);
+                    
+                    // Display the model
+                    showModel(modelClone, modelInfo.data, () => {
+                        // Clear the loading interval when model is fully displayed
+                        clearInterval(loadingInterval);
+                        updateLoadingProgress(100);
+                        setTimeout(() => {
+                            hideLoading();
+                        }, 200);
+                    });
                 } catch (error) {
-                    console.error(`Error loading model ${category}/${itemName}:`, error);
+                    console.error(`Error showing model ${modelKey}:`, error);
+                    clearInterval(loadingInterval);
+                    hideLoading();
                 }
-            }
+            });
         }
-
+    }
+}
         renderer.setAnimationLoop((timestamp, frame) => {
             if (frame) {
                 const referenceSpace = renderer.xr.getReferenceSpace();
